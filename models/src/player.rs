@@ -1,0 +1,26 @@
+use crate::{critical::{CriticalChance, CriticalDamage}, damage_done::DamageDoneType, penetration::Penetration, resource::PlayerMaxResource};
+
+struct Player {
+    level: u8,
+    effective_level: u8,
+    max_health: PlayerMaxResource,
+    max_magicka: PlayerMaxResource,
+    max_stamina: PlayerMaxResource,
+    critical_damage: CriticalDamage,
+    critical_chance: CriticalChance,
+    penetration: Penetration,
+    dot_damage: DamageDoneType,
+    direct_damage: DamageDoneType,
+    single_target_damage: DamageDoneType,
+    aoe_damage: DamageDoneType,
+    magic_damage: DamageDoneType,
+    physical_damage: DamageDoneType,
+    shock_damage: DamageDoneType,
+    flame_damage: DamageDoneType,
+    frost_damage: DamageDoneType,
+    poison_damage: DamageDoneType,
+    disease_damage: DamageDoneType,
+    bow_damage: DamageDoneType,
+    pet_damage: DamageDoneType,
+    damage_done: DamageDoneType,
+}
