@@ -1,6 +1,6 @@
-use crate::{critical::{CriticalChance, CriticalDamage}, damage_done::DamageDoneType, penetration::Penetration, resource::PlayerMaxResource};
+use crate::{critical::{CriticalChance, CriticalDamage}, damage_done::DamageDone, damage_taken::Resistance, power::Power, resource::{PlayerAttributeType, PlayerMaxResource}, Percent, EFFECTIVE_LEVEL, LEVEL};
 
-struct Player {
+pub struct Player {
     level: u8,
     effective_level: u8,
     max_health: PlayerMaxResource,
@@ -8,19 +8,41 @@ struct Player {
     max_stamina: PlayerMaxResource,
     critical_damage: CriticalDamage,
     critical_chance: CriticalChance,
-    penetration: Penetration,
-    dot_damage: DamageDoneType,
-    direct_damage: DamageDoneType,
-    single_target_damage: DamageDoneType,
-    aoe_damage: DamageDoneType,
-    magic_damage: DamageDoneType,
-    physical_damage: DamageDoneType,
-    shock_damage: DamageDoneType,
-    flame_damage: DamageDoneType,
-    frost_damage: DamageDoneType,
-    poison_damage: DamageDoneType,
-    disease_damage: DamageDoneType,
-    bow_damage: DamageDoneType,
-    pet_damage: DamageDoneType,
-    damage_done: DamageDoneType,
+    penetration: u32,
+    damage_done: DamageDone,
+    damage_taken: Percent,
+    physical_resistance: Resistance,
+    spell_resistance: Resistance,
+    frost_resistance: u16,
+    flame_resistance: u16,
+    shock_resistance: u16,
+    poison_resistance: u16,
+    disease_resistance: u16,
+    spell_power: Power,
+    weapon_power: Power,
+}
+impl Player {
+    pub fn new() -> Self {
+        Self {
+            level: LEVEL,
+            effective_level: EFFECTIVE_LEVEL,
+            max_health: PlayerMaxResource::new(PlayerAttributeType::Health),
+            max_magicka: PlayerMaxResource::new(PlayerAttributeType::Magicka),
+            max_stamina: PlayerMaxResource::new(PlayerAttributeType::Stamina),
+            critical_damage: CriticalDamage::default(),
+            critical_chance: CriticalChance::default(),
+            penetration: 0,
+            damage_done: DamageDone::default(),
+            damage_taken: Percent::new(),
+            physical_resistance: Resistance::new(),
+            spell_resistance: Resistance::new(),
+            frost_resistance: 0,
+            flame_resistance: 0,
+            shock_resistance: 0,
+            poison_resistance: 0,
+            disease_resistance: 0,
+            spell_power: Power::new(),
+            weapon_power: Power::new(),
+        }
+    }
 }

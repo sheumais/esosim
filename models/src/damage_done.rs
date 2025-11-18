@@ -1,25 +1,26 @@
 use crate::Percent;
 
-pub struct DamageDoneType {
-    cp: Percent,
-    skill: Percent,
-    buff: Percent,
-    item: Percent,
-    set: Percent,
+#[derive(Default)]
+pub struct DamageDone {
+    dot: Percent,
+    direct: Percent,
+    single_target: Percent,
+    aoe: Percent,
+    magic: Percent,
+    physical: Percent,
+    shock: Percent,
+    flame: Percent,
+    frost: Percent,
+    poison: Percent,
+    disease: Percent,
+    bow: Percent,
+    pet: Percent,
+    global: Percent,
+    monster: Percent,
 }
 
-impl DamageDoneType {
-    fn calculate(self) -> f32 {
-        (self.cp + self.skill + self.buff + self.item + self.set).to_f32()
-    }
-
+impl DamageDone {
     fn new() -> Self {
-        Self { 
-            cp: Percent::U8(0),
-            skill: Percent::U8(0),
-            buff: Percent::U8(0), 
-            item: Percent::U8(0), 
-            set: Percent::U8(0),
-        }
+        Self::default()
     }
 }

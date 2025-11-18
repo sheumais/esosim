@@ -1,6 +1,6 @@
-use crate::LEVEL;
+use crate::{Percent, LEVEL};
 
-enum PlayerAttributeType {
+pub enum PlayerAttributeType {
     Health,
     Magicka,
     Stamina,
@@ -9,17 +9,12 @@ enum PlayerAttributeType {
 pub struct PlayerMaxResource {
     resource_type: PlayerAttributeType,
     attribute: u16,
-    item: u16,
-    set: u16,
-    food: u16,
-    skill2: u16,
-    mundus: u16,
-    skill: f32,
-    buff: f32,
+    additive: u16,
+    multiplicative: Percent,
 }
 
 impl PlayerMaxResource {
-    fn calculate(&self) -> u32 {
+    pub fn calculate(&self) -> u32 {
         let (level_coeff, attr_coeff) = match self.resource_type {
             PlayerAttributeType::Health => (300, 122),
             PlayerAttributeType::Magicka | PlayerAttributeType::Stamina => (220, 111),
@@ -28,27 +23,22 @@ impl PlayerMaxResource {
         let base = level_coeff * LEVEL as u16
             + 1000
             + attr_coeff * self.attribute
-            + self.item
-            + self.set
-            + self.food
-            + self.skill2
-            + self.mundus;
+            + self.additive;
 
-        (base as f32 * (1.0 + self.skill + self.buff)).round() as u32
+        (base as f32 * (1.0 + self.multiplicative.to_f32())).round() as u32
     }
 
-    fn new(resource_type: PlayerAttributeType) -> Self {
+    pub fn new(resource_type: PlayerAttributeType) -> Self {
         PlayerMaxResource {
             resource_type,
             attribute: 0,
-            item: 0,
-            set: 0,
-            food: 0,
-            skill2: 0,
-            mundus: 0,
-            skill: 0.0,
-            buff: 0.0,
+            additive: 0,
+            multiplicative: Percent::new(),
         }
+    }
+
+    pub fn get_type(self) -> PlayerAttributeType {
+        self.resource_type
     }
 }
 
@@ -78,11 +68,11 @@ mod tests {
     fn test_calculate_max_health_tank() {
         let mut h = PlayerMaxResource::new(PlayerAttributeType::Health);
         h.attribute = 32; 
-        h.food = 4462; // random crown tri max food 
-        h.item = 477 * 2 + 193 * 3 + 560; // hakeijo enchants + hero's vigor CP
-        h.set = 1206*2; // pearlescent ward passive
-        h.buff = 0.1 + 0.02; // undaunted passive + heavy armour passive x5
-        h.skill2 = 1000; // nord passive
+        h.additive = 4462 // random crown tri max food 
+            + 477 * 2 + 193 * 3 + 560 // hakeijo enchants + hero's vigor CP
+            + 1206*2 // pearlescent ward passive
+            + 1000; // nord passive
+        h.multiplicative = Percent::from_f32(0.1 + 0.02); // undaunted passive + heavy armour passive x5
         assert_eq!(h.calculate(), 33456u32); // compare with tested value in game
     }
 
