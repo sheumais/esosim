@@ -2,13 +2,25 @@ pub enum DamageType {
     BLEED,
     COLD,
     DISEASE,
-    DROWN,
-    EARTH,
     FIRE,
-    GENERIC,
     MAGIC,
     OBLIVION,
     PHYSICAL,
     POISON,
     SHOCK,
+}
+
+pub enum DamageSize {
+    SINGLETARGET,
+    MULTITARGET,
+}
+
+pub enum DamageTime {
+    INSTANT,
+    DOT,
+}
+
+pub enum DamageRelation {
+    PLAYER,
+    PET
 }

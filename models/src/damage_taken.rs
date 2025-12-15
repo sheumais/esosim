@@ -1,8 +1,8 @@
-use crate::{Percent, ARMOUR_MAXIMUM, EFFECTIVE_LEVEL};
+use crate::{ARMOUR_MAXIMUM, EFFECTIVE_LEVEL};
 
 pub struct Resistance {
-    additive: u16,
-    multiplicative: Percent,
+    additive: u32,
+    multiplicative: f32,
 }
 
 impl Resistance {
@@ -12,14 +12,22 @@ impl Resistance {
     }
 
     pub fn calculate_with_level(&self, level: u8) -> f32 {
-        let armour_cap = level as u16 * 500;
-        ((self.additive as f32 / armour_cap as f32) * (1.0 + self.multiplicative.to_f32())).min(ARMOUR_MAXIMUM)
+        let armour_cap = level as u32 * 500;
+        ((self.additive as f32 / armour_cap as f32) * (1.0 + self.multiplicative)).min(ARMOUR_MAXIMUM)
+    }
+
+    pub fn add_to_additive(&mut self, value: u32) {
+        self.additive += value;
+    }
+
+    pub fn add_to_multiplicative(&mut self, value: f32) {
+        self.multiplicative += value;
     }
     
     pub fn new() -> Self {
         Self {
             additive: 0,
-            multiplicative: Percent::new()
+            multiplicative: 0.0
         }
     }
 }

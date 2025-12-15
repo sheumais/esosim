@@ -1,4 +1,4 @@
-use crate::{critical::{CriticalChance, CriticalDamage}, damage_done::DamageDone, damage_taken::Resistance, power::Power, resource::{PlayerAttributeType, PlayerMaxResource}, Percent, EFFECTIVE_LEVEL, LEVEL};
+use crate::{critical::{CriticalChance, CriticalDamage}, damage_done::DamageDone, damage_taken::Resistance, power::Power, resource::{PlayerAttributeType, PlayerMaxResource}, EFFECTIVE_LEVEL, LEVEL};
 
 pub struct Player {
     level: u8,
@@ -10,14 +10,14 @@ pub struct Player {
     critical_chance: CriticalChance,
     penetration: u32,
     damage_done: DamageDone,
-    damage_taken: Percent,
+    damage_taken: f32,
     physical_resistance: Resistance,
     spell_resistance: Resistance,
-    frost_resistance: u16,
-    flame_resistance: u16,
-    shock_resistance: u16,
-    poison_resistance: u16,
-    disease_resistance: u16,
+    frost_resistance: u32,
+    flame_resistance: u32,
+    shock_resistance: u32,
+    poison_resistance: u32,
+    disease_resistance: u32,
     spell_power: Power,
     weapon_power: Power,
 }
@@ -33,7 +33,7 @@ impl Player {
             critical_chance: CriticalChance::default(),
             penetration: 0,
             damage_done: DamageDone::default(),
-            damage_taken: Percent::new(),
+            damage_taken: 0.0,
             physical_resistance: Resistance::new(),
             spell_resistance: Resistance::new(),
             frost_resistance: 0,

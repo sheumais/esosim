@@ -1,4 +1,4 @@
-use crate::{Percent, LEVEL};
+use crate::{LEVEL};
 
 pub enum PlayerAttributeType {
     Health,
@@ -8,9 +8,9 @@ pub enum PlayerAttributeType {
 
 pub struct PlayerMaxResource {
     resource_type: PlayerAttributeType,
-    attribute: u16,
-    additive: u16,
-    multiplicative: Percent,
+    attribute: u32,
+    additive: u32,
+    multiplicative: f32,
 }
 
 impl PlayerMaxResource {
@@ -20,12 +20,24 @@ impl PlayerMaxResource {
             PlayerAttributeType::Magicka | PlayerAttributeType::Stamina => (220, 111),
         };
 
-        let base = level_coeff * LEVEL as u16
+        let base = level_coeff * LEVEL as u32
             + 1000
             + attr_coeff * self.attribute
             + self.additive;
 
-        (base as f32 * (1.0 + self.multiplicative.to_f32())).round() as u32
+        (base as f32 * (1.0 + self.multiplicative)).round() as u32
+    }
+
+    pub fn add_to_additive(&mut self, value: u32) {
+        self.additive += value;
+    }
+
+    pub fn add_to_multiplicative(&mut self, value: f32) {
+        self.multiplicative += value;
+    }
+
+    pub fn add_to_attribute(&mut self, value: u32) {
+        self.attribute += value;
     }
 
     pub fn new(resource_type: PlayerAttributeType) -> Self {
@@ -33,7 +45,7 @@ impl PlayerMaxResource {
             resource_type,
             attribute: 0,
             additive: 0,
-            multiplicative: Percent::new(),
+            multiplicative: 0.0,
         }
     }
 
@@ -72,17 +84,7 @@ mod tests {
             + 477 * 2 + 193 * 3 + 560 // hakeijo enchants + hero's vigor CP
             + 1206*2 // pearlescent ward passive
             + 1000; // nord passive
-        h.multiplicative = Percent::from_f32(0.1 + 0.02); // undaunted passive + heavy armour passive x5
-        assert_eq!(h.calculate(), 33456u32); // compare with tested value in game
-    }
-
-    #[test]
-    fn test_calculate_max_stamina_dps() {
-        todo!();
-    }
-
-    #[test]
-    fn test_calculate_max_magicka_healer() {
-        todo!();
+        h.multiplicative = 0.12; // undaunted passive + heavy armour passive x5
+        assert_eq!(h.calculate(), 33456u32); // compared with tested value in game
     }
 }
