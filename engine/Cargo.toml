@@ -1,6 +1,8 @@
 [package]
-name = "engine"
+name = "esosim-engine"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+esosim-models = { path = "../models" }
+esosim-data = { path = "../data" }

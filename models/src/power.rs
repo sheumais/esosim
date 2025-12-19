@@ -13,7 +13,7 @@ impl Power {
     }
 
     pub fn calculate_with_level(&self, level: u8) -> u32 {
-        let base = 
+        let base =
             level as u32 * 20
             + self.additive;
         (base as f32 * (1.0 + self.multiplicative)).round() as u32 + self.bloodthirsty
