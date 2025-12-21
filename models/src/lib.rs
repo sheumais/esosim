@@ -3,7 +3,6 @@ pub mod critical;
 pub mod damage_taken;
 pub mod damage_done;
 pub mod power;
-pub mod monster;
 pub mod damage;
 pub mod player;
 

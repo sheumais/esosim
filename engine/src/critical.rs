@@ -19,10 +19,22 @@ impl CriticalDamage {
 
     pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
         self.sources.insert(id, stacks.unwrap_or(1));
+        self.refresh();
     }
 
-    pub fn remove_source(&mut self, id: ID) {
-        self.sources.remove(&id);
+    pub fn remove_source(&mut self, id: &ID) {
+        self.sources.remove(id);
+        self.refresh();
+    }
+
+    fn refresh(&mut self) {
+        self.critical_damage.reset();
+        for (id, stacks) in &self.sources {
+            if let Some(buff) = CRITICAL_DAMAGE_DONE_BY_ID.get(&id) {
+                self.critical_damage.add_to_additive((buff.value + buff.value_per_stack * *stacks as i32) as u16);
+            }
+            // Malacath's add to multiplicative
+        }
     }
 
     pub fn is_valid_source(id: &ID) -> bool {
@@ -30,12 +42,6 @@ impl CriticalDamage {
     }
 
     pub fn calculate(&mut self) -> u8 {
-        for (id, stacks) in &self.sources {
-            if let Some(buff) = CRITICAL_DAMAGE_DONE_BY_ID.get(&id) {
-                self.critical_damage.add_to_additive((buff.value + buff.value_per_stack * *stacks as i32) as u16);
-            }
-            // Malacath's add to multiplicative
-        }
         self.critical_damage.calculate()
     }
 

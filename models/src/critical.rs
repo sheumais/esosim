@@ -21,6 +21,11 @@ impl CriticalDamage {
     pub fn add_to_multiplicative(&mut self, value: f32) {
         self.multiplicative += value;
     }
+
+    pub fn reset(&mut self) {
+        self.additive = 0;
+        self.multiplicative = 0.0;
+    }
 }
 
 impl Default for CriticalDamage {

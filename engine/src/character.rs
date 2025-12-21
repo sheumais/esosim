@@ -1,0 +1,47 @@
+use esosim_models::player::{ActiveBar, GearPiece, GearSlot, Player as PlayerModel};
+
+use crate::{ID, STACKS, critical::{self, CriticalDamage}};
+
+pub struct Character {
+    player: PlayerModel,
+    critical_damage_done: CriticalDamage,
+}
+
+impl Character {
+    pub fn new() -> Self {
+        Self {
+            player: PlayerModel::new(),
+            critical_damage_done: CriticalDamage::new(),
+        }
+    }
+
+    pub fn add_buff(&mut self, id: ID, stacks: STACKS) {
+        self.player.add_buff(id, stacks);
+        if critical::CriticalDamage::is_valid_source(&id) {
+            self.critical_damage_done.add_source(id.clone(), Some(stacks));
+        }
+    }
+
+    pub fn remove_buff(&mut self, id: ID) {
+        self.player.remove_buff(&id);
+        if critical::CriticalDamage::is_valid_source(&id) {
+            self.critical_damage_done.remove_source(&id);
+        }
+    }
+
+    pub fn get_critical_damage_done(&mut self) -> u8 {
+        self.critical_damage_done.calculate()
+    }
+
+    pub fn swap_bars(&mut self, choice: Option<ActiveBar>) {
+        self.player.swap_bars(choice);
+    }
+
+    pub fn set_gear_piece(&mut self, slot: &GearSlot, gear: GearPiece) {
+        self.player.set_gear_piece(slot, gear);
+    }
+
+    pub fn set_skills_on_bar(&mut self, bar: ActiveBar, skills: [Option<u32>; 6]) {
+        self.player.set_skills(&bar, skills)
+    }
+}

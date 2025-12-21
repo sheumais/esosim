@@ -19,8 +19,3 @@ pub enum DamageTime {
     INSTANT,
     DOT,
 }
-
-pub enum DamageRelation {
-    PLAYER,
-    PET
-}

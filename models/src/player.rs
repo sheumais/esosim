@@ -52,6 +52,13 @@ impl Player {
         self.gear.set_gear_piece(slot, gear);
     }
 
+    pub fn set_skills(&mut self, bar: &ActiveBar, skills: [Option<u32>; 6]) {
+        match bar {
+            ActiveBar::Primary => self.primary_abilities = skills,
+            ActiveBar::Backup => self.backup_abilities = skills,
+        }
+    }
+
     pub fn get_buffs(&self) -> &HashMap<u32, u8> {
         &self.buffs
     }
