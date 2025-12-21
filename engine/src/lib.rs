@@ -1,5 +1,5 @@
 mod critical;
-mod character;
+pub mod character;
 
 type ID = u32;
 type STACKS = u8;
