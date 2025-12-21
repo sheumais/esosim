@@ -41,7 +41,11 @@ impl Character {
         self.player.set_gear_piece(slot, gear);
     }
 
-    pub fn set_skills_on_bar(&mut self, bar: ActiveBar, skills: [Option<u32>; 6]) {
+    pub fn set_skills_on_bar(&mut self, bar: ActiveBar, skills: Vec<u32>) {
         self.player.set_skills(&bar, skills)
+    }
+
+    pub fn get_bar_of_skill_id(&self, skill: &ID) -> Option<ActiveBar> {
+        self.player.get_bar_of_skill_id(skill)
     }
 }

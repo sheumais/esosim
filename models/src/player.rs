@@ -4,8 +4,8 @@ use esosim_data::item_type::{ITEM_TYPES, ItemQuality, ItemType};
 
 pub struct Player {
     gear: Loadout,
-    primary_abilities: [Option<u32>; 6],
-    backup_abilities: [Option<u32>; 6],
+    primary_abilities: Vec<u32>,
+    backup_abilities: Vec<u32>,
     active_bar: ActiveBar,
     buffs: HashMap<u32, u8>,
 }
@@ -14,8 +14,8 @@ impl Player {
     pub fn new() -> Self {
         Self {
             gear: Loadout::default(),
-            primary_abilities: [None; 6],
-            backup_abilities: [None; 6],
+            primary_abilities: Vec::new(),
+            backup_abilities: Vec::new(),
             active_bar: ActiveBar::Primary,
             buffs: HashMap::new(),
         }
@@ -37,7 +37,7 @@ impl Player {
             ActiveBar::Primary => &self.primary_abilities,
             ActiveBar::Backup => &self.backup_abilities,
         };
-        skills.iter().filter_map(|s| s.as_ref()).collect()
+        skills.iter().map(|f| f).collect()
     }
 
     pub fn get_active_gear(&self) -> Vec<&GearPiece> {
@@ -52,7 +52,7 @@ impl Player {
         self.gear.set_gear_piece(slot, gear);
     }
 
-    pub fn set_skills(&mut self, bar: &ActiveBar, skills: [Option<u32>; 6]) {
+    pub fn set_skills(&mut self, bar: &ActiveBar, skills: Vec<u32>) {
         match bar {
             ActiveBar::Primary => self.primary_abilities = skills,
             ActiveBar::Backup => self.backup_abilities = skills,
@@ -73,6 +73,17 @@ impl Player {
 
     pub fn modify_stacks(&mut self, id: u32, stacks: u8) {
         self.add_buff(id, stacks);
+    }
+
+    pub fn get_bar_of_skill_id(&self, skill: &u32) -> Option<ActiveBar> {
+        let in_primary = self.primary_abilities.contains(skill);
+        let in_backup = self.backup_abilities.contains(skill);
+
+        match (in_primary, in_backup) {
+            (true, false) => Some(ActiveBar::Primary),
+            (false, true) => Some(ActiveBar::Backup),
+            _ => None,
+        }
     }
 }
 
