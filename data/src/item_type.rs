@@ -71,6 +71,7 @@ pub fn calculate_item_type(str: &str) -> ItemType {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum ItemQuality {
     Normal,
     Fine,

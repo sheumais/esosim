@@ -2,7 +2,7 @@ use phf::{Map, phf_map};
 
 use crate::StatBuff as Buff;
 
-pub static CRITICAL_DAMAGE_BUFF_BY_ID: Map<u32, &'static Buff> = phf_map! {
+pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     13984 => &THE_SHADOW,
     44046 => &PIERCING_SPEAR,
     45060 => &HEMORRHAGE_PASSIVE,
@@ -12,6 +12,7 @@ pub static CRITICAL_DAMAGE_BUFF_BY_ID: Map<u32, &'static Buff> = phf_map! {
     45564 => &DEXTERITY,
     61746 => &FORCE_MINOR,
     61747 => &FORCE_MAJOR,
+    79113 => &ENERVATION_MINOR,
     86069 => &ADVANCED_SPECIES,
     154737 => &SUL_XANS_TORMENT,
     155150 => &HARPOONERS_WADING_KILT,
@@ -20,7 +21,7 @@ pub static CRITICAL_DAMAGE_BUFF_BY_ID: Map<u32, &'static Buff> = phf_map! {
     220315 => &MORA_SCRIBES_THESIS,
 };
 
-pub static CRITICAL_DAMAGE_DEBUFF_BY_ID: Map<u32, &'static Buff> = phf_map! {
+pub static CRITICAL_DAMAGE_TAKEN_BY_ID: Map<u32, &'static Buff> = phf_map! {
     142610 => &FLAME_WEAKNESS,
     142652 => &FROST_WEAKNESS,
     142653 => &SHOCK_WEAKNESS,
@@ -34,6 +35,9 @@ pub static FORCE_MINOR: Buff = Buff { id: FORCE_MINOR_ID, value: 10, value_per_s
 pub const FORCE_MAJOR_ID: u32 = 61747;
 pub static FORCE_MAJOR: Buff = Buff { id: FORCE_MAJOR_ID, value: 20, value_per_stack: 0};
 
+pub const ENERVATION_MINOR_ID: u32 = 79113;
+pub static ENERVATION_MINOR: Buff = Buff { id: ENERVATION_MINOR_ID, value: -5, value_per_stack: 0};
+
 pub const BRITTLE_MINOR_ID: u32 = 145975;
 pub static BRITTLE_MINOR: Buff = Buff { id: BRITTLE_MINOR_ID, value: 10, value_per_stack: 0};
 
@@ -41,7 +45,7 @@ pub const BRITTLE_MAJOR_ID: u32 = 145977;
 pub static BRITTLE_MAJOR: Buff = Buff { id: BRITTLE_MAJOR_ID, value: 20, value_per_stack: 0};
 
 pub const THE_SHADOW_ID: u32 = 13984;
-/// Each stack is an piece of CP160 Gold Divines gear, which rounds to an additional 1% crit damage per piece. For lower tier/level items, this relationship does not hold. See https://en.uesp.net/wiki/Online:The_Shadow_(Mundus_Stone)
+/// Each stack is a piece of CP160 Gold Divines gear, which rounds to an additional 1% crit damage per piece. This relationship does not hold for lower quality and level items. See https://en.uesp.net/wiki/Online:The_Shadow_(Mundus_Stone)
 pub static THE_SHADOW: Buff = Buff { id: THE_SHADOW_ID, value: 11, value_per_stack: 1};
 
 pub const FLAME_WEAKNESS_ID: u32 = 142610;
@@ -72,8 +76,8 @@ pub static HEMORRHAGE_PASSIVE: Buff = Buff { id: HEMORRHAGE_PASSIVE_ID, value: 1
 pub const PIERCING_SPEAR_ID: u32 = 44046;
 pub static PIERCING_SPEAR: Buff = Buff { id: PIERCING_SPEAR_ID, value: 10, value_per_stack: 0};
 
-pub const TWIN_BLADE_AND_BLUNT: u32 = 45482;
-pub static TWIN_BLADE_AND_BLUNT_AXE: Buff = Buff { id: TWIN_BLADE_AND_BLUNT, value: 0, value_per_stack: 6};
+pub const TWIN_BLADE_AND_BLUNT_ID: u32 = 45482;
+pub static TWIN_BLADE_AND_BLUNT_AXE: Buff = Buff { id: TWIN_BLADE_AND_BLUNT_ID, value: 0, value_per_stack: 6};
 
 pub const HEAVY_WEAPONS_ID: u32 = 45430;
 pub static HEAVY_WEAPONS: Buff = Buff { id: HEAVY_WEAPONS_ID, value: 12, value_per_stack: 0};

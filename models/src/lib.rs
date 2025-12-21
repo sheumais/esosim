@@ -5,6 +5,7 @@ pub mod damage_done;
 pub mod power;
 pub mod monster;
 pub mod damage;
+pub mod player;
 
 const LEVEL: u8 = 50;
 const EFFECTIVE_LEVEL: u8 = 66;
