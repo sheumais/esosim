@@ -41,7 +41,7 @@ impl CriticalDamage {
         CRITICAL_DAMAGE_DONE_BY_ID.get(id).is_some()
     }
 
-    pub fn calculate(&mut self) -> u8 {
+    pub fn calculate(&self) -> u8 {
         self.critical_damage.calculate()
     }
 
@@ -84,7 +84,7 @@ impl CriticalDamageTaken {
         CRITICAL_DAMAGE_TAKEN_BY_ID.get(id).is_some()
     }
 
-    pub fn calculate(&mut self) -> u8 {
+    pub fn calculate(&self) -> u8 {
         let mut value: u8 = 0;
         for (id, stacks) in &self.sources {
             if let Some(buff) = CRITICAL_DAMAGE_TAKEN_BY_ID.get(&id) {

@@ -29,7 +29,7 @@ impl Character {
         }
     }
 
-    pub fn get_critical_damage_done(&mut self) -> u8 {
+    pub fn get_critical_damage_done(&self) -> u8 {
         self.critical_damage_done.calculate()
     }
 
