@@ -97,7 +97,7 @@ pub struct Loadout {
 }
 
 impl Loadout {
-    fn default() -> Self {
+    pub fn default() -> Self {
         Loadout { 
             head: None,
             shoulders: None,
@@ -118,7 +118,7 @@ impl Loadout {
         }
     }
 
-    fn get_gear_piece(&self, slot: &GearSlot) -> Option<&GearPiece> {
+    pub fn get_gear_piece(&self, slot: &GearSlot) -> Option<&GearPiece> {
         let option = match slot {
             GearSlot::Head => &self.head,
             GearSlot::Shoulders => &self.shoulders,
@@ -140,7 +140,7 @@ impl Loadout {
         option.as_ref()
     }
 
-    fn set_gear_piece(&mut self, slot: &GearSlot, gear: GearPiece) {
+    pub fn set_gear_piece(&mut self, slot: &GearSlot, gear: GearPiece) {
         match slot {
             GearSlot::Head => self.head = Some(gear),
             GearSlot::Shoulders => self.shoulders = Some(gear),
@@ -161,7 +161,7 @@ impl Loadout {
         };
     }
 
-    fn get_active_gear(&self, active_bar: &ActiveBar) -> Vec<&GearPiece> {
+    pub fn get_active_gear(&self, active_bar: &ActiveBar) -> Vec<&GearPiece> {
         let slots: &[GearSlot] = match active_bar {
             ActiveBar::Primary => &[
                 GearSlot::Head,
@@ -200,7 +200,7 @@ impl Loadout {
             .collect()
     }
 
-    fn get_number_of_item_type(&self, item_type: &ItemType, active_bar: &ActiveBar) -> u8 {
+    pub fn get_number_of_item_type(&self, item_type: &ItemType, active_bar: &ActiveBar) -> u8 {
         self.get_active_gear(active_bar)
             .iter()
             .filter_map(|g| g.get_item_type())
