@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use crate::StatBuff as Buff;
+use crate::{StatBuff as Buff, major_minor::{BRITTLE_MAJOR_ID, BRITTLE_MINOR_ID, ENERVATION_MINOR_ID, FORCE_MAJOR_ID, FORCE_MINOR_ID}};
 
 pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     13984 => &THE_SHADOW,
@@ -16,7 +16,6 @@ pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     86069 => &ADVANCED_SPECIES,
     154737 => &SUL_XANS_TORMENT,
     155150 => &HARPOONERS_WADING_KILT,
-    193447 => &VELOTHI_UR_MAGES_AMULET,
     194875 => &FATED_FORTUNE,
     220015 => &LUCENT_ECHOES,
     220315 => &MORA_SCRIBES_THESIS,
@@ -30,23 +29,10 @@ pub static CRITICAL_DAMAGE_TAKEN_BY_ID: Map<u32, &'static Buff> = phf_map! {
     145977 => &BRITTLE_MAJOR,
 };
 
-pub const FORCE_MINOR_ID: u32 = 61746;
 pub static FORCE_MINOR: Buff = Buff { id: FORCE_MINOR_ID, value: 10, value_per_stack: 0};
-
-pub const VELOTHI_UR_MAGES_AMULET_ID: u32 = 193447;
-pub const VELOTHI_UR_MAGES_AMULET_ITEM_ID: u32 = 194512;
-pub static VELOTHI_UR_MAGES_AMULET: Buff = Buff { id: VELOTHI_UR_MAGES_AMULET_ID, value: 10, value_per_stack: 0};
-
-pub const FORCE_MAJOR_ID: u32 = 61747;
 pub static FORCE_MAJOR: Buff = Buff { id: FORCE_MAJOR_ID, value: 20, value_per_stack: 0};
-
-pub const ENERVATION_MINOR_ID: u32 = 79113;
 pub static ENERVATION_MINOR: Buff = Buff { id: ENERVATION_MINOR_ID, value: -5, value_per_stack: 0};
-
-pub const BRITTLE_MINOR_ID: u32 = 145975;
 pub static BRITTLE_MINOR: Buff = Buff { id: BRITTLE_MINOR_ID, value: 10, value_per_stack: 0};
-
-pub const BRITTLE_MAJOR_ID: u32 = 145977;
 pub static BRITTLE_MAJOR: Buff = Buff { id: BRITTLE_MAJOR_ID, value: 20, value_per_stack: 0};
 
 pub const THE_SHADOW_ID: u32 = 13984;
@@ -85,7 +71,7 @@ pub const TWIN_BLADE_AND_BLUNT_ID: u32 = 45482;
 pub static TWIN_BLADE_AND_BLUNT_AXE: Buff = Buff { id: TWIN_BLADE_AND_BLUNT_ID, value: 0, value_per_stack: 6};
 
 pub const HEAVY_WEAPONS_ID: u32 = 45430;
-pub static HEAVY_WEAPONS: Buff = Buff { id: HEAVY_WEAPONS_ID, value: 12, value_per_stack: 0};
+pub static HEAVY_WEAPONS: Buff = Buff { id: HEAVY_WEAPONS_ID, value: 0, value_per_stack: 12};
 
 pub const ADVANCED_SPECIES_ID: u32 = 86069;
 pub static ADVANCED_SPECIES: Buff = Buff { id: ADVANCED_SPECIES_ID, value: 0, value_per_stack: 5};

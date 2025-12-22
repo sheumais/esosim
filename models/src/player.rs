@@ -44,6 +44,10 @@ impl Player {
         self.gear.get_active_gear(&self.active_bar)
     }
 
+    pub fn get_active_bar(&self) -> &ActiveBar {
+        &self.active_bar
+    }
+
     pub fn is_specific_item_equipped(&self, item_id: u32) -> bool {
         for item in self.get_active_gear() {
             if item.item_id == item_id {return true}
@@ -53,6 +57,10 @@ impl Player {
 
     pub fn get_number_of_equipped_item_type(&self, item_type: &ItemType) -> u8 {
         self.gear.get_number_of_item_type(item_type, &self.active_bar)
+    }
+
+    pub fn get_number_of_equipped_trait(&self, item_trait: &GearTrait) -> u8 {
+        self.gear.get_number_of_trait(item_trait, &self.active_bar)
     }
 
     pub fn set_gear_piece(&mut self, slot: &GearSlot, gear: GearPiece) {
@@ -225,6 +233,14 @@ impl Loadout {
             .filter(|i| *i == item_type)
             .count() as u8
     }
+
+    pub fn get_number_of_trait(&self, item_trait: &GearTrait, active_bar: &ActiveBar) -> u8 {
+        self.get_active_gear(active_bar)
+            .iter()
+            .filter_map(|g| g.get_item_trait())
+            .filter(|i| *i == item_trait)
+            .count() as u8
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -330,6 +346,10 @@ pub struct GearPiece {
 impl GearPiece {
     pub fn get_item_type(&self) -> Option<&ItemType> {
         ITEM_TYPES.get(&self.item_id)
+    }
+
+    pub fn get_item_trait(&self) -> Option<&GearTrait> {
+        self.gear_trait.as_ref()
     }
 }
 
