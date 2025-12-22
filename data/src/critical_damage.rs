@@ -16,6 +16,7 @@ pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     86069 => &ADVANCED_SPECIES,
     154737 => &SUL_XANS_TORMENT,
     155150 => &HARPOONERS_WADING_KILT,
+    193447 => &VELOTHI_UR_MAGES_AMULET,
     194875 => &FATED_FORTUNE,
     220015 => &LUCENT_ECHOES,
     220315 => &MORA_SCRIBES_THESIS,
@@ -31,6 +32,10 @@ pub static CRITICAL_DAMAGE_TAKEN_BY_ID: Map<u32, &'static Buff> = phf_map! {
 
 pub const FORCE_MINOR_ID: u32 = 61746;
 pub static FORCE_MINOR: Buff = Buff { id: FORCE_MINOR_ID, value: 10, value_per_stack: 0};
+
+pub const VELOTHI_UR_MAGES_AMULET_ID: u32 = 193447;
+pub const VELOTHI_UR_MAGES_AMULET_ITEM_ID: u32 = 194512;
+pub static VELOTHI_UR_MAGES_AMULET: Buff = Buff { id: VELOTHI_UR_MAGES_AMULET_ID, value: 10, value_per_stack: 0};
 
 pub const FORCE_MAJOR_ID: u32 = 61747;
 pub static FORCE_MAJOR: Buff = Buff { id: FORCE_MAJOR_ID, value: 20, value_per_stack: 0};

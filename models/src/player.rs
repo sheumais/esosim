@@ -44,6 +44,13 @@ impl Player {
         self.gear.get_active_gear(&self.active_bar)
     }
 
+    pub fn is_specific_item_equipped(&self, item_id: u32) -> bool {
+        for item in self.get_active_gear() {
+            if item.item_id == item_id {return true}
+        }
+        false
+    }
+
     pub fn get_number_of_equipped_item_type(&self, item_type: &ItemType) -> u8 {
         self.gear.get_number_of_item_type(item_type, &self.active_bar)
     }

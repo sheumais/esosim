@@ -17,19 +17,15 @@ impl Character {
 
     pub fn add_buff(&mut self, id: ID, stacks: STACKS) {
         self.player.add_buff(id, stacks);
-        if critical::CriticalDamage::is_valid_source(&id) {
-            self.critical_damage_done.add_source(id.clone(), Some(stacks));
-        }
+        self.critical_damage_done.update_from_player(&self.player);
     }
 
     pub fn remove_buff(&mut self, id: ID) {
         self.player.remove_buff(&id);
-        if critical::CriticalDamage::is_valid_source(&id) {
-            self.critical_damage_done.remove_source(&id);
-        }
+        self.critical_damage_done.update_from_player(&self.player);
     }
 
-    pub fn get_critical_damage_done(&self) -> u8 {
+    pub fn get_critical_damage_done(&mut self) -> u8 {
         self.critical_damage_done.calculate()
     }
 

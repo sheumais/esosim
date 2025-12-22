@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use esosim_data::{critical_damage::{CRITICAL_DAMAGE_DONE_BY_ID, CRITICAL_DAMAGE_TAKEN_BY_ID, DEXTERITY_ID, HEAVY_WEAPONS_ID, THE_SHADOW_ID, TWIN_BLADE_AND_BLUNT_ID}, item_type::ItemType};
+use esosim_data::{critical_damage::{CRITICAL_DAMAGE_DONE_BY_ID, CRITICAL_DAMAGE_TAKEN_BY_ID, DEXTERITY_ID, FORCE_MINOR_ID, HEAVY_WEAPONS_ID, THE_SHADOW_ID, TWIN_BLADE_AND_BLUNT_ID, VELOTHI_UR_MAGES_AMULET_ID, VELOTHI_UR_MAGES_AMULET_ITEM_ID}, item_type::ItemType};
 use esosim_models::{critical::CriticalDamage as CriticalDamageModel, player::Player};
 
 use crate::{ID, STACKS};
@@ -29,7 +29,14 @@ impl CriticalDamage {
 
     fn refresh(&mut self) {
         self.critical_damage.reset();
+        let mut has_seen_minor_force = false;
         for (id, stacks) in &self.sources {
+            if matches!(id, &FORCE_MINOR_ID | &VELOTHI_UR_MAGES_AMULET_ID) {
+                match has_seen_minor_force {
+                    true => continue,
+                    false => has_seen_minor_force = true,
+                }
+            }
             if let Some(buff) = CRITICAL_DAMAGE_DONE_BY_ID.get(&id) {
                 self.critical_damage.add_to_additive((buff.value + buff.value_per_stack * *stacks as i32) as u16);
             }
@@ -60,10 +67,12 @@ impl CriticalDamage {
         let medium = player.get_number_of_equipped_item_type(&ItemType::Medium);
         let axes = player.get_number_of_equipped_item_type(&ItemType::Axe);
         let two_handed_axe = player.get_number_of_equipped_item_type(&ItemType::TwoHandedAxe);
+        let is_velothi_equipped = player.is_specific_item_equipped(VELOTHI_UR_MAGES_AMULET_ITEM_ID);
 
         self.add_source(TWIN_BLADE_AND_BLUNT_ID, Some(axes));
         self.add_source(HEAVY_WEAPONS_ID, Some(two_handed_axe));
         self.add_source(DEXTERITY_ID, Some(medium));
+        if is_velothi_equipped {self.add_source(VELOTHI_UR_MAGES_AMULET_ID, None);}
     }
 }
 
