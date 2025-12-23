@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use esosim_data::item_type::{ITEM_TYPES, ItemQuality, ItemType};
 
 pub struct Player {
+    id: u32,
     gear: Loadout,
     primary_abilities: Vec<u32>,
     backup_abilities: Vec<u32>,
@@ -11,8 +12,9 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Self {
+    pub fn new(id: u32) -> Self {
         Self {
+            id,
             gear: Loadout::default(),
             primary_abilities: Vec::new(),
             backup_abilities: Vec::new(),
@@ -48,9 +50,9 @@ impl Player {
         &self.active_bar
     }
 
-    pub fn is_specific_item_equipped(&self, item_id: u32) -> bool {
+    pub fn is_specific_item_equipped(&self, item_id: &u32) -> bool {
         for item in self.get_active_gear() {
-            if item.item_id == item_id {return true}
+            if &item.item_id == item_id {return true}
         }
         false
     }
@@ -61,6 +63,10 @@ impl Player {
 
     pub fn get_number_of_equipped_trait(&self, item_trait: &GearTrait) -> u8 {
         self.gear.get_number_of_trait(item_trait, &self.active_bar)
+    }
+
+    pub fn get_number_of_equipped_set(&self, set_id: &u16) -> u8 {
+        self.gear.get_number_of_set(set_id, &self.active_bar)
     }
 
     pub fn set_gear_piece(&mut self, slot: &GearSlot, gear: GearPiece) {
@@ -99,6 +105,10 @@ impl Player {
             (false, true) => Some(ActiveBar::Backup),
             _ => None,
         }
+    }
+
+    pub fn id(&self) -> &u32 {
+        &self.id
     }
 }
 
@@ -239,6 +249,14 @@ impl Loadout {
             .iter()
             .filter_map(|g| g.get_item_trait())
             .filter(|i| *i == item_trait)
+            .count() as u8
+    }
+
+    pub fn get_number_of_set(&self, set_id: &u16, active_bar: &ActiveBar) -> u8 {
+        self.get_active_gear(active_bar)
+            .iter()
+            .filter_map(|g| g.set_id)
+            .filter(|i| i == set_id)
             .count() as u8
     }
 }
