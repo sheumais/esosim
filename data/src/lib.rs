@@ -2,6 +2,9 @@ pub mod item_type;
 pub mod power;
 pub mod critical_damage;
 pub mod major_minor;
+pub mod skill;
+pub mod traits;
+pub mod armour;
 
 #[derive(Eq, PartialEq, Hash, Debug)]
 pub struct StatBuff {

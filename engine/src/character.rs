@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use esosim_models::player::{ActiveBar, GearPiece, GearSlot, Player as PlayerModel};
+use esosim_data::item_type::GearSlot;
+use esosim_models::{player::{ActiveBar, GearPiece, Player as PlayerModel}};
 
-use crate::{ID, STACKS, critical::CriticalDamage, event::{Context, Event, SetInstance}, sets::SET_REGISTRY};
+use crate::{ID, STACKS, critical::CriticalDamage, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
 
 pub struct CharacterContext<'a> {
     player: &'a mut PlayerModel,
@@ -12,6 +13,7 @@ pub struct Character {
     player: PlayerModel,
     active_sets: HashMap<u16, Box<dyn SetInstance>>,
     critical_damage_done: CriticalDamage,
+    power: Power,
 }
 
 impl Character {
@@ -20,6 +22,7 @@ impl Character {
             player: PlayerModel::new(id),
             active_sets: HashMap::new(),
             critical_damage_done: CriticalDamage::new(),
+            power: Power::new(),
         }
     }
 
@@ -47,6 +50,10 @@ impl Character {
 
     pub fn get_critical_damage_done(&mut self) -> u8 {
         self.critical_damage_done.calculate()
+    }
+
+    pub fn get_power(&mut self) -> u32 {
+        self.power.calculate()
     }
 
     pub fn swap_bars(&mut self, choice: Option<ActiveBar>) {
@@ -110,6 +117,7 @@ impl Character {
 
     fn recompute_all_supplemental_state(&mut self) {
         self.critical_damage_done.update_from_player(&self.player);
+        self.power.update_from_player(&self.player);
     }
 }
 
@@ -135,11 +143,11 @@ impl<'a> Context for CharacterContext<'a> {
 #[cfg(test)]
 mod character_integration_test {
     use super::*;
-    use esosim_models::player::{GearPiece, GearSlot, GearTrait};
-    use esosim_data::{critical_damage::*, item_type::ItemQuality, major_minor::{FORCE_MAJOR_ID, FORCE_MINOR_ID}};
+    use esosim_models::player::{GearEnchant, GearPiece};
+    use esosim_data::{critical_damage::*, item_type::{EnchantType, GearTrait, ItemQuality}, major_minor::{COURAGE_MAJOR_ID, COURAGE_MINOR_ID, FORCE_MAJOR_ID, FORCE_MINOR_ID, SORCERY_MAJOR_ID}, skill::HARNESSED_QUINTESSENCE_ID};
 
     #[test]
-    fn full_character_with_many_buffs_and_items_calculates_critical_damage() {
+    fn critical_damage() {
         let mut character = Character::new(0);
 
         character.add_buff(FORCE_MINOR_ID, 1);
@@ -154,7 +162,7 @@ mod character_integration_test {
         GearPiece {
                 item_id: 172034,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Nirnhoned),
+                gear_trait: Some(GearTrait::WeaponNirnhoned),
                 quality: ItemQuality::Legendary,
                 set_id: None,
                 enchant: None,
@@ -165,7 +173,7 @@ mod character_integration_test {
         GearPiece {
                 item_id: 172034,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Precise),
+                gear_trait: Some(GearTrait::WeaponPrecise),
                 quality: ItemQuality::Legendary,
                 set_id: None,
                 enchant: None,
@@ -177,7 +185,7 @@ mod character_integration_test {
             GearPiece {
                 item_id: 194512,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Bloodthirsty),
+                gear_trait: Some(GearTrait::JewelryBloodthirsty),
                 quality: ItemQuality::Legendary,
                 set_id: Some(694),
                 enchant: None,
@@ -195,5 +203,70 @@ mod character_integration_test {
         let crit_damage = character.get_critical_damage_done();
 
         assert!(crit_damage == 94, "crit damage incorrect (is {}%)", crit_damage);
+    }
+
+    #[test]
+    fn power() {
+        let mut character = Character::new(0);
+
+        // let mut power = Power::new();
+        // power.additive = ((0.1765 + 0.06) as f32 * 1335.0).round() as u32 + 1535;
+        // power.multiplicative = 0.03; // one fighters guild skill
+        // assert_eq!(power.calculate(), 2937);
+        // power.multiplicative += 0.12; // 6 medium pieces
+        // assert_eq!(power.calculate(), 3279);
+        // power.additive += 174 * 3; // jewellery with weapon damage enchants
+        // power.additive += 129 * 2; // 2x set lines
+        // assert_eq!(power.calculate(), 4176);
+        // power.multiplicative += 0.2; // major brutality
+        // assert_eq!(power.calculate(), 4902);
+
+        character.add_buff(COURAGE_MINOR_ID, 1);
+        character.add_buff(COURAGE_MAJOR_ID, 1);
+        character.add_buff(SORCERY_MAJOR_ID, 1);
+        character.add_buff(HARNESSED_QUINTESSENCE_ID, 1);
+
+        character.set_gear_piece(
+        &GearSlot::MainHand,
+        GearPiece {
+                item_id: 172034,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::WeaponNirnhoned),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            },
+        );
+        character.set_gear_piece(
+        &GearSlot::OffHand,
+        GearPiece {
+                item_id: 172034,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::WeaponPrecise),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            },
+        );
+
+        character.set_gear_piece(
+            &GearSlot::Necklace,
+            GearPiece {
+                item_id: 194512,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::JewelryBloodthirsty),
+                quality: ItemQuality::Legendary,
+                set_id: Some(694),
+                enchant: Some(GearEnchant {
+                    glyph: EnchantType::IncreasePhysicalDamage,
+                    effective_level: 66,
+                    quality: ItemQuality::Legendary,
+                }),
+            },
+        );
+
+        let power = character.get_power();
+
+        assert!(power == 4307, "power incorrect (is {})", power);
     }
 }

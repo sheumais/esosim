@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use esosim_data::item_type::{ITEM_TYPES, ItemQuality, ItemType};
+use esosim_data::{armour::armour_from_armour_piece, item_type::{EnchantType, GearSlot, GearTrait, ITEM_TYPES, ItemQuality, ItemType, weapon_trait_doubles, is_two_handed_weapon, is_weapon}, power::{OFFHAND_MULTIPLIER, power_from_weapon_type}, skill::{SkillLine, ability_id_to_skill_line}, traits::*};
 
 pub struct Player {
     id: u32,
@@ -109,6 +109,22 @@ impl Player {
 
     pub fn id(&self) -> &u32 {
         &self.id
+    }
+
+    pub fn get_gear_piece(&self, slot: &GearSlot) -> Option<&GearPiece> {
+        self.gear.get_gear_piece(slot)
+    }
+
+    pub fn get_number_of_active_skills_from_skill_line(&self, skill_line: &SkillLine) -> u8 {
+        self.get_skills_on_current_bar()
+            .iter()
+            .filter_map(|s| ability_id_to_skill_line(s))
+            .filter(|a| a == skill_line)
+            .count() as u8
+    }
+
+    pub fn has_buff(&self, ability_id: &u32) -> bool {
+        self.buffs.get(ability_id).is_some()
     }
 }
 
@@ -262,89 +278,6 @@ impl Loadout {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum GearSlot {
-    Head,
-    Shoulders,
-    Chest,
-    Hands,
-    Waist,
-    Legs,
-    Feet,
-    Necklace,
-    Ring1,
-    Ring2,
-    MainHand,
-    MainHandBackup,
-    Poison,
-    OffHand,
-    OffHandBackup,
-    BackupPoison,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum GearTrait {
-    Powered,
-    Charged,
-    Precise,
-    Infused,
-    Defending,
-    Training,
-    Sharpened,
-    Decisive,
-    Sturdy,
-    Impenetrable,
-    Reinforced,
-    WellFitted,
-    Invigorating,
-    Divines,
-    Nirnhoned,
-    Healthy,
-    Arcane,
-    Robust,
-    Bloodthirsty,
-    Harmony,
-    Protective,
-    Swift,
-    Triune,
-    Intricate,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum EnchantType {
-    AbsorbHealth,
-    AbsorbMagicka,
-    AbsorbStamina,
-    BefouledWeapon,
-    Beserker,
-    ChargedWeapon,
-    DamageShield,
-    DiseaseResistance,
-    FieryWeapon,
-    FrozenWeapon,
-    Health,
-    HealthRegen,
-    IncreaseBashDamage,
-    IncreasePhysicalDamage,
-    IncreasePotionEffectiveness,
-    IncreaseSpellDamage,
-    Magicka,
-    MagickaRegen,
-    OblivionDamage,
-    PoisonedWeapon,
-    PrismaticDefense,
-    PrismaticOnslaught,
-    PrismaticRecovery,
-    ReduceArmor,
-    ReduceBlockAndBash,
-    ReduceFeatCost,
-    ReducePotionCooldown,
-    ReducePower,
-    ReduceSpellCost,
-    Stamina,
-    StaminaRegen,
-}
-
-#[derive(Debug, PartialEq)]
 pub struct GearEnchant {
     pub glyph: EnchantType,
     pub effective_level: u8,
@@ -369,6 +302,155 @@ impl GearPiece {
     pub fn get_item_trait(&self) -> Option<&GearTrait> {
         self.gear_trait.as_ref()
     }
+
+    pub fn get_trait_value(&self) -> Option<f32> {
+        let trait_opt = &self.gear_trait;
+        let item_type = self.get_item_type()?; // todo fix jewellery
+        let quality = &self.quality;
+
+        let trait_ = if let Some(trait_) = trait_opt {
+            trait_
+        } else {
+            return None;
+        };
+
+        let mut value = match trait_ {
+            GearTrait::WeaponPowered => get_weapon_powered_value(quality),
+            GearTrait::WeaponCharged => get_weapon_charged_value(quality),
+            GearTrait::WeaponPrecise => get_weapon_precise_value(quality),
+            GearTrait::WeaponInfused => get_weapon_infused_value(quality),
+            GearTrait::WeaponDefending => get_weapon_defending_value(quality),
+            GearTrait::WeaponTraining => get_weapon_training_value(quality),
+            GearTrait::WeaponSharpened => get_weapon_sharpened_value(quality),
+            GearTrait::WeaponDecisive => get_weapon_decisive_value(quality),
+            GearTrait::WeaponNirnhoned => get_weapon_nirnhoned_value(quality),
+
+            GearTrait::ArmorSturdy => get_armor_sturdy_value(quality),
+            GearTrait::ArmorImpenetrable => get_armor_impenetrable_value(quality),
+            GearTrait::ArmorReinforced => get_armor_reinforced_value(quality),
+            GearTrait::ArmorWellFitted => get_armor_well_fitted_value(quality),
+            GearTrait::ArmorTraining => get_armor_training_value(quality),
+            GearTrait::ArmorInfused => get_armor_infused_value(quality),
+            GearTrait::ArmorInvigorating => get_armor_invigorating_value(quality),
+            GearTrait::ArmorDivines => get_armor_divines_value(quality),
+            GearTrait::ArmorNirnhoned => get_armor_nirnhoned_value(quality),
+
+            GearTrait::JewelryHealthy => get_jewelry_healthy_value(quality),
+            GearTrait::JewelryArcane => get_jewelry_arcane_value(quality),
+            GearTrait::JewelryRobust => get_jewelry_robust_value(quality),
+            GearTrait::JewelryBloodthirsty => get_jewelry_bloodthirsty_value(quality),
+            GearTrait::JewelryHarmony => get_jewelry_harmony_value(quality),
+            GearTrait::JewelryInfused => get_jewelry_infused_value(quality),
+            GearTrait::JewelryProtective => get_jewelry_protective_value(quality),
+            GearTrait::JewelrySwift => get_jewelry_swift_value(quality),
+
+            GearTrait::JewelryTriune => return None,
+
+            _ => return None,
+        };
+
+        if is_weapon(item_type)
+            && is_two_handed_weapon(item_type)
+            && weapon_trait_doubles(&trait_)
+        {
+            value *= 2.0;
+        }
+
+        Some(value)
+    }
+
+    pub fn get_weapon_power(&self, gear_slot: &GearSlot) -> u32 {
+        let base_power = self
+            .get_item_type()
+            .and_then(|item_type| power_from_weapon_type(item_type, &self.quality))
+            .unwrap_or(0) as f32;
+
+        let trait_multiplier = match self.gear_trait {
+            Some(GearTrait::WeaponNirnhoned) => get_weapon_nirnhoned_value(&self.quality),
+            _ => 1.0,
+        };
+
+        let multiplier = match gear_slot {
+            GearSlot::OffHand | GearSlot::OffHandBackup => OFFHAND_MULTIPLIER,
+            _ => 1.0
+        };
+
+        (base_power * trait_multiplier * multiplier) as u32
+    }
+
+    pub fn get_armour_value(&self, gear_slot: &GearSlot) -> u32 {
+        let armour_value = if let Some(item_type) = self.get_item_type() {
+            armour_from_armour_piece(item_type, gear_slot, &self.quality).unwrap_or(0).into()
+        } else {
+            0
+        };
+        let new_armour_value = if let Some(trait_) = &self.gear_trait {
+            match trait_ {
+                GearTrait::ArmorReinforced => (armour_value as f32 * get_armor_reinforced_value(&self.quality)) as u32,
+                GearTrait::ArmorNirnhoned => (armour_value as f32 + get_armor_nirnhoned_value(&self.quality)) as u32,
+                _ => armour_value,
+            }
+        } else {
+            armour_value
+        };
+        return new_armour_value
+    }
+}
+
+pub fn get_trait_value_for_item(gear: &GearPiece) -> Option<f32> {
+    let trait_opt = gear.get_item_trait();
+    let item_type = gear.get_item_type()?;
+    let quality = &gear.quality;
+
+    let trait_ = if let Some(trait_) = trait_opt {
+        trait_
+    } else {
+        return None;
+    };
+
+    let mut value = match trait_ {
+        GearTrait::WeaponPowered => get_weapon_powered_value(quality),
+        GearTrait::WeaponCharged => get_weapon_charged_value(quality),
+        GearTrait::WeaponPrecise => get_weapon_precise_value(quality),
+        GearTrait::WeaponInfused => get_weapon_infused_value(quality),
+        GearTrait::WeaponDefending => get_weapon_defending_value(quality),
+        GearTrait::WeaponTraining => get_weapon_training_value(quality),
+        GearTrait::WeaponSharpened => get_weapon_sharpened_value(quality),
+        GearTrait::WeaponDecisive => get_weapon_decisive_value(quality),
+        GearTrait::WeaponNirnhoned => get_weapon_nirnhoned_value(quality),
+
+        GearTrait::ArmorSturdy => get_armor_sturdy_value(quality),
+        GearTrait::ArmorImpenetrable => get_armor_impenetrable_value(quality),
+        GearTrait::ArmorReinforced => get_armor_reinforced_value(quality),
+        GearTrait::ArmorWellFitted => get_armor_well_fitted_value(quality),
+        GearTrait::ArmorTraining => get_armor_training_value(quality),
+        GearTrait::ArmorInfused => get_armor_infused_value(quality),
+        GearTrait::ArmorInvigorating => get_armor_invigorating_value(quality),
+        GearTrait::ArmorDivines => get_armor_divines_value(quality),
+        GearTrait::ArmorNirnhoned => get_armor_nirnhoned_value(quality),
+
+        GearTrait::JewelryHealthy => get_jewelry_healthy_value(quality),
+        GearTrait::JewelryArcane => get_jewelry_arcane_value(quality),
+        GearTrait::JewelryRobust => get_jewelry_robust_value(quality),
+        GearTrait::JewelryBloodthirsty => get_jewelry_bloodthirsty_value(quality),
+        GearTrait::JewelryHarmony => get_jewelry_harmony_value(quality),
+        GearTrait::JewelryInfused => get_jewelry_infused_value(quality),
+        GearTrait::JewelryProtective => get_jewelry_protective_value(quality),
+        GearTrait::JewelrySwift => get_jewelry_swift_value(quality),
+
+        GearTrait::JewelryTriune => return None,
+
+        _ => return None,
+    };
+
+    if is_weapon(item_type)
+        && is_two_handed_weapon(item_type)
+        && weapon_trait_doubles(&trait_)
+    {
+        value *= 2.0;
+    }
+
+    Some(value)
 }
 
 #[derive(Debug, PartialEq)]

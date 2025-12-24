@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use esosim_data::{critical_damage::*, item_type::ItemType};
-use esosim_models::{critical::CriticalDamage as CriticalDamageModel, player::{GearTrait, Player}};
+use esosim_data::{critical_damage::*, item_type::{GearTrait, ItemType}};
+use esosim_models::{critical::CriticalDamage as CriticalDamageModel, player::Player};
 
 use crate::{ID, STACKS};
 
@@ -56,14 +56,14 @@ impl CriticalDamage {
     pub fn update_from_player(&mut self, player: &Player) {
         self.critical_damage.reset();
         self.sources.clear();
-        let divines = player.get_number_of_equipped_trait(&GearTrait::Divines);
-        for buff in player.get_buffs().iter() {
-            if Self::is_valid_source(buff.0) {
-                match buff.0 {
+        let divines = player.get_number_of_equipped_trait(&GearTrait::ArmorDivines);
+        for (id, stacks) in player.get_buffs().iter() {
+            if Self::is_valid_source(id) {
+                match id {
                     &THE_SHADOW_ID => {
-                        self.add_source_without_refresh(*buff.0, Some(divines)) // assumes cp160 gold gear
+                        self.add_source_without_refresh(*id, Some(divines)) // assumes cp160 gold gear
                     },
-                    _ => self.add_source_without_refresh(*buff.0, Some(*buff.1)),
+                    _ => self.add_source_without_refresh(*id, Some(*stacks)),
                 }
             }
         }
@@ -83,8 +83,8 @@ impl CriticalDamage {
 mod tests {
     use super::*;
     use crate::{character::Character, critical::{CriticalDamage}};
-    use esosim_models::player::{GearPiece, GearSlot, GearTrait};
-    use esosim_data::{item_type::ItemQuality, major_minor::{BRITTLE_MAJOR_ID, BRITTLE_MINOR_ID, FORCE_MINOR_ID}};
+    use esosim_models::player::GearPiece;
+    use esosim_data::{item_type::{GearSlot, ItemQuality}, major_minor::{BRITTLE_MAJOR_ID, BRITTLE_MINOR_ID, FORCE_MINOR_ID}};
 
     #[test]
     fn critical_damage_done_ids_are_registered() {
@@ -129,7 +129,7 @@ mod tests {
         GearPiece {
                 item_id: 172034,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Nirnhoned),
+                gear_trait: Some(GearTrait::WeaponNirnhoned),
                 quality: ItemQuality::Legendary,
                 set_id: None,
                 enchant: None,
@@ -140,7 +140,7 @@ mod tests {
         GearPiece {
                 item_id: 172034,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Precise),
+                gear_trait: Some(GearTrait::WeaponPrecise),
                 quality: ItemQuality::Legendary,
                 set_id: None,
                 enchant: None,
@@ -160,7 +160,7 @@ mod tests {
         GearPiece {
                 item_id: 131073,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Precise),
+                gear_trait: Some(GearTrait::WeaponPrecise),
                 quality: ItemQuality::Legendary,
                 set_id: None,
                 enchant: None,
@@ -180,7 +180,7 @@ mod tests {
             GearPiece {
                 item_id: 194512,
                 effective_level: 66,
-                gear_trait: Some(GearTrait::Bloodthirsty),
+                gear_trait: Some(GearTrait::JewelryBloodthirsty),
                 quality: ItemQuality::Legendary,
                 set_id: Some(694),
                 enchant: None,

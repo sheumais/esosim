@@ -18,7 +18,10 @@ pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     155150 => &HARPOONERS_WADING_KILT,
     194875 => &FATED_FORTUNE,
     220015 => &LUCENT_ECHOES,
-    220315 => &MORA_SCRIBES_THESIS,
+    220315 => &MORA_SCRIBES_THESIS, // todo
+    // order's wrath // todo
+    // true-sworn fury // maybe?
+    // senches bite // probably not
 };
 
 pub static CRITICAL_DAMAGE_TAKEN_BY_ID: Map<u32, &'static Buff> = phf_map! {

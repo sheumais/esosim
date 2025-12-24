@@ -71,6 +71,42 @@ pub fn calculate_item_type(str: &str) -> ItemType {
     }
 }
 
+pub fn is_weapon(item: &ItemType) -> bool {
+    matches!(
+        item,
+        ItemType::Axe
+            | ItemType::Dagger
+            | ItemType::Mace
+            | ItemType::Sword
+            | ItemType::TwoHandedAxe
+            | ItemType::TwoHandedMace
+            | ItemType::TwoHandedSword
+            | ItemType::FrostStaff
+            | ItemType::FireStaff
+            | ItemType::LightningStaff
+            | ItemType::HealingStaff
+            | ItemType::Bow
+    )
+}
+
+pub fn is_two_handed_weapon(item: &ItemType) -> bool {
+    matches!(
+        item,
+        ItemType::TwoHandedAxe
+            | ItemType::TwoHandedMace
+            | ItemType::TwoHandedSword
+            | ItemType::Bow
+            | ItemType::FrostStaff
+            | ItemType::FireStaff
+            | ItemType::LightningStaff
+            | ItemType::HealingStaff
+    )
+}
+
+pub fn is_armour(item: &ItemType) -> bool {
+    matches!(item, ItemType::Light | ItemType::Medium | ItemType::Heavy | ItemType::Shield)
+}
+
 #[derive(Debug, PartialEq)]
 pub enum ItemQuality {
     Normal,
@@ -78,4 +114,111 @@ pub enum ItemQuality {
     Superior,
     Epic,
     Legendary,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum GearSlot {
+    Head,
+    Shoulders,
+    Chest,
+    Hands,
+    Waist,
+    Legs,
+    Feet,
+    Necklace,
+    Ring1,
+    Ring2,
+    MainHand,
+    MainHandBackup,
+    Poison,
+    OffHand,
+    OffHandBackup,
+    BackupPoison,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum GearTrait {
+    JewelryBloodthirsty,
+    JewelryHarmony,
+    JewelryProtective,
+    JewelrySwift,
+    JewelryTriune,
+    JewelryInfused,
+    JewelryArcane,
+    JewelryRobust,
+    JewelryHealthy,
+    JewelryIntricate,
+    JewelryOrnate,
+
+    ArmorSturdy,
+    ArmorImpenetrable,
+    ArmorReinforced,
+    ArmorWellFitted,
+    ArmorDivines,
+    ArmorNirnhoned,
+    ArmorInfused,
+    ArmorTraining,
+    ArmorInvigorating,
+    ArmorIntricate,
+    ArmorOrnate,
+
+    WeaponInfused,
+    WeaponNirnhoned,
+    WeaponCharged,
+    WeaponDecisive,
+    WeaponDefending,
+    WeaponPowered,
+    WeaponPrecise,
+    WeaponSharpened,
+    WeaponTraining,
+    WeaponIntricate,
+    WeaponOrnate,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum EnchantType {
+    AbsorbHealth,
+    AbsorbMagicka,
+    AbsorbStamina,
+    BefouledWeapon,
+    Beserker,
+    ChargedWeapon,
+    DamageShield,
+    DiseaseResistance,
+    FieryWeapon,
+    FrozenWeapon,
+    Health,
+    HealthRegen,
+    IncreaseBashDamage,
+    IncreasePhysicalDamage,
+    IncreasePotionEffectiveness,
+    IncreaseSpellDamage,
+    Magicka,
+    MagickaRegen,
+    OblivionDamage,
+    PoisonedWeapon,
+    PrismaticDefense,
+    PrismaticOnslaught,
+    PrismaticRecovery,
+    ReduceArmor,
+    ReduceBlockAndBash,
+    ReduceFeatCost,
+    ReducePotionCooldown,
+    ReducePower,
+    ReduceSpellCost,
+    Stamina,
+    StaminaRegen,
+}
+
+pub fn weapon_trait_doubles(trait_: &GearTrait) -> bool {
+    matches!(
+        trait_,
+        GearTrait::WeaponPowered
+            | GearTrait::WeaponCharged
+            | GearTrait::WeaponPrecise
+            | GearTrait::WeaponDefending
+            | GearTrait::WeaponTraining
+            | GearTrait::WeaponSharpened
+            | GearTrait::WeaponDecisive
+    )
 }
