@@ -42,14 +42,14 @@ pub static PEARLESCENT_WARD: Buff = Buff { id: 172621, value: 180, value_per_sta
 // pub static GLYPHIC: Buff = Buff {}; // scales in proportion to health, todo
 pub static SEETHING_FURY: Buff = Buff { id: 122729, value: 0, value_per_stack: 100};
 // pub static CLIFF_RACER: Buff = Buff { id: , value: 100, value_per_stack: 0};
+pub static EXPERT_MAGE: Buff = Buff { id: EXPERT_MAGE_ID, value: 0, value_per_stack: 108};
+pub static HARNESSED_QUINTESSENCE: Buff = Buff { id: HARNESSED_QUINTESSENCE_ID, value: 284, value_per_stack: 0};
 
 pub static SORCERY_MINOR: Buff = Buff { id: SORCERY_MINOR_ID, value: 10, value_per_stack: 0};
 pub static SORCERY_MAJOR: Buff = Buff { id: SORCERY_MAJOR_ID, value: 20, value_per_stack: 0};
 pub static AGILITY: Buff = Buff { id: 45572, value: 0, value_per_stack: 2};
 pub static SLAYER: Buff = Buff { id: SLAYER_ID, value: 0, value_per_stack: 3};
 pub static BALANCED_WARRIOR: Buff = Buff { id: BALANCED_WARRIOR_ID, value: 6, value_per_stack: 0};
-pub static HARNESSED_QUINTESSENCE: Buff = Buff { id: HARNESSED_QUINTESSENCE_ID, value: 284, value_per_stack: 0};
-pub static EXPERT_MAGE: Buff = Buff { id: EXPERT_MAGE_ID, value: 0, value_per_stack: 108};
 pub static SAVAGE_STRENGTH: Buff = Buff { id: 46139, value: 18, value_per_stack: 0};
 
 pub static POWER_INCREASES_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
@@ -59,9 +59,11 @@ pub static POWER_INCREASES_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
     215727 => &SUNDERER,
     21230 => &BERSERKER_INFUSED,
     61771 => &POWERFUL_ASSAULT,
+    45195 => &EXPERT_MAGE,
     163401 => &AURA_OF_PRIDE,
     172621 => &PEARLESCENT_WARD,
     122729 => &SEETHING_FURY,
+    184860 => &HARNESSED_QUINTESSENCE,
 };
 
 pub static POWER_INCREASES_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
@@ -70,7 +72,5 @@ pub static POWER_INCREASES_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
     45572 => &AGILITY,
     45596 => &SLAYER,
     44732 => &BALANCED_WARRIOR,
-    184860 => &HARNESSED_QUINTESSENCE,
-    45195 => &EXPERT_MAGE,
     46139 => &SAVAGE_STRENGTH,
 };
