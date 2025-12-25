@@ -371,11 +371,11 @@ impl GearPiece {
         };
 
         let multiplier = match gear_slot {
-            GearSlot::OffHand | GearSlot::OffHandBackup => OFFHAND_MULTIPLIER,
+            GearSlot::OffHand | GearSlot::OffHandBackup => OFFHAND_MULTIPLIER + 0.06,
             _ => 1.0
         };
 
-        (base_power * trait_multiplier * multiplier) as u32
+        (base_power * trait_multiplier * multiplier).round() as u32
     }
 
     pub fn get_armour_value(&self, gear_slot: &GearSlot) -> u32 {

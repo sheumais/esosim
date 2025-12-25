@@ -144,7 +144,7 @@ impl<'a> Context for CharacterContext<'a> {
 mod character_integration_test {
     use super::*;
     use esosim_models::player::{GearEnchant, GearPiece};
-    use esosim_data::{critical_damage::*, item_type::{EnchantType, GearTrait, ItemQuality}, major_minor::{COURAGE_MAJOR_ID, COURAGE_MINOR_ID, FORCE_MAJOR_ID, FORCE_MINOR_ID, SORCERY_MAJOR_ID}, skill::HARNESSED_QUINTESSENCE_ID};
+    use esosim_data::{critical_damage::*, item_type::{EnchantType, GearTrait, ItemQuality}, major_minor::{FORCE_MAJOR_ID, FORCE_MINOR_ID, SORCERY_MAJOR_ID}, skill::CAMOUFLAGED_HUNTER_ID};
 
     #[test]
     fn critical_damage() {
@@ -209,22 +209,7 @@ mod character_integration_test {
     fn power() {
         let mut character = Character::new(0);
 
-        // let mut power = Power::new();
-        // power.additive = ((0.1765 + 0.06) as f32 * 1335.0).round() as u32 + 1535;
-        // power.multiplicative = 0.03; // one fighters guild skill
-        // assert_eq!(power.calculate(), 2937);
-        // power.multiplicative += 0.12; // 6 medium pieces
-        // assert_eq!(power.calculate(), 3279);
-        // power.additive += 174 * 3; // jewellery with weapon damage enchants
-        // power.additive += 129 * 2; // 2x set lines
-        // assert_eq!(power.calculate(), 4176);
-        // power.multiplicative += 0.2; // major brutality
-        // assert_eq!(power.calculate(), 4902);
-
-        character.add_buff(COURAGE_MINOR_ID, 1);
-        character.add_buff(COURAGE_MAJOR_ID, 1);
         character.add_buff(SORCERY_MAJOR_ID, 1);
-        character.add_buff(HARNESSED_QUINTESSENCE_ID, 1);
 
         character.set_gear_piece(
         &GearSlot::MainHand,
@@ -248,7 +233,36 @@ mod character_integration_test {
                 enchant: None,
             },
         );
-
+        character.set_gear_piece(
+            &GearSlot::Ring1,
+            GearPiece {
+                item_id: 0,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::JewelryBloodthirsty),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: Some(GearEnchant {
+                    glyph: EnchantType::IncreasePhysicalDamage,
+                    effective_level: 66,
+                    quality: ItemQuality::Legendary,
+                }),
+            },
+        );
+        character.set_gear_piece(
+            &GearSlot::Ring2,
+            GearPiece {
+                item_id: 0,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::JewelryBloodthirsty),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: Some(GearEnchant {
+                    glyph: EnchantType::IncreasePhysicalDamage,
+                    effective_level: 66,
+                    quality: ItemQuality::Legendary,
+                }),
+            },
+        );
         character.set_gear_piece(
             &GearSlot::Necklace,
             GearPiece {
@@ -264,9 +278,77 @@ mod character_integration_test {
                 }),
             },
         );
+        character.set_gear_piece(
+            &GearSlot::Waist,
+            GearPiece { 
+                item_id: 98304,
+                effective_level: 66,
+                gear_trait: None,
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece(
+            &GearSlot::Chest,
+            GearPiece { 
+                item_id: 98304,
+                effective_level: 66,
+                gear_trait: None,
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece(
+            &GearSlot::Shoulders,
+            GearPiece { 
+                item_id: 98304,
+                effective_level: 66,
+                gear_trait: None,
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece(
+            &GearSlot::Hands,
+            GearPiece { 
+                item_id: 98304,
+                effective_level: 66,
+                gear_trait: None,
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece(
+            &GearSlot::Legs,
+            GearPiece { 
+                item_id: 98304,
+                effective_level: 66,
+                gear_trait: None,
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece(
+            &GearSlot::Feet,
+            GearPiece { 
+                item_id: 98304,
+                effective_level: 66,
+                gear_trait: None,
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+
+        character.set_skills_on_bar(ActiveBar::Primary, vec![CAMOUFLAGED_HUNTER_ID]);
 
         let power = character.get_power();
 
-        assert!(power == 4307, "power incorrect (is {})", power);
+        assert!(power == 4554, "power incorrect (is {})", power);
     }
 }
