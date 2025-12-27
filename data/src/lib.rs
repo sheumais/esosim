@@ -6,9 +6,9 @@ pub mod skill;
 pub mod traits;
 pub mod armour;
 
-#[derive(Eq, PartialEq, Hash, Debug)]
+#[derive(PartialEq, Debug)]
 pub struct StatBuff {
     pub id: u32,
-    pub value: i32,
-    pub value_per_stack: i32,
+    pub value: f64,
+    pub value_per_stack: f64,
 }

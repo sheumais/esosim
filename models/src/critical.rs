@@ -7,11 +7,19 @@ pub struct CriticalDamage {
 
 impl CriticalDamage {
     pub fn calculate(&self) -> u8 {
-        let base = 
+        let base =
             self.additive
             + CRITICAL_DAMAGE_DEFAULT as u16;
-        
+
         CRITICAL_DAMAGE_MAXIMUM.min((base as f32 * (1.0 + self.multiplicative)) as u8)
+    }
+
+    pub fn calculate_uncapped(&self) -> u16 {
+        let base =
+            self.additive
+            + CRITICAL_DAMAGE_DEFAULT as u16;
+
+        (base as f32 * (1.0 + self.multiplicative)) as u16
     }
 
     pub fn add_to_additive(&mut self, value: u16) {

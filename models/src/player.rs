@@ -126,6 +126,10 @@ impl Player {
     pub fn has_buff(&self, ability_id: &u32) -> bool {
         self.buffs.get(ability_id).is_some()
     }
+
+    pub fn get_total_armour(&self) -> u32 {
+        self.gear.get_total_armour(&self.active_bar)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -252,6 +256,46 @@ impl Loadout {
             .collect()
     }
 
+    pub fn iter_active_gear(&self, active_bar: &ActiveBar) -> impl Iterator<Item = (GearSlot, &GearPiece)> {
+        let slots: &[GearSlot] = match active_bar {
+            ActiveBar::Primary => &[
+                GearSlot::Head,
+                GearSlot::Shoulders,
+                GearSlot::Chest,
+                GearSlot::Hands,
+                GearSlot::Waist,
+                GearSlot::Legs,
+                GearSlot::Feet,
+                GearSlot::Necklace,
+                GearSlot::Ring1,
+                GearSlot::Ring2,
+                GearSlot::MainHand,
+                GearSlot::OffHand,
+                GearSlot::Poison,
+            ],
+            ActiveBar::Backup => &[
+                GearSlot::Head,
+                GearSlot::Shoulders,
+                GearSlot::Chest,
+                GearSlot::Hands,
+                GearSlot::Waist,
+                GearSlot::Legs,
+                GearSlot::Feet,
+                GearSlot::Necklace,
+                GearSlot::Ring1,
+                GearSlot::Ring2,
+                GearSlot::MainHandBackup,
+                GearSlot::OffHandBackup,
+                GearSlot::BackupPoison,
+            ],
+        };
+
+        slots.iter().filter_map(|slot| {
+            self.get_gear_piece(slot)
+                .map(|gear| (*slot, gear))
+        })
+    }
+
     pub fn get_number_of_item_type(&self, item_type: &ItemType, active_bar: &ActiveBar) -> u8 {
         self.get_active_gear(active_bar)
             .iter()
@@ -274,6 +318,10 @@ impl Loadout {
             .filter_map(|g| g.set_id)
             .filter(|i| i == set_id)
             .count() as u8
+    }
+
+    pub fn get_total_armour(&self, active_bar: &ActiveBar) -> u32 {
+        self.iter_active_gear(active_bar).map(|(slot, gear_piece)| gear_piece.get_armour_value(&slot)).sum()
     }
 }
 
@@ -388,6 +436,7 @@ impl GearPiece {
             match trait_ {
                 GearTrait::ArmorReinforced => (armour_value as f32 * get_armor_reinforced_value(&self.quality)) as u32,
                 GearTrait::ArmorNirnhoned => (armour_value as f32 + get_armor_nirnhoned_value(&self.quality)) as u32,
+                GearTrait::JewelryProtective => (get_jewelry_protective_value(&self.quality)) as u32,
                 _ => armour_value,
             }
         } else {

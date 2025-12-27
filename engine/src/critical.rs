@@ -19,11 +19,6 @@ impl CriticalDamage {
 
     pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
         self.sources.insert(id, stacks.unwrap_or(1));
-        self.refresh();
-    }
-
-    pub fn add_source_without_refresh(&mut self, id: ID, stacks: Option<STACKS>) {
-        self.sources.insert(id, stacks.unwrap_or(1));
     }
 
     pub fn add_raw_stat_unchecked(&mut self, value: u16) {
@@ -39,7 +34,7 @@ impl CriticalDamage {
         self.critical_damage.reset();
         for (id, stacks) in &self.sources {
             if let Some(buff) = CRITICAL_DAMAGE_DONE_BY_ID.get(&id) {
-                self.critical_damage.add_to_additive((buff.value + buff.value_per_stack * *stacks as i32) as u16);
+                self.critical_damage.add_to_additive((buff.value + buff.value_per_stack * *stacks as f64) as u16);
             }
             // Malacath's add to multiplicative
         }
@@ -53,6 +48,10 @@ impl CriticalDamage {
         self.critical_damage.calculate()
     }
 
+    pub fn calculate_uncapped(&self) -> u16 {
+        self.critical_damage.calculate_uncapped()
+    }
+
     pub fn update_from_player(&mut self, player: &Player) {
         self.critical_damage.reset();
         self.sources.clear();
@@ -61,9 +60,9 @@ impl CriticalDamage {
             if Self::is_valid_source(id) {
                 match id {
                     &THE_SHADOW_ID => {
-                        self.add_source_without_refresh(*id, Some(divines)) // assumes cp160 gold gear
+                        self.add_source(*id, Some(divines)) // assumes cp160 gold gear
                     },
-                    _ => self.add_source_without_refresh(*id, Some(*stacks)),
+                    _ => self.add_source(*id, Some(*stacks)),
                 }
             }
         }
@@ -72,9 +71,9 @@ impl CriticalDamage {
         let axes = player.get_number_of_equipped_item_type(&ItemType::Axe);
         let two_handed_axe = player.get_number_of_equipped_item_type(&ItemType::TwoHandedAxe);
 
-        if axes > 0 {self.add_source_without_refresh(TWIN_BLADE_AND_BLUNT_ID, Some(axes))};
-        if two_handed_axe > 0 {self.add_source_without_refresh(HEAVY_WEAPONS_ID, Some(two_handed_axe))};
-        if medium > 0 {self.add_source_without_refresh(DEXTERITY_ID, Some(medium))};
+        if axes > 0 {self.add_source(TWIN_BLADE_AND_BLUNT_ID, Some(axes))};
+        if two_handed_axe > 0 {self.add_source(HEAVY_WEAPONS_ID, Some(two_handed_axe))};
+        if medium > 0 {self.add_source(DEXTERITY_ID, Some(medium))};
         self.refresh();
     }
 }

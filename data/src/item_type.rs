@@ -116,7 +116,7 @@ pub enum ItemQuality {
     Legendary,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum GearSlot {
     Head,
     Shoulders,
@@ -175,6 +175,9 @@ pub enum GearTrait {
     WeaponOrnate,
 }
 
+// Note that enchants are only bound to specific gear pieces by the rules of what can be applied in the game. This is why they are listed here as one enum.
+// In fact, bugged items exist on live servers from trials that have armour enchantments on weapons, such as a +Max Stamina Lightning Staff
+// If such an item exists but with traits instead of enchants then please let me know.
 #[derive(Debug, PartialEq)]
 pub enum EnchantType {
     AbsorbHealth,
@@ -210,6 +213,7 @@ pub enum EnchantType {
     StaminaRegen,
 }
 
+/// Doubles the effectiveness of the trait when applied to a two-handed weapon compared to one handed.
 pub fn weapon_trait_doubles(trait_: &GearTrait) -> bool {
     matches!(
         trait_,

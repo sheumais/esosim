@@ -53,9 +53,9 @@ impl Power {
         self.power.reset();
         for (id, stacks) in &self.sources {
             if let Some(buff) = POWER_INCREASES_ADDITIVE.get(id) {
-                self.power.add_to_additive((buff.value + buff.value_per_stack * *stacks as i32) as u32);
+                self.power.add_to_additive((buff.value + buff.value_per_stack * *stacks as f64) as u32);
             } else if let Some(buff) = POWER_INCREASES_MULTIPLICATIVE.get(id) {
-                self.power.add_to_multiplicative((buff.value + buff.value_per_stack * *stacks as i32 ) as f32 / 100.0);
+                self.power.add_to_multiplicative((buff.value + buff.value_per_stack * *stacks as f64) as f32 / 100.0);
             }
         }
         self.power.add_to_additive(self.gear_source);

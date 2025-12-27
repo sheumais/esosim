@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use esosim_data::item_type::GearSlot;
-use esosim_models::{player::{ActiveBar, GearPiece, Player as PlayerModel}};
+use esosim_models::{damage::DamageType, player::{ActiveBar, GearPiece, Player as PlayerModel}};
 
-use crate::{ID, STACKS, critical::CriticalDamage, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
+use crate::{ID, STACKS, armour::Armour, critical::CriticalDamage, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
 
 pub struct CharacterContext<'a> {
     player: &'a mut PlayerModel,
@@ -14,6 +14,7 @@ pub struct Character {
     active_sets: HashMap<u16, Box<dyn SetInstance>>,
     critical_damage_done: CriticalDamage,
     power: Power,
+    armour: Armour,
 }
 
 impl Character {
@@ -23,6 +24,7 @@ impl Character {
             active_sets: HashMap::new(),
             critical_damage_done: CriticalDamage::new(),
             power: Power::new(),
+            armour: Armour::new(),
         }
     }
 
@@ -52,8 +54,16 @@ impl Character {
         self.critical_damage_done.calculate()
     }
 
+    pub fn get_critical_damage_uncapped(&mut self) -> u16 {
+        self.critical_damage_done.calculate_uncapped()
+    }
+
     pub fn get_power(&mut self) -> u32 {
         self.power.calculate()
+    }
+
+    pub fn get_armour(&self, damage_type: &DamageType) -> u32 {
+        self.armour.calculate(damage_type)
     }
 
     pub fn swap_bars(&mut self, choice: Option<ActiveBar>) {
@@ -118,6 +128,7 @@ impl Character {
     fn recompute_all_supplemental_state(&mut self) {
         self.critical_damage_done.update_from_player(&self.player);
         self.power.update_from_player(&self.player);
+        self.armour.update_from_player(&self.player);
     }
 }
 
@@ -350,5 +361,95 @@ mod character_integration_test {
         let power = character.get_power();
 
         assert!(power == 4554, "power incorrect (is {})", power);
+    }
+    
+    #[test]
+    fn armour() {
+        let mut character = Character::new(0);
+
+        character.set_gear_piece( // 2813
+            &GearSlot::Head,
+            GearPiece {  
+                item_id: 178627,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorReinforced),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece( // 1039
+            &GearSlot::Waist,
+            GearPiece { 
+                item_id: 207775,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorDivines),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece( // 3215
+            &GearSlot::Chest,
+            GearPiece { 
+                item_id: 207729,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorReinforced),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece( // 2813
+            &GearSlot::Shoulders,
+            GearPiece { 
+                item_id: 207766,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorReinforced),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece( // 1386
+            &GearSlot::Hands,
+            GearPiece { 
+                item_id: 207742,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorDivines),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece( // 2813
+            &GearSlot::Legs,
+            GearPiece { 
+                item_id: 207761,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorReinforced),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+        character.set_gear_piece( // 2425
+            &GearSlot::Feet,
+            GearPiece { 
+                item_id: 207735,
+                effective_level: 66,
+                gear_trait: Some(GearTrait::ArmorDivines),
+                quality: ItemQuality::Legendary,
+                set_id: None,
+                enchant: None,
+            }
+        );
+
+        character.add_buff(45306, 1); // Nord passive
+
+        let armour = character.get_armour(&DamageType::PHYSICAL);
+
+        // 16504 + 2402 + 2600
+        assert!(armour == 21506, "armour incorrect (is {})", armour);
     }
 }
