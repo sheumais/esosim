@@ -140,11 +140,11 @@ impl Armour {
         self.reset_all();
         self.sources.clear();
 
-        let player_armour = player.get_total_armour();
-        self.player_armour = player_armour;
+        let mut player_armour = player.get_total_armour();
         let heavy = player.get_number_of_equipped_item_type(&ItemType::Heavy);
         let light = player.get_number_of_equipped_item_type(&ItemType::Light);
         let warden = player.get_number_of_active_skills_from_skill_line(&SkillLine::WintersEmbrace);
+        let ice_staves_shields = player.get_number_of_equipped_item_type(&ItemType::FrostStaff) + player.get_number_of_equipped_item_type(&ItemType::Shield);
 
         for (id, stacks) in player.get_buffs().iter() {
             if Self::is_valid_source(id) {
@@ -155,6 +155,12 @@ impl Armour {
         if heavy > 0 {self.add_source(45533, Some(heavy))};
         if light > 0 {self.add_source(45559, Some(light))};
         if warden > 0 {self.add_source(FROZEN_ARMOUR_ID, Some(warden))};
+        if ice_staves_shields > 0 {self.add_source(64079, Some(1))}; // Assume players have this because it is shown for only the person logging
+        if heavy >= 4 {
+            player_armour += (34.62f32 * 50.0).round() as u32; // Assume players wearing heavy armour (tanks) always have this CP because it is never shown on logs so there is no way to know until reverse engineering the damage taken numbers.
+        }
+
+        self.player_armour = player_armour;
 
         self.refresh();
     }

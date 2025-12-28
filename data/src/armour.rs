@@ -124,6 +124,10 @@ pub static FROZEN_ARMOUR: Buff = Buff { id: FROZEN_ARMOUR_ID, value: 0.0, value_
 pub static RESOLVE: Buff = Buff { id: 45533, value: 0.0, value_per_stack: 343.2}; // Heavy armour passive
 pub static RUGGED: Buff = Buff { id: 45306, value: 2600.0, value_per_stack: 0.0}; // Nord passive
 pub static SCALED_ARMOUR: Buff = Buff { id: SCALED_ARMOUR_ID, value: 2974.0, value_per_stack: 0.0}; // Draconic Power passive
+/// Only shows up for the person logging.
+pub static BULWARK: Buff = Buff { id: 64079, value: 1900.0, value_per_stack: 0.0}; // Blue CP.
+/// Fake ID. Doesn't show on logs
+pub static FORTIFIED: Buff = Buff { id: 4001000, value: 0.0, value_per_stack: 34.62}; // Red CP.
 
 // Decrease
 pub static MAJOR_BREACH: Buff = Buff { id: BREACH_MAJOR_ID, value: -5948.0, value_per_stack: 0.0};
@@ -140,6 +144,7 @@ pub static ARMOUR_ALL_BY_ID: Map<u32, &'static Buff> = phf_map! {
     61743 => &MAJOR_BREACH,
     61742 => &MINOR_BREACH,
     17906 => &CRUSHER,
+    64079 => &BULWARK,
 };
 
 // Spell Resistance Only

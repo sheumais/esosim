@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use esosim_data::item_type::GearSlot;
 use esosim_models::{damage::DamageType, player::{ActiveBar, GearPiece, Player as PlayerModel}};
 
-use crate::{ID, STACKS, armour::Armour, critical::CriticalDamage, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
+use crate::{ID, STACKS, armour::Armour, critical::{CriticalDamage, CriticalDamageTaken}, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
 
 pub struct CharacterContext<'a> {
     player: &'a mut PlayerModel,
@@ -15,6 +15,7 @@ pub struct Character {
     critical_damage_done: CriticalDamage,
     power: Power,
     armour: Armour,
+    critical_damage_taken: CriticalDamageTaken,
 }
 
 impl Character {
@@ -25,6 +26,7 @@ impl Character {
             critical_damage_done: CriticalDamage::new(),
             power: Power::new(),
             armour: Armour::new(),
+            critical_damage_taken: CriticalDamageTaken::new(),
         }
     }
 
@@ -52,6 +54,10 @@ impl Character {
 
     pub fn get_critical_damage_done(&mut self) -> u8 {
         self.critical_damage_done.calculate()
+    }
+
+    pub fn get_critical_damage_taken(&mut self) -> u8 {
+        self.critical_damage_taken.calculate()
     }
 
     pub fn get_critical_damage_uncapped(&mut self) -> u16 {
@@ -129,6 +135,7 @@ impl Character {
         self.critical_damage_done.update_from_player(&self.player);
         self.power.update_from_player(&self.player);
         self.armour.update_from_player(&self.player);
+        self.critical_damage_taken.update_from_player(&self.player);
     }
 }
 
