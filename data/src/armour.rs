@@ -118,21 +118,21 @@ pub fn armour_from_armour_piece(item_type: &ItemType, item_slot: &GearSlot, qual
 }
 
 // Both
-pub static MAJOR_RESOLVE: Buff = Buff { id: RESOLVE_MAJOR_ID, value: 5948.0, value_per_stack: 0.0};
-pub static MINOR_RESOLVE: Buff = Buff { id: RESOLVE_MINOR_ID, value: 2974.0, value_per_stack: 0.0};
-pub static FROZEN_ARMOUR: Buff = Buff { id: FROZEN_ARMOUR_ID, value: 0.0, value_per_stack: 1240.0}; // Winter's Embrace passive
-pub static RESOLVE: Buff = Buff { id: 45533, value: 0.0, value_per_stack: 343.2}; // Heavy armour passive
-pub static RUGGED: Buff = Buff { id: 45306, value: 2600.0, value_per_stack: 0.0}; // Nord passive
-pub static SCALED_ARMOUR: Buff = Buff { id: SCALED_ARMOUR_ID, value: 2974.0, value_per_stack: 0.0}; // Draconic Power passive
+pub static MAJOR_RESOLVE: Buff = Buff { id: RESOLVE_MAJOR_ID, value: 5948f64, value_per_stack: 0f64};
+pub static MINOR_RESOLVE: Buff = Buff { id: RESOLVE_MINOR_ID, value: 2974f64, value_per_stack: 0f64};
+pub static FROZEN_ARMOUR: Buff = Buff { id: FROZEN_ARMOUR_ID, value: 0f64, value_per_stack: 1240f64}; // Winter's Embrace passive
+pub static RESOLVE: Buff = Buff { id: 45533, value: 0f64, value_per_stack: 343.2}; // Heavy armour passive
+pub static RUGGED: Buff = Buff { id: 45306, value: 2600f64, value_per_stack: 0f64}; // Nord passive
+pub static SCALED_ARMOUR: Buff = Buff { id: SCALED_ARMOUR_ID, value: 2974f64, value_per_stack: 0f64}; // Draconic Power passive
 /// Only shows up for the person logging.
-pub static BULWARK: Buff = Buff { id: 64079, value: 1900.0, value_per_stack: 0.0}; // Blue CP.
+pub static BULWARK: Buff = Buff { id: 64079, value: 1900f64, value_per_stack: 0f64}; // Blue CP.
 /// Fake ID. Doesn't show on logs
-pub static FORTIFIED: Buff = Buff { id: 4001000, value: 0.0, value_per_stack: 34.62}; // Red CP.
+pub static FORTIFIED: Buff = Buff { id: 4001000, value: 0f64, value_per_stack: 34.62}; // Red CP.
 
 // Decrease
-pub static MAJOR_BREACH: Buff = Buff { id: BREACH_MAJOR_ID, value: -5948.0, value_per_stack: 0.0};
-pub static MINOR_BREACH: Buff = Buff { id: BREACH_MINOR_ID, value: -2974.0, value_per_stack: 0.0};
-pub static CRUSHER: Buff = Buff { id: 17906, value: -2108.0, value_per_stack: 0.0}; // Assumes infused. todo
+pub static MAJOR_BREACH: Buff = Buff { id: BREACH_MAJOR_ID, value: -5948f64, value_per_stack: 0f64};
+pub static MINOR_BREACH: Buff = Buff { id: BREACH_MINOR_ID, value: -2974f64, value_per_stack: 0f64};
+pub static CRUSHER: Buff = Buff { id: 17906, value: -2108f64, value_per_stack: 0f64}; // Assumes infused. todo
 
 pub static ARMOUR_ALL_BY_ID: Map<u32, &'static Buff> = phf_map! {
     61694 => &MAJOR_RESOLVE,
@@ -148,10 +148,10 @@ pub static ARMOUR_ALL_BY_ID: Map<u32, &'static Buff> = phf_map! {
 };
 
 // Spell Resistance Only
-pub static SISLEAS_DEFENSE: Buff = Buff { id: 139698, value: 15000.0, value_per_stack: 0.0}; // Kyne's Aegis prisoner buff
-pub static SPELL_ATTUNEMENT: Buff = Buff { id: 45262, value: 0.0, value_per_stack: 2310.0}; // Breton Passive. Doubles if afflicted by burning, chilled or concussed.
-pub static SPELL_RESIST_POTION: Buff = Buff { id: 64562, value: 5280.0, value_per_stack: 0.0};
-pub static SPELL_WARDING: Buff = Buff { id: 45559, value: 0.0, value_per_stack: 726.0}; // Light Armour Passive
+pub static SISLEAS_DEFENSE: Buff = Buff { id: 139698, value: 15000f64, value_per_stack: 0f64}; // Kyne's Aegis prisoner buff
+pub static SPELL_ATTUNEMENT: Buff = Buff { id: 45262, value: 0f64, value_per_stack: 2310f64}; // Breton Passive. Doubles if afflicted by burning, chilled or concussed.
+pub static SPELL_RESIST_POTION: Buff = Buff { id: 64562, value: 5280f64, value_per_stack: 0f64};
+pub static SPELL_WARDING: Buff = Buff { id: 45559, value: 0f64, value_per_stack: 726f64}; // Light Armour Passive
 
 pub static SPELL_RESISTANCE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     139698 => &SISLEAS_DEFENSE,
@@ -161,16 +161,16 @@ pub static SPELL_RESISTANCE_BY_ID: Map<u32, &'static Buff> = phf_map! {
 };
 
 // Physical Resistance Only
-pub static PHYSICAL_RESIST_POTION: Buff = Buff { id: 64564, value: 5280.0, value_per_stack: 0.0};
+pub static PHYSICAL_RESIST_POTION: Buff = Buff { id: 64564, value: 5280f64, value_per_stack: 0f64};
 
 pub static PHYSICAL_RESISTANCE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     64564 => &PHYSICAL_RESIST_POTION,
 };
 
 // Specific Type of Damage
-pub static RESIST_FROST: Buff = Buff { id: 45304, value: 4620.0, value_per_stack: 0.0}; // frost, nord
-pub static ARGONIAN_RESISTANCE: Buff = Buff { id: 45255, value: 2310.0, value_per_stack: 0.0}; // poison + disease, argonian
-pub static RESIST_AFFLICTION: Buff = Buff { id: 45319, value: 2310.0, value_per_stack: 0.0}; // poison + disease, wood elf
+pub static RESIST_FROST: Buff = Buff { id: 45304, value: 4620f64, value_per_stack: 0f64}; // frost, nord
+pub static ARGONIAN_RESISTANCE: Buff = Buff { id: 45255, value: 2310f64, value_per_stack: 0f64}; // poison + disease, argonian
+pub static RESIST_AFFLICTION: Buff = Buff { id: 45319, value: 2310f64, value_per_stack: 0f64}; // poison + disease, wood elf
 
 pub static FROST_RESISTANCE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     45304 => &RESIST_FROST,

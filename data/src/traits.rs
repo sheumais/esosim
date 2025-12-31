@@ -240,6 +240,7 @@ pub fn get_jewelry_infused_value(q: &ItemQuality) -> f32 {
     }
 }
 
+// Health, Magicka, Stamina
 pub fn get_jewelry_triune_value(q: &ItemQuality) -> (f32, f32, f32) {
     match q {
         ItemQuality::Normal => (418.0, 380.0, 380.0),

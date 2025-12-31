@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use esosim_data::enchant::get_enchant_jewellery_increase_weapon_damage;
 use esosim_data::item_type::{EnchantType, GearSlot, GearTrait, ItemType};
 use esosim_data::power::{POWER_INCREASES_ADDITIVE, POWER_INCREASES_MULTIPLICATIVE};
 use esosim_data::skill::{EXPERT_MAGE_ID, SLAYER_ID, SkillLine};
@@ -117,7 +118,7 @@ impl Power {
                     } else {
                         1.0
                     };
-                    self.gear_source += (174.0 * multiplier) as u32;
+                    self.gear_source += (get_enchant_jewellery_increase_weapon_damage(&enchant.effective_level, &enchant.quality) * multiplier) as u32;
                 }
             }
         }

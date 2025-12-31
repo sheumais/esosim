@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use esosim_data::item_type::GearSlot;
-use esosim_models::{damage::DamageType, player::{ActiveBar, GearPiece, Player as PlayerModel}};
+use esosim_models::{damage::DamageType, player::{ActiveBar, GearPiece, Player as PlayerModel}, resource::{PlayerAttributeType, PlayerMaxResource}};
 
 use crate::{ID, STACKS, armour::Armour, critical::{CriticalDamage, CriticalDamageTaken}, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
 
@@ -16,6 +16,9 @@ pub struct Character {
     power: Power,
     armour: Armour,
     critical_damage_taken: CriticalDamageTaken,
+    health: PlayerMaxResource,
+    stamina: PlayerMaxResource,
+    magicka: PlayerMaxResource,
 }
 
 impl Character {
@@ -27,6 +30,9 @@ impl Character {
             power: Power::new(),
             armour: Armour::new(),
             critical_damage_taken: CriticalDamageTaken::new(),
+            health: PlayerMaxResource::new(PlayerAttributeType::Health),
+            stamina: PlayerMaxResource::new(PlayerAttributeType::Stamina),
+            magicka: PlayerMaxResource::new(PlayerAttributeType::Magicka),
         }
     }
 
@@ -119,7 +125,7 @@ impl Character {
         self.recompute_all_supplemental_state();
     }
 
-    pub fn emit_event_to_sets(&mut self, event: &Event) {
+    fn emit_event_to_sets(&mut self, event: &Event) {
         let player_id = *self.player.id();
 
         let mut ctx = CharacterContext {

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use esosim_data::{armour::{ARMOUR_ALL_BY_ID, FROST_RESISTANCE_BY_ID, PHYSICAL_RESISTANCE_BY_ID, POISON_DISEASE_RESISTANCE_BY_ID, SPELL_RESISTANCE_BY_ID}, item_type::ItemType, skill::{FROZEN_ARMOUR_ID, SkillLine}};
+use esosim_data::{armour::{ARMOUR_ALL_BY_ID, FROST_RESISTANCE_BY_ID, PHYSICAL_RESISTANCE_BY_ID, POISON_DISEASE_RESISTANCE_BY_ID, SPELL_RESISTANCE_BY_ID}, enchant::{get_enchant_jewellery_increase_disease_resistance, get_enchant_jewellery_increase_fire_resistance, get_enchant_jewellery_increase_frost_resistance, get_enchant_jewellery_increase_physical_resistance, get_enchant_jewellery_increase_poison_resistance, get_enchant_jewellery_increase_shock_resistance, get_enchant_jewellery_increase_spell_resistance}, item_type::{EnchantType, GearTrait, ItemType}, skill::{FROZEN_ARMOUR_ID, SkillLine}};
 use esosim_models::{armour::Armour as ArmourModel, damage::DamageType, player::Player};
 
 use crate::{ID, STACKS};
@@ -26,6 +26,7 @@ pub struct Armour {
     physical: ArmourModel,
     poison: ArmourModel,
     shock: ArmourModel,
+    spell: ArmourModel,
 }
 
 impl Armour {
@@ -42,6 +43,7 @@ impl Armour {
             physical: ArmourModel::default(),
             poison: ArmourModel::default(),
             shock: ArmourModel::default(),
+            spell: ArmourModel::default(),
         }
     }
 
@@ -64,6 +66,7 @@ impl Armour {
         self.physical.add_to_additive(self.player_armour.clone());
         self.poison.add_to_additive(self.player_armour.clone());
         self.shock.add_to_additive(self.player_armour.clone());
+        self.spell.add_to_additive(self.player_armour.clone());
         for (id, stacks) in &self.sources {
             if let Some(buff) = ARMOUR_ALL_BY_ID.get(&id) {
                 let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
@@ -75,6 +78,7 @@ impl Armour {
                 self.physical.add_to_additive(value.clone());
                 self.poison.add_to_additive(value.clone());
                 self.shock.add_to_additive(value.clone());
+                self.spell.add_to_additive(value.clone());
             }
 
             if let Some(buff) = SPELL_RESISTANCE_BY_ID.get(&id) {
@@ -83,6 +87,7 @@ impl Armour {
                 self.fire.add_to_additive(value.clone());
                 self.magic.add_to_additive(value.clone());
                 self.shock.add_to_additive(value.clone());
+                self.spell.add_to_additive(value.clone());
             }
 
             if let Some(buff) = PHYSICAL_RESISTANCE_BY_ID.get(&id) {
@@ -155,13 +160,28 @@ impl Armour {
         if heavy > 0 {self.add_source(45533, Some(heavy))};
         if light > 0 {self.add_source(45559, Some(light))};
         if warden > 0 {self.add_source(FROZEN_ARMOUR_ID, Some(warden))};
-        if ice_staves_shields > 0 {self.add_source(64079, Some(1))}; // Assume players have this because it is shown for only the person logging
         if heavy >= 4 {
+            if ice_staves_shields > 0 {self.add_source(64079, Some(1))}; // Assume players have this because it is shown for only the person logging
             player_armour += (34.62f32 * 50.0).round() as u32; // Assume players wearing heavy armour (tanks) always have this CP because it is never shown on logs so there is no way to know until reverse engineering the damage taken numbers.
         }
 
         self.player_armour = player_armour;
 
         self.refresh();
+
+        for gear in player.get_active_gear() {
+            if let Some(enchant) = &gear.enchant {
+                match enchant.glyph {
+                    EnchantType::FrostResistance    => self.cold.add_to_additive(get_enchant_jewellery_increase_frost_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::FireResistance     => self.fire.add_to_additive(get_enchant_jewellery_increase_fire_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::ShockResistance    => self.shock.add_to_additive(get_enchant_jewellery_increase_shock_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::PoisonResistance   => self.poison.add_to_additive(get_enchant_jewellery_increase_poison_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::DiseaseResistance  => self.disease.add_to_additive(get_enchant_jewellery_increase_disease_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::PhysicalResistance => self.physical.add_to_additive(get_enchant_jewellery_increase_physical_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::SpellResistance    => self.spell.add_to_additive(get_enchant_jewellery_increase_spell_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    _ => {},
+                }
+            }
+        }
     }
 }

@@ -441,6 +441,7 @@ pub const EXPLOITATION_ID: u32 = 45181;
 pub const BLOOD_MAGIC_ID: u32 = 45172;
 pub const PERSISTENCE_ID: u32 = 45165;
 pub const UNHOLY_KNOWLEDGE_ID: u32 = 45176;
+pub const MAGICKA_FLOOD_ID: u32 = 45150;
 
 // Skills https://www.esologs.com/reports/Cm7Kkb2RHBhJ68AT?boss=-3&difficulty=0
 // DarkMagic
