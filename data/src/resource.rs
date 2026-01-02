@@ -84,6 +84,7 @@ pub static RESIST_FROST: Buff = Buff { id: 45304, value: 1000f64, value_per_stac
 pub static ARGONIAN_RESISTANCE: Buff = Buff { id: 45255, value: 1000f64, value_per_stack: 0f64};
 pub static TOUGH: Buff = Buff { id: 50907, value: 2000f64, value_per_stack: 0f64};
 pub static UNFLINCHING_RAGE: Buff = Buff { id: 84672, value: 1000f64, value_per_stack: 0f64};
+// Ayleid well bonus
 
 pub static RESOURCE_HEALTH_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
     117848 => &LUNAR_BLESSINGS,
@@ -141,4 +142,108 @@ pub static RESOURCE_MAGICKA_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
     45603 => &MAGICKA_CONTROLLER,
     45150 => &MAGICKA_FLOOD,
     // ??? => &STURDY_HORN
+};
+
+pub static FOOD_BUFFS: phf::Map<u32, &'static FoodBuff> = phf_map! {
+    86673  => &LAVA_FOOT_SOUP_AND_SOULTRICE,
+    72824  => &ORZORGAS_SMOKED_BEAR_HAUNCH,
+    61257  => &BISTAT_MAG,
+    61255  => &BISTAT_STAM,
+    127596 => &BEWITCHED_SUGAR_SKULLS,
+    107789 => &ARTAEUM_TAKEAWAY_BROTH,
+    100498 => &CLOCKWORK_CITRUS_FILET,
+    84720  => &GHASTLY_EYE_BOWL,
+    89971  => &JEWELS_OF_MISRULE,
+    107748 => &ARTAEUM_PICKLED_FISH_BOWL,
+    127572 => &PACK_LEADERS_BONE_BROTH,
+    127531 => &CORRUPTING_BLOODY_MARA,
+    84731  => &WITCHMOTHERS_POTENT_BREW,
+    89957  => &DUBIOUS_CAMORAN_THRONE,
+    89973  => &ORZORGAS_RED_FROTHGAR,
+    61261  => &PARSE_STAMINA,
+    61260  => &PARSE_MAGICKA,
+};
+
+pub struct FoodBuff {
+    pub id: u32,
+    pub max_health: Option<u32>,
+    pub max_magicka: Option<u32>,
+    pub max_stamina: Option<u32>,
+    pub health_recovery: Option<u32>,
+    pub magicka_recovery: Option<u32>,
+    pub stamina_recovery: Option<u32>,
+}
+
+impl FoodBuff {
+    pub fn is_valid_source(id: &u32) -> bool {
+        FOOD_BUFFS.get(id).is_some()
+    }
+}
+
+pub static LAVA_FOOT_SOUP_AND_SOULTRICE: FoodBuff = FoodBuff { 
+    id: 86673, max_health: None, max_magicka: None, max_stamina: Some(4936), health_recovery: None, magicka_recovery: None, stamina_recovery: Some(493)
+};
+
+pub static ORZORGAS_SMOKED_BEAR_HAUNCH: FoodBuff = FoodBuff { 
+    id: 72824, max_health: Some(4312), max_magicka: None, max_stamina: None, health_recovery: Some(406), magicka_recovery: Some(369), stamina_recovery: Some(369)
+};
+
+pub static BISTAT_MAG: FoodBuff = FoodBuff { 
+    id: 61257, max_health: Some(5395), max_magicka: Some(4936), max_stamina: None, health_recovery: None, magicka_recovery: None, stamina_recovery: None
+};
+
+pub static BISTAT_STAM: FoodBuff = FoodBuff { 
+    id: 61255, max_health: Some(5395), max_magicka: None, max_stamina: Some(4936), health_recovery: None, magicka_recovery: None, stamina_recovery: None
+};
+
+pub static BEWITCHED_SUGAR_SKULLS: FoodBuff = FoodBuff {
+    id: 127596, max_health: Some(4620), max_magicka: Some(4250), max_stamina: Some(4250), health_recovery: Some(462), magicka_recovery: None, stamina_recovery: None,
+};
+
+pub static ARTAEUM_TAKEAWAY_BROTH: FoodBuff = FoodBuff {
+    id: 107789, max_health: Some(3326), max_magicka: None, max_stamina: Some(3080), health_recovery: Some(406), magicka_recovery: None, stamina_recovery: Some(338),
+};
+
+pub static CLOCKWORK_CITRUS_FILET: FoodBuff = FoodBuff {
+    id: 100498, max_health: Some(3326), max_magicka: Some(3080), max_stamina: None, health_recovery: Some(406), magicka_recovery: Some(338), stamina_recovery: None,
+};
+
+pub static GHASTLY_EYE_BOWL: FoodBuff = FoodBuff {
+    id: 84720, max_health: None, max_magicka: Some(4592), max_stamina: None, health_recovery: None, magicka_recovery: Some(459), stamina_recovery: None,
+};
+
+pub static JEWELS_OF_MISRULE: FoodBuff = FoodBuff {
+    id: 89971, max_health: Some(3927), max_magicka: None, max_stamina: None, health_recovery: None, magicka_recovery: Some(357), stamina_recovery: Some(357),
+};
+
+pub static ARTAEUM_PICKLED_FISH_BOWL: FoodBuff = FoodBuff {
+    id: 107748, max_health: Some(5652), max_magicka: Some(5117), max_stamina: None, health_recovery: None, magicka_recovery: None, stamina_recovery: None,
+};
+
+pub static PACK_LEADERS_BONE_BROTH: FoodBuff = FoodBuff {
+    id: 127572, max_health: Some(5051), max_magicka: None, max_stamina: Some(4620), health_recovery: None, magicka_recovery: None, stamina_recovery: None,
+};
+
+pub static CORRUPTING_BLOODY_MARA: FoodBuff = FoodBuff {
+    id: 127531, max_health: Some(5051), max_magicka: Some(4620), max_stamina: None, health_recovery: Some(505), magicka_recovery: None, stamina_recovery: None,
+};
+
+pub static WITCHMOTHERS_POTENT_BREW: FoodBuff = FoodBuff {
+    id: 84731, max_health: Some(3094), max_magicka: Some(2856), max_stamina: None, health_recovery: None, magicka_recovery: Some(315), stamina_recovery: None,
+};
+
+pub static DUBIOUS_CAMORAN_THRONE: FoodBuff = FoodBuff {
+    id: 89957, max_health: Some(3094), max_magicka: None, max_stamina: Some(2856), health_recovery: None, magicka_recovery: None, stamina_recovery: Some(315),
+};
+
+pub static ORZORGAS_RED_FROTHGAR: FoodBuff = FoodBuff {
+    id: 89973, max_health: Some(5395), max_magicka: None, max_stamina: None, health_recovery: None, magicka_recovery: Some(493), stamina_recovery: None,
+};
+
+pub static PARSE_STAMINA: FoodBuff = FoodBuff {
+    id: 61261, max_health: None, max_magicka: None, max_stamina: Some(6048), health_recovery: None, magicka_recovery: None, stamina_recovery: None,
+};
+
+pub static PARSE_MAGICKA: FoodBuff = FoodBuff {
+    id: 61260, max_health: None, max_magicka: Some(6048), max_stamina: None, health_recovery: None, magicka_recovery: None, stamina_recovery: None,
 };

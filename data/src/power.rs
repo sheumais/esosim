@@ -46,6 +46,7 @@ pub static SEETHING_FURY: Buff = Buff { id: 122729, value: 0f64, value_per_stack
 // pub static CLIFF_RACER: Buff = Buff { id: , value: 100, value_per_stack: 0};
 pub static EXPERT_MAGE: Buff = Buff { id: EXPERT_MAGE_ID, value: 0f64, value_per_stack: 108f64};
 pub static HARNESSED_QUINTESSENCE: Buff = Buff { id: HARNESSED_QUINTESSENCE_ID, value: 284f64, value_per_stack: 0f64};
+// continuous attack
 
 pub static SORCERY_MINOR: Buff = Buff { id: SORCERY_MINOR_ID, value: 10f64, value_per_stack: 0f64};
 pub static SORCERY_MAJOR: Buff = Buff { id: SORCERY_MAJOR_ID, value: 20f64, value_per_stack: 0f64};

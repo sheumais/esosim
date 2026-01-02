@@ -8,7 +8,7 @@ pub enum PlayerAttributeType {
 
 pub struct PlayerMaxResource {
     resource_type: PlayerAttributeType,
-    attribute: u32,
+    attribute: u8,
     additive: u32,
     multiplicative: f32,
 }
@@ -22,7 +22,7 @@ impl PlayerMaxResource {
 
         let base = level_coeff * LEVEL as u32
             + 1000
-            + attr_coeff * self.attribute
+            + attr_coeff * self.attribute as u32
             + self.additive;
 
         (base as f32 * (1.0 + self.multiplicative)).round() as u32
@@ -36,8 +36,13 @@ impl PlayerMaxResource {
         self.multiplicative += value;
     }
 
-    pub fn add_to_attribute(&mut self, value: u32) {
-        self.attribute += value;
+    pub fn set_attribute(&mut self, value: u8) {
+        self.attribute = value;
+    }
+
+    pub fn reset(&mut self) {
+        self.additive = 0;
+        self.multiplicative = 0.0;
     }
 
     pub fn new(resource_type: PlayerAttributeType) -> Self {

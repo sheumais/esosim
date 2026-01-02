@@ -9,6 +9,7 @@ pub struct Player {
     backup_abilities: Vec<u32>,
     active_bar: ActiveBar,
     buffs: HashMap<u32, u8>,
+    attributes: (u8, u8, u8),
 }
 
 impl Player {
@@ -20,6 +21,7 @@ impl Player {
             backup_abilities: Vec::new(),
             active_bar: ActiveBar::Primary,
             buffs: HashMap::new(),
+            attributes: (0, 0, 0)
         }
     }
 
@@ -129,6 +131,15 @@ impl Player {
 
     pub fn get_total_armour(&self) -> u32 {
         self.gear.get_total_armour(&self.active_bar)
+    }
+
+    pub fn set_attributes(&mut self, attributes: (u8, u8, u8)) {
+        debug_assert!(attributes.0 + attributes.1 + attributes.2 <= 64);
+        self.attributes = attributes
+    }
+
+    pub fn get_attributes(&self) -> (u8, u8, u8) {
+        self.attributes
     }
 }
 

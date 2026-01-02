@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use esosim_data::item_type::GearSlot;
 use esosim_models::{damage::DamageType, player::{ActiveBar, GearPiece, Player as PlayerModel}, resource::{PlayerAttributeType, PlayerMaxResource}};
 
-use crate::{ID, STACKS, armour::Armour, critical::{CriticalDamage, CriticalDamageTaken}, event::{Context, Event, SetInstance}, power::Power, sets::SET_REGISTRY};
+use crate::{ID, STACKS, armour::Armour, critical::{CriticalDamage, CriticalDamageTaken}, event::{Context, Event, SetInstance}, power::Power, resource::Resources as ResourceModel, sets::SET_REGISTRY};
 
 pub struct CharacterContext<'a> {
     player: &'a mut PlayerModel,
@@ -16,9 +16,7 @@ pub struct Character {
     power: Power,
     armour: Armour,
     critical_damage_taken: CriticalDamageTaken,
-    health: PlayerMaxResource,
-    stamina: PlayerMaxResource,
-    magicka: PlayerMaxResource,
+    resources: ResourceModel,
 }
 
 impl Character {
@@ -30,9 +28,7 @@ impl Character {
             power: Power::new(),
             armour: Armour::new(),
             critical_damage_taken: CriticalDamageTaken::new(),
-            health: PlayerMaxResource::new(PlayerAttributeType::Health),
-            stamina: PlayerMaxResource::new(PlayerAttributeType::Stamina),
-            magicka: PlayerMaxResource::new(PlayerAttributeType::Magicka),
+            resources: ResourceModel::new(),
         }
     }
 

@@ -4,6 +4,7 @@ pub mod character;
 mod sets;
 mod power;
 mod armour;
+mod resource;
 
 type ID = u32;
 type STACKS = u8;
