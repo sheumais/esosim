@@ -1,6 +1,5 @@
 use phf::{Map, phf_map};
-
-use crate::{StatBuff as Buff, major_minor::{BRITTLE_MAJOR_ID, BRITTLE_MINOR_ID, ENERVATION_MINOR_ID, FORCE_MAJOR_ID, FORCE_MINOR_ID}};
+use crate::data::{StatBuff as Buff, major_minor::*};
 
 pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     13984 => &THE_SHADOW,

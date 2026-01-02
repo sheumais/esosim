@@ -1,4 +1,4 @@
-use crate::item_type::ItemQuality;
+use crate::data::item_type::ItemQuality;
 
 enum EnchantLevel {
     One,
@@ -528,7 +528,7 @@ pub fn get_enchant_jewellery_increase_spell_damage(effective_level: &u8, quality
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::item_type::ItemQuality::*;
+    use crate::data::item_type::ItemQuality::*;
 
     #[test]
     fn test_match_effective_level_to_enchant_level_basic_ranges() {

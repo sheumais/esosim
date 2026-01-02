@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use esosim_data::{armour::armour_from_armour_piece, item_type::{EnchantType, GearSlot, GearTrait, ITEM_TYPES, ItemQuality, ItemType, weapon_trait_doubles, is_two_handed_weapon, is_weapon}, power::{OFFHAND_MULTIPLIER, power_from_weapon_type}, skill::{SkillLine, ability_id_to_skill_line}, traits::*};
+use crate::data::{armour::*, item_type::*, power::*, skill::*, traits::*};
 
 pub struct Player {
     id: u32,

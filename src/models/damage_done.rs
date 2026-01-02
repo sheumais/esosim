@@ -1,5 +1,3 @@
-use crate::damage::DamageType;
-
 #[derive(Default)]
 pub struct DamageDone {
     dot: f32,

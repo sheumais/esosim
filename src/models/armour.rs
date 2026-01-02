@@ -1,5 +1,3 @@
-use crate::ARMOUR_MAXIMUM;
-
 #[derive(Default)]
 pub struct Armour {
     additive: u32,

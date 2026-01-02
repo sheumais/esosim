@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use crate::{StatBuff as Buff, item_type::{ItemQuality, ItemType}, major_minor::{COURAGE_MAJOR_ID, COURAGE_MINOR_ID, SORCERY_MAJOR_ID, SORCERY_MINOR_ID}, skill::{BALANCED_WARRIOR_ID, EXPERT_MAGE_ID, HARNESSED_QUINTESSENCE_ID, SLAYER_ID}};
+use crate::data::{StatBuff as Buff, item_type::{ItemQuality, ItemType}, major_minor::*, skill::*};
 
 /// Assumes CP160
 pub fn power_from_weapon_type(item_type: &ItemType, quality: &ItemQuality) -> Option<u16> {

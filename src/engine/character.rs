@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
-use esosim_data::item_type::GearSlot;
-use esosim_models::{damage::DamageType, player::{ActiveBar, GearPiece, Player as PlayerModel}, resource::{PlayerAttributeType, PlayerMaxResource}};
-
-use crate::{ID, STACKS, armour::Armour, critical::{CriticalDamage, CriticalDamageTaken}, event::{Context, Event, SetInstance}, power::Power, resource::Resources as ResourceModel, sets::SET_REGISTRY};
+use crate::data::item_type::GearSlot;
+use crate::engine::sets::SET_REGISTRY;
+use crate::engine::{ID, STACKS};
+use crate::engine::armour::Armour;
+use crate::engine::critical::{CriticalDamage, CriticalDamageTaken};
+use crate::engine::event::{Context, Event, SetInstance};
+use crate::engine::power::Power;
+use crate::engine::resource::Resources as ResourceModel;
+use crate::models::damage::DamageType;
+use crate::models::player::{ActiveBar, GearPiece, Player as PlayerModel};
 
 pub struct CharacterContext<'a> {
     player: &'a mut PlayerModel,
@@ -74,6 +80,18 @@ impl Character {
         self.armour.calculate(damage_type)
     }
 
+    pub fn get_max_health(&self) -> u32 {
+        self.resources.get_max_health()
+    }
+
+    pub fn get_max_magicka(&self) -> u32 {
+        self.resources.get_max_magicka()
+    }
+
+    pub fn get_max_stamina(&self) -> u32 {
+        self.resources.get_max_stamina()
+    }
+
     pub fn swap_bars(&mut self, choice: Option<ActiveBar>) {
         self.player.swap_bars(choice);
         self.handle_event(Event::BarSwapped);
@@ -138,6 +156,7 @@ impl Character {
         self.power.update_from_player(&self.player);
         self.armour.update_from_player(&self.player);
         self.critical_damage_taken.update_from_player(&self.player);
+        self.resources.update_from_player(&self.player);
     }
 }
 
@@ -162,9 +181,9 @@ impl<'a> Context for CharacterContext<'a> {
 
 #[cfg(test)]
 mod character_integration_test {
+    use crate::{data::{critical_damage::*, item_type::{EnchantType, GearTrait, ItemQuality}, major_minor::*, skill::CAMOUFLAGED_HUNTER_ID}, models::player::GearEnchant};
+
     use super::*;
-    use esosim_models::player::{GearEnchant, GearPiece};
-    use esosim_data::{critical_damage::*, item_type::{EnchantType, GearTrait, ItemQuality}, major_minor::{FORCE_MAJOR_ID, FORCE_MINOR_ID, SORCERY_MAJOR_ID}, skill::CAMOUFLAGED_HUNTER_ID};
 
     #[test]
     fn critical_damage() {

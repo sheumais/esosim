@@ -1,8 +1,10 @@
 use std::collections::HashMap;
-use esosim_data::{critical_damage::*, item_type::{GearTrait, ItemType}};
-use esosim_models::{critical::CriticalDamage as CriticalDamageModel, player::Player};
 
-use crate::{ID, STACKS};
+use crate::data::critical_damage::{CRITICAL_DAMAGE_DONE_BY_ID, CRITICAL_DAMAGE_TAKEN_BY_ID, DEXTERITY_ID, HEAVY_WEAPONS_ID, THE_SHADOW_ID, TWIN_BLADE_AND_BLUNT_ID};
+use crate::data::item_type::{GearTrait, ItemType};
+use crate::engine::{ID, STACKS};
+use crate::models::critical::CriticalDamage as CriticalDamageModel;
+use crate::models::player::Player;
 
 pub struct CriticalDamage {
     pub sources: HashMap<ID, STACKS>,
@@ -136,10 +138,9 @@ impl CriticalDamageTaken {
 
 #[cfg(test)]
 mod tests {
+    use crate::{data::{item_type::{GearSlot, ItemQuality}, major_minor::*}, engine::character::Character, models::player::GearPiece};
+
     use super::*;
-    use crate::{character::Character, critical::{CriticalDamage}};
-    use esosim_models::player::GearPiece;
-    use esosim_data::{item_type::{GearSlot, ItemQuality}, major_minor::{BRITTLE_MAJOR_ID, BRITTLE_MINOR_ID, FORCE_MINOR_ID}};
 
     #[test]
     fn critical_damage_done_ids_are_registered() {

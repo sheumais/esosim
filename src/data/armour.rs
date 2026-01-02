@@ -1,6 +1,7 @@
 use phf::{Map, phf_map};
 
-use crate::{StatBuff as Buff, item_type::{GearSlot, ItemQuality, ItemType, is_armour}, major_minor::{BREACH_MAJOR_ID, BREACH_MINOR_ID, RESOLVE_MAJOR_ID, RESOLVE_MINOR_ID}, skill::{FROZEN_ARMOUR_ID, SCALED_ARMOUR_ID}};
+use crate::data::{StatBuff as Buff, item_type::{GearSlot, ItemQuality, ItemType, is_armour}, major_minor::*, skill::*};
+
 
 pub fn armour_from_armour_piece(item_type: &ItemType, item_slot: &GearSlot, quality: &ItemQuality) -> Option<u16> {
     use ItemType as T;

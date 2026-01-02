@@ -1,4 +1,4 @@
-use crate::{ARMOUR_MAXIMUM, EFFECTIVE_LEVEL};
+use crate::models::{ARMOUR_MAXIMUM, EFFECTIVE_LEVEL};
 
 pub struct Resistance {
     additive: u32,

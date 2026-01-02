@@ -1,13 +1,14 @@
 use std::collections::HashMap;
-use esosim_data::enchant::get_enchant_jewellery_increase_weapon_damage;
-use esosim_data::item_type::{EnchantType, GearSlot, GearTrait, ItemType};
-use esosim_data::power::{POWER_INCREASES_ADDITIVE, POWER_INCREASES_MULTIPLICATIVE};
-use esosim_data::skill::{EXPERT_MAGE_ID, SLAYER_ID, SkillLine};
-use esosim_data::traits::get_jewelry_infused_value;
-use esosim_models::{power::Power as PowerModel};
-use esosim_models::player::{ActiveBar, Player};
 
-use crate::{ID, STACKS};
+use crate::data::item_type::{EnchantType, GearSlot, GearTrait, ItemType};
+use crate::data::power::{POWER_INCREASES_ADDITIVE, POWER_INCREASES_MULTIPLICATIVE};
+use crate::data::skill::{EXPERT_MAGE_ID, SLAYER_ID, SkillLine};
+use crate::data::traits::get_jewelry_infused_value;
+use crate::data::enchant::get_enchant_jewellery_increase_weapon_damage;
+use crate::engine::{ID, STACKS};
+use crate::models::player::{ActiveBar, Player};
+use crate::models::power::Power as PowerModel;
+
 
 pub struct Power {
     pub sources: HashMap<ID, STACKS>,

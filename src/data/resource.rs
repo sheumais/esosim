@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use crate::{StatBuff as Buff, major_minor::TOUGHNESS_MINOR_ID, skill::{BONE_GOLIATH_TRANSFORMATION_ID, DARK_VIGOR_ID, EXPERT_SUMMONER_ID, LAST_GASP_ID, MAGICKA_CONTROLLER_ID, MAGICKA_FLOOD_ID, UNDAUNTED_METTLE_ID}};
+use crate::data::{StatBuff as Buff, major_minor::*, skill::*};
 
 // *todo, all the fucking foods. like a hundred foods. ugh.
 

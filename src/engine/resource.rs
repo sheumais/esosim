@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
-use esosim_data::{enchant::{get_enchant_armour_health_value, get_enchant_armour_magicka_value, get_enchant_armour_prismatic_values, get_enchant_armour_stamina_value}, item_type::EnchantType, resource::{FOOD_BUFFS, RESOURCE_HEALTH_ADDITIVE, RESOURCE_HEALTH_MULTIPLICATIVE, RESOURCE_MAGICKA_ADDITIVE, RESOURCE_MAGICKA_MULTIPLICATIVE, RESOURCE_STAMINA_ADDITIVE, RESOURCE_STAMINA_MULTIPLICATIVE}};
-use esosim_models::{player::Player, resource::{PlayerAttributeType, PlayerMaxResource}};
-
-use crate::{ID, STACKS};
+use crate::{data::{item_type::EnchantType, resource::{FOOD_BUFFS, RESOURCE_HEALTH_ADDITIVE, RESOURCE_HEALTH_MULTIPLICATIVE, RESOURCE_MAGICKA_ADDITIVE, RESOURCE_MAGICKA_MULTIPLICATIVE, RESOURCE_STAMINA_ADDITIVE, RESOURCE_STAMINA_MULTIPLICATIVE}}, engine::{ID, STACKS}, models::{player::Player, resource::{PlayerAttributeType, PlayerMaxResource}}};
+use crate::data::enchant::*;
 
 pub struct Resources {
     sources: HashMap<ID, STACKS>,
@@ -81,6 +79,10 @@ impl Resources {
                 };
             }
         }
+        let (ref health, ref magicka, ref stamina) = self.gear_stats;
+        self.max_health.add_to_additive(*health);
+        self.max_magicka.add_to_additive(*magicka);
+        self.max_stamina.add_to_additive(*stamina);
     }
 
     pub fn update_from_player(&mut self, player: &Player) {
@@ -116,5 +118,17 @@ impl Resources {
             }
         }
         self.refresh();
+    }
+
+    pub fn get_max_health(&self) -> u32 {
+        self.max_health.calculate()
+    }
+
+    pub fn get_max_magicka(&self) -> u32 {
+        self.max_magicka.calculate()
+    }
+
+    pub fn get_max_stamina(&self) -> u32 {
+        self.max_stamina.calculate()
     }
 }

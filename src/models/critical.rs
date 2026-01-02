@@ -1,4 +1,4 @@
-use crate::{CRITICAL_CHANCE_DEFAULT, CRITICAL_DAMAGE_DEFAULT, CRITICAL_DAMAGE_MAXIMUM, EFFECTIVE_LEVEL};
+use crate::models::{CRITICAL_CHANCE_DEFAULT, CRITICAL_DAMAGE_DEFAULT, CRITICAL_DAMAGE_MAXIMUM, EFFECTIVE_LEVEL};
 
 pub struct CriticalDamage {
     additive: u16,
@@ -51,7 +51,7 @@ pub struct CriticalChance {
 }
 
 impl CriticalChance {
-    pub fn calculate(&self) -> f32 {       
+    pub fn calculate(&self) -> f32 {
         self.calculate_with_level(EFFECTIVE_LEVEL)
     }
 
@@ -85,9 +85,9 @@ mod tests {
     #[test]
     fn test_calculate_defaults() {
         let crit_dmg = CriticalDamage::default();
-        assert_eq!(crit_dmg.calculate(), crate::CRITICAL_DAMAGE_DEFAULT);
+        assert_eq!(crit_dmg.calculate(), CRITICAL_DAMAGE_DEFAULT);
         let crit_chance = CriticalChance::default();
-        assert_eq!(crit_chance.calculate(), crate::CRITICAL_CHANCE_DEFAULT);
+        assert_eq!(crit_chance.calculate(), CRITICAL_CHANCE_DEFAULT);
     }
 
     #[test]

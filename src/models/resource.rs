@@ -1,4 +1,4 @@
-use crate::{LEVEL};
+use crate::models::LEVEL;
 
 pub enum PlayerAttributeType {
     Health,

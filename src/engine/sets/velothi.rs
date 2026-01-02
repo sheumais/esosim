@@ -1,6 +1,7 @@
-use esosim_data::major_minor::FORCE_MINOR_ID;
+use crate::data::major_minor::FORCE_MINOR_ID;
 
-use crate::{ID, event::{Context, Event, SetDescriptor, SetInstance}};
+use crate::engine::ID;
+use crate::{engine::event::{Context, Event, SetDescriptor, SetInstance}};
 
 pub struct VelothiInstance;
 

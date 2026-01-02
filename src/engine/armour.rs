@@ -1,8 +1,13 @@
 use std::collections::HashMap;
-use esosim_data::{armour::{ARMOUR_ALL_BY_ID, FROST_RESISTANCE_BY_ID, PHYSICAL_RESISTANCE_BY_ID, POISON_DISEASE_RESISTANCE_BY_ID, SPELL_RESISTANCE_BY_ID}, enchant::{get_enchant_jewellery_increase_disease_resistance, get_enchant_jewellery_increase_fire_resistance, get_enchant_jewellery_increase_frost_resistance, get_enchant_jewellery_increase_physical_resistance, get_enchant_jewellery_increase_poison_resistance, get_enchant_jewellery_increase_shock_resistance, get_enchant_jewellery_increase_spell_resistance}, item_type::{EnchantType, GearTrait, ItemType}, skill::{FROZEN_ARMOUR_ID, SkillLine}};
-use esosim_models::{armour::Armour as ArmourModel, damage::DamageType, player::Player};
 
-use crate::{ID, STACKS};
+use crate::data::armour::*;
+use crate::data::item_type::{EnchantType, ItemType};
+use crate::data::skill::{FROZEN_ARMOUR_ID, SkillLine};
+use crate::data::enchant::*;
+use crate::engine::{ID, STACKS};
+use crate::models::armour::{Armour as ArmourModel};
+use crate::models::damage::DamageType;
+use crate::models::player::Player;
 
     // BLEED,
     // COLD,
@@ -172,13 +177,13 @@ impl Armour {
         for gear in player.get_active_gear() {
             if let Some(enchant) = &gear.enchant {
                 match enchant.glyph {
-                    EnchantType::FrostResistance    => self.cold.add_to_additive(get_enchant_jewellery_increase_frost_resistance(&enchant.effective_level, &enchant.quality) as u32),
-                    EnchantType::FireResistance     => self.fire.add_to_additive(get_enchant_jewellery_increase_fire_resistance(&enchant.effective_level, &enchant.quality) as u32),
-                    EnchantType::ShockResistance    => self.shock.add_to_additive(get_enchant_jewellery_increase_shock_resistance(&enchant.effective_level, &enchant.quality) as u32),
-                    EnchantType::PoisonResistance   => self.poison.add_to_additive(get_enchant_jewellery_increase_poison_resistance(&enchant.effective_level, &enchant.quality) as u32),
-                    EnchantType::DiseaseResistance  => self.disease.add_to_additive(get_enchant_jewellery_increase_disease_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::FrostResistance => self.cold.add_to_additive(get_enchant_jewellery_increase_frost_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::FireResistance => self.fire.add_to_additive(get_enchant_jewellery_increase_fire_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::ShockResistance => self.shock.add_to_additive(get_enchant_jewellery_increase_shock_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::PoisonResistance => self.poison.add_to_additive(get_enchant_jewellery_increase_poison_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::DiseaseResistance => self.disease.add_to_additive(get_enchant_jewellery_increase_disease_resistance(&enchant.effective_level, &enchant.quality) as u32),
                     EnchantType::PhysicalResistance => self.physical.add_to_additive(get_enchant_jewellery_increase_physical_resistance(&enchant.effective_level, &enchant.quality) as u32),
-                    EnchantType::SpellResistance    => self.spell.add_to_additive(get_enchant_jewellery_increase_spell_resistance(&enchant.effective_level, &enchant.quality) as u32),
+                    EnchantType::SpellResistance => self.spell.add_to_additive(get_enchant_jewellery_increase_spell_resistance(&enchant.effective_level, &enchant.quality) as u32),
                     _ => {},
                 }
             }
