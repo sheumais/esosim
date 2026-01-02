@@ -48,6 +48,10 @@ impl Player {
         self.gear.get_active_gear(&self.active_bar)
     }
 
+    pub fn get_active_gear_with_slots(&self) -> impl Iterator<Item = (GearSlot, &GearPiece)> {
+        self.gear.iter_active_gear(&self.active_bar)
+    }
+
     pub fn get_active_bar(&self) -> &ActiveBar {
         &self.active_bar
     }
@@ -511,6 +515,14 @@ pub fn get_trait_value_for_item(gear: &GearPiece) -> Option<f32> {
     }
 
     Some(value)
+}
+
+pub fn get_armour_enchant_multiplier(slot: &GearSlot) -> f32 {
+    match slot {
+        GearSlot::Head | GearSlot::OffHand | GearSlot::OffHandBackup | GearSlot::Chest | GearSlot::Legs => 1.0,
+        GearSlot::Waist | GearSlot::Shoulders | GearSlot::Hands | GearSlot::Feet => 0.4,
+        _ => 0.0
+    }
 }
 
 #[derive(Debug, PartialEq)]
