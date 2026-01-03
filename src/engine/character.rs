@@ -42,9 +42,12 @@ impl Character {
         self.emit_event_to_sets(&event);
 
         match event {
-            Event::EquipChanged | Event::PlayerUpdated | Event::BarSwapped | Event::BuffFaded | Event::BuffGained | Event::BuffStacksUpdated => {
+            Event::EquipChanged | Event::PlayerUpdated | Event::BarSwapped => {
                 self.evaluate_sets();
                 self.recompute_all_supplemental_state();
+            }
+            Event::BuffFaded | Event::BuffGained | Event::BuffStacksUpdated => {
+                self.recompute_buff_supplemental_state();
             }
             _ => {}
         }
@@ -52,11 +55,21 @@ impl Character {
 
     pub fn add_buff(&mut self, id: ID, stacks: STACKS) {
         self.player.add_buff(id, stacks);
+        self.armour.add_source_checked(id, Some(stacks));
+        self.critical_damage_done.add_source_checked(id, Some(stacks));
+        self.critical_damage_taken.add_source_checked(id, Some(stacks));
+        self.power.add_source_checked(id, Some(stacks));
+        self.resources.add_source_checked(id, Some(stacks));
         self.handle_event(Event::BuffGained);
     }
 
     pub fn remove_buff(&mut self, id: ID) {
         self.player.remove_buff(&id);
+        self.armour.remove_source(&id);
+        self.critical_damage_done.remove_source(&id);
+        self.critical_damage_taken.remove_source(&id);
+        self.power.remove_source(&id);
+        self.resources.remove_source(&id);
         self.handle_event(Event::BuffFaded);
     }
 
@@ -157,6 +170,16 @@ impl Character {
         self.armour.update_from_player(&self.player);
         self.critical_damage_taken.update_from_player(&self.player);
         self.resources.update_from_player(&self.player);
+    }
+
+    fn recompute_buff_supplemental_state(&mut self) {
+        if self.critical_damage_done.is_dirty {self.critical_damage_done.refresh()};
+        if self.power.is_dirty {self.power.refresh()};
+        // self.armour.refresh(); todo
+        if self.armour.is_dirty {self.armour.update_from_player(&self.player)};
+        if self.critical_damage_done.is_dirty {self.critical_damage_done.refresh()};
+        if self.critical_damage_taken.is_dirty {self.critical_damage_taken.refresh()};
+        if self.resources.is_dirty {self.resources.refresh()};
     }
 }
 

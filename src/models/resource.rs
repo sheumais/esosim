@@ -40,6 +40,10 @@ impl PlayerMaxResource {
         self.attribute = value;
     }
 
+    pub fn get_attribute(&self) -> u8 {
+        self.attribute
+    }
+
     pub fn reset(&mut self) {
         self.additive = 0;
         self.multiplicative = 0.0;
@@ -56,6 +60,16 @@ impl PlayerMaxResource {
 
     pub fn get_type(self) -> PlayerAttributeType {
         self.resource_type
+    }
+
+    pub fn calculate_attribute_count_from_target(&mut self, target_resource_amount: u32) -> Option<u8> {
+        for i in 0..=64 {
+            self.attribute = i;
+            if self.calculate() == target_resource_amount {
+                return Some(i);
+            }
+        }
+        None
     }
 }
 

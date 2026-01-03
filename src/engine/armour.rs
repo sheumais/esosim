@@ -2,22 +2,13 @@ use std::collections::HashMap;
 
 use crate::data::armour::*;
 use crate::data::item_type::{EnchantType, ItemType};
+use crate::data::sets::{SET_ARMOUR_MAX, SetBonusType, get_number_of_bonus_type_from_active_set};
 use crate::data::skill::{FROZEN_ARMOUR_ID, SkillLine};
 use crate::data::enchant::*;
 use crate::engine::{ID, STACKS};
 use crate::models::armour::{Armour as ArmourModel};
 use crate::models::damage::DamageType;
 use crate::models::player::Player;
-
-    // BLEED,
-    // COLD,
-    // DISEASE,
-    // FIRE,
-    // MAGIC,
-    // OBLIVION,
-    // PHYSICAL,
-    // POISON,
-    // SHOCK,
 
 pub struct Armour {
     pub sources: HashMap<ID, STACKS>,
@@ -32,6 +23,7 @@ pub struct Armour {
     poison: ArmourModel,
     shock: ArmourModel,
     spell: ArmourModel,
+    pub is_dirty: bool,
 }
 
 impl Armour {
@@ -49,18 +41,26 @@ impl Armour {
             poison: ArmourModel::default(),
             shock: ArmourModel::default(),
             spell: ArmourModel::default(),
+            is_dirty: false,
         }
     }
 
     pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
         self.sources.insert(id, stacks.unwrap_or(1));
+        self.is_dirty = true;
+    }
+
+    pub fn add_source_checked(&mut self, id: ID, stacks: Option<STACKS>) {
+        if Self::is_valid_source(&id) {
+            self.add_source(id, stacks);
+        }
     }
 
     pub fn remove_source(&mut self, id: &ID) {
-        self.sources.remove(id);
+        self.is_dirty = self.sources.remove(id).is_some();
     }
 
-    fn refresh(&mut self) {
+    pub fn refresh(&mut self) {
         self.reset_all();
 
         self.bleed.add_to_additive(self.player_armour.clone());
@@ -114,6 +114,7 @@ impl Armour {
                 self.disease.add_to_additive(value.clone());
             }
         }
+        self.is_dirty = false;
     }
 
     fn reset_all(&mut self) {
@@ -126,6 +127,7 @@ impl Armour {
         self.physical.reset();
         self.poison.reset();
         self.shock.reset();
+        self.is_dirty = true;
     }
 
     pub fn is_valid_source(id: &ID) -> bool {
@@ -168,6 +170,9 @@ impl Armour {
         if heavy >= 4 {
             if ice_staves_shields > 0 {self.add_source(64079, Some(1))}; // Assume players have this because it is shown for only the person logging
             player_armour += (34.62f32 * 50.0).round() as u32; // Assume players wearing heavy armour (tanks) always have this CP because it is never shown on logs so there is no way to know until reverse engineering the damage taken numbers.
+        }
+        for set in player.get_active_sets_counts() {
+            self.player_armour += SET_ARMOUR_MAX * get_number_of_bonus_type_from_active_set(&set, &SetBonusType::Armour) as u32;
         }
 
         self.player_armour = player_armour;

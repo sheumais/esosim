@@ -7,6 +7,7 @@ pub mod traits;
 pub mod armour;
 pub mod resource;
 pub mod enchant;
+pub mod sets;
 
 #[derive(PartialEq, Debug)]
 pub struct StatBuff {

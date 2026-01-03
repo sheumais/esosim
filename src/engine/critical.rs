@@ -9,6 +9,7 @@ use crate::models::player::Player;
 pub struct CriticalDamage {
     pub sources: HashMap<ID, STACKS>,
     critical_damage: CriticalDamageModel,
+    pub is_dirty: bool,
 }
 
 impl CriticalDamage {
@@ -16,11 +17,19 @@ impl CriticalDamage {
         Self {
             sources: HashMap::new(),
             critical_damage: CriticalDamageModel::default(),
+            is_dirty: false,
         }
     }
 
     pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
         self.sources.insert(id, stacks.unwrap_or(1));
+        self.is_dirty = true;
+    }
+
+    pub fn add_source_checked(&mut self, id: ID, stacks: Option<STACKS>) {
+        if Self::is_valid_source(&id) {
+            self.add_source(id, stacks);
+        }
     }
 
     pub fn add_raw_stat_unchecked(&mut self, value: u16) {
@@ -28,11 +37,10 @@ impl CriticalDamage {
     }
 
     pub fn remove_source(&mut self, id: &ID) {
-        self.sources.remove(id);
-        self.refresh();
+        self.is_dirty = self.sources.remove(id).is_some();
     }
 
-    fn refresh(&mut self) {
+    pub fn refresh(&mut self) {
         self.critical_damage.reset();
         for (id, stacks) in &self.sources {
             if let Some(buff) = CRITICAL_DAMAGE_DONE_BY_ID.get(&id) {
@@ -40,6 +48,7 @@ impl CriticalDamage {
             }
             // Malacath's add to multiplicative
         }
+        self.is_dirty = false;
     }
 
     pub fn is_valid_source(id: &ID) -> bool {
@@ -83,6 +92,7 @@ impl CriticalDamage {
 pub struct CriticalDamageTaken {
     pub sources: HashMap<ID, STACKS>,
     critical_damage_taken: u8,
+    pub is_dirty: bool,
 }
 
 impl CriticalDamageTaken {
@@ -90,11 +100,19 @@ impl CriticalDamageTaken {
         Self {
             sources: HashMap::new(),
             critical_damage_taken: 0,
+            is_dirty: false,
         }
     }
 
     pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
         self.sources.insert(id, stacks.unwrap_or(1));
+        self.is_dirty = true;
+    }
+    
+    pub fn add_source_checked(&mut self, id: ID, stacks: Option<STACKS>) {
+        if Self::is_valid_source(&id) {
+            self.add_source(id, stacks);
+        }
     }
 
     pub fn add_raw_stat_unchecked(&mut self, value: u8) {
@@ -102,17 +120,17 @@ impl CriticalDamageTaken {
     }
 
     pub fn remove_source(&mut self, id: &ID) {
-        self.sources.remove(id);
-        self.refresh();
+        self.is_dirty = self.sources.remove(id).is_some();
     }
 
-    fn refresh(&mut self) {
+    pub fn refresh(&mut self) {
         self.critical_damage_taken = 0;
         for (id, stacks) in &self.sources {
             if let Some(buff) = CRITICAL_DAMAGE_TAKEN_BY_ID.get(&id) {
                 self.critical_damage_taken += (buff.value + buff.value_per_stack * *stacks as f64).round() as u8;
             }
         }
+        self.is_dirty = false;
     }
 
     pub fn is_valid_source(id: &ID) -> bool {
@@ -123,7 +141,7 @@ impl CriticalDamageTaken {
         self.critical_damage_taken
     }
 
-        pub fn update_from_player(&mut self, player: &Player) {
+    pub fn update_from_player(&mut self, player: &Player) {
         self.critical_damage_taken = 0;
         self.sources.clear();
         for (id, stacks) in player.get_buffs() {

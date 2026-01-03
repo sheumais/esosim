@@ -78,7 +78,6 @@ pub static MINOR_MANGLE: Buff = Buff { id: 61733, value: -10f64, value_per_stack
 pub static JUGGERNAUT: Buff = Buff { id: 45546, value: 0f64, value_per_stack: 2f64}; // Multiplicative
 pub static LAST_GASP: Buff = Buff { id: LAST_GASP_ID, value: 2412f64, value_per_stack: 0f64};
 pub static MINOR_TOUGHNESS: Buff = Buff { id: TOUGHNESS_MINOR_ID, value: 10f64, value_per_stack: 0f64}; // Multiplicative
-// Goliath Transformation
 pub static BONE_GOLIATH_TRANSFORMATION: Buff = Buff { id: BONE_GOLIATH_TRANSFORMATION_ID, value: 30_000f64, value_per_stack: 0f64};
 pub static RESIST_FROST: Buff = Buff { id: 45304, value: 1000f64, value_per_stack: 0f64};
 pub static ARGONIAN_RESISTANCE: Buff = Buff { id: 45255, value: 1000f64, value_per_stack: 0f64};
@@ -162,6 +161,7 @@ pub static FOOD_BUFFS: phf::Map<u32, &'static FoodBuff> = phf_map! {
     89973  => &ORZORGAS_RED_FROTHGAR,
     61261  => &PARSE_STAMINA,
     61260  => &PARSE_MAGICKA,
+    89955  => &CANDIED_JESTERS_COINS,
 };
 
 pub struct FoodBuff {
@@ -246,4 +246,8 @@ pub static PARSE_STAMINA: FoodBuff = FoodBuff {
 
 pub static PARSE_MAGICKA: FoodBuff = FoodBuff {
     id: 61260, max_health: None, max_magicka: Some(6048), max_stamina: None, health_recovery: None, magicka_recovery: None, stamina_recovery: None,
+};
+
+pub static CANDIED_JESTERS_COINS: FoodBuff = FoodBuff {
+    id: 89955, max_health: None, max_magicka: None, max_stamina: Some(4592), health_recovery: None, magicka_recovery: Some(459), stamina_recovery: None,
 };

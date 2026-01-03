@@ -145,6 +145,24 @@ impl Player {
     pub fn get_attributes(&self) -> (u8, u8, u8) {
         self.attributes
     }
+
+    pub fn get_active_sets_counts(&self) -> Vec<ActiveSet> {
+        let gear = self.get_active_gear();
+        let mut sets: HashMap<u16, u8> = HashMap::new();
+        for gear_piece in gear {
+            if let Some(set_id) = gear_piece.set_id {
+                *sets.entry(set_id).or_insert(0) += 1;
+            }
+        }
+        sets.into_iter()
+            .map(|(set_id, count)| ActiveSet { set_id: set_id as u32, count })
+            .collect()
+    }
+}
+
+pub struct ActiveSet {
+    pub set_id: u32,
+    pub count: u8,
 }
 
 #[derive(Debug, PartialEq)]

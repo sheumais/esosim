@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use crate::data::{StatBuff as Buff, item_type::{ItemQuality, ItemType}, major_minor::*, skill::*};
+use crate::data::{StatBuff as Buff, critical_damage::{HEAVY_WEAPONS_ID, TWIN_BLADE_AND_BLUNT_ID}, item_type::{ItemQuality, ItemType}, major_minor::*, skill::*};
 
 /// Assumes CP160
 pub fn power_from_weapon_type(item_type: &ItemType, quality: &ItemQuality) -> Option<u16> {
@@ -47,9 +47,13 @@ pub static SEETHING_FURY: Buff = Buff { id: 122729, value: 0f64, value_per_stack
 pub static EXPERT_MAGE: Buff = Buff { id: EXPERT_MAGE_ID, value: 0f64, value_per_stack: 108f64};
 pub static HARNESSED_QUINTESSENCE: Buff = Buff { id: HARNESSED_QUINTESSENCE_ID, value: 284f64, value_per_stack: 0f64};
 // continuous attack
+pub static TWIN_BLADE_AND_BLUNT: Buff = Buff { id: TWIN_BLADE_AND_BLUNT_ID, value: 0f64, value_per_stack: 129f64};
+pub static HEAVY_WEAPONS: Buff = Buff { id: HEAVY_WEAPONS_ID, value: 0f64, value_per_stack: 258f64};
 
 pub static SORCERY_MINOR: Buff = Buff { id: SORCERY_MINOR_ID, value: 10f64, value_per_stack: 0f64};
 pub static SORCERY_MAJOR: Buff = Buff { id: SORCERY_MAJOR_ID, value: 20f64, value_per_stack: 0f64};
+pub static BRUTALITY_MINOR: Buff = Buff { id: BRUTALITY_MINOR_ID, value: 10f64, value_per_stack: 0f64};
+pub static BRUTALITY_MAJOR: Buff = Buff { id: BRUTALITY_MAJOR_ID, value: 20f64, value_per_stack: 0f64};
 pub static AGILITY: Buff = Buff { id: 45572, value: 0f64, value_per_stack: 2f64};
 pub static SLAYER: Buff = Buff { id: SLAYER_ID, value: 0f64, value_per_stack: 3f64};
 pub static BALANCED_WARRIOR: Buff = Buff { id: BALANCED_WARRIOR_ID, value: 6f64, value_per_stack: 0f64};
@@ -74,6 +78,8 @@ pub static POWER_INCREASES_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
 pub static POWER_INCREASES_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
     61685 => &SORCERY_MINOR,
     61687 => &SORCERY_MAJOR,
+    61665 => &BRUTALITY_MAJOR,
+    61662 => &BRUTALITY_MINOR,
     45572 => &AGILITY,
     45596 => &SLAYER,
     44732 => &BALANCED_WARRIOR,
