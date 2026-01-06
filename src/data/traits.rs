@@ -253,11 +253,11 @@ pub fn get_jewelry_triune_value(q: &ItemQuality) -> (f32, f32, f32) {
 
 pub fn get_jewelry_protective_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1624.0,
-        ItemQuality::Fine => 1664.0,
-        ItemQuality::Superior => 1744.0,
-        ItemQuality::Epic => 1804.0,
-        ItemQuality::Legendary => 1844.0,
+        ItemQuality::Normal => 1053.0,
+        ItemQuality::Fine => 1091.0,
+        ItemQuality::Superior => 1128.0,
+        ItemQuality::Epic => 1153.0,
+        ItemQuality::Legendary => 1190.0,
     }
 }
 

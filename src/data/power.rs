@@ -49,6 +49,10 @@ pub static HARNESSED_QUINTESSENCE: Buff = Buff { id: HARNESSED_QUINTESSENCE_ID, 
 // continuous attack
 pub static TWIN_BLADE_AND_BLUNT: Buff = Buff { id: TWIN_BLADE_AND_BLUNT_ID, value: 0f64, value_per_stack: 129f64};
 pub static HEAVY_WEAPONS: Buff = Buff { id: HEAVY_WEAPONS_ID, value: 0f64, value_per_stack: 258f64};
+// apprentice mundus
+pub static THE_APPRENTICE: Buff = Buff { id: 13979, value: 238f64, value_per_stack: 0f64};
+// warrior mundus
+pub static THE_WARRIOR: Buff = Buff { id: 13940, value: 238f64, value_per_stack: 0f64};
 
 pub static SORCERY_MINOR: Buff = Buff { id: SORCERY_MINOR_ID, value: 10f64, value_per_stack: 0f64};
 pub static SORCERY_MAJOR: Buff = Buff { id: SORCERY_MAJOR_ID, value: 20f64, value_per_stack: 0f64};
@@ -76,12 +80,27 @@ pub static POWER_INCREASES_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
 };
 
 pub static POWER_INCREASES_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
-    61685 => &SORCERY_MINOR,
-    61687 => &SORCERY_MAJOR,
-    61665 => &BRUTALITY_MAJOR,
-    61662 => &BRUTALITY_MINOR,
     45572 => &AGILITY,
     45596 => &SLAYER,
     44732 => &BALANCED_WARRIOR,
     46139 => &SAVAGE_STRENGTH,
 };
+
+pub static SPELL_POWER_INCREASES_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
+    13979 => &THE_APPRENTICE,
+};
+
+pub static SPELL_POWER_INCREASES_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
+    61685 => &SORCERY_MINOR,
+    61687 => &SORCERY_MAJOR,
+};
+
+pub static WEAPON_POWER_INCREASES_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
+    13940 => &THE_WARRIOR,
+};
+
+pub static WEAPON_POWER_INCREASES_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
+    61665 => &BRUTALITY_MAJOR,
+    61662 => &BRUTALITY_MINOR,
+};
+

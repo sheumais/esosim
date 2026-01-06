@@ -1,46 +1,37 @@
 use crate::models::{CRITICAL_CHANCE_DEFAULT, CRITICAL_DAMAGE_DEFAULT, CRITICAL_DAMAGE_MAXIMUM, EFFECTIVE_LEVEL};
 
+pub const CRIT_DAMAGE_SCALE: u16 = 66;
+
 pub struct CriticalDamage {
-    additive: u16,
-    multiplicative: f32
+    additive_scaled: u16,
 }
 
 impl CriticalDamage {
-    pub fn calculate(&self) -> u8 {
-        let base =
-            self.additive
-            + CRITICAL_DAMAGE_DEFAULT as u16;
+    pub fn calculate(&self) -> u16 {
+        let base = self.additive_scaled
+            + (CRITICAL_DAMAGE_DEFAULT * CRIT_DAMAGE_SCALE);
 
-        CRITICAL_DAMAGE_MAXIMUM.min((base as f32 * (1.0 + self.multiplicative)) as u8)
+        CRITICAL_DAMAGE_MAXIMUM.min(base)
     }
 
     pub fn calculate_uncapped(&self) -> u16 {
-        let base =
-            self.additive
-            + CRITICAL_DAMAGE_DEFAULT as u16;
-
-        (base as f32 * (1.0 + self.multiplicative)) as u16
+        self.additive_scaled
+            + (CRITICAL_DAMAGE_DEFAULT * CRIT_DAMAGE_SCALE)
     }
 
-    pub fn add_to_additive(&mut self, value: u16) {
-        self.additive += value;
-    }
-
-    pub fn add_to_multiplicative(&mut self, value: f32) {
-        self.multiplicative += value;
+    pub fn add_percent(&mut self, percent: u16) {
+        self.additive_scaled += percent * CRIT_DAMAGE_SCALE;
     }
 
     pub fn reset(&mut self) {
-        self.additive = 0;
-        self.multiplicative = 0.0;
+        self.additive_scaled = 0;
     }
 }
 
 impl Default for CriticalDamage {
     fn default() -> Self {
         Self {
-            additive: 0,
-            multiplicative: 0.0
+            additive_scaled: 0,
         }
     }
 }
@@ -93,24 +84,24 @@ mod tests {
     #[test]
     fn test_calculate_crit_chance() {
         let mut crit_chance = CriticalChance::default();
-        crit_chance.additive 
-        +=2629 // major savagery
+        crit_chance.add_to_additive(
+        2629 // major savagery
         + 1922 // thief mundus
         + 219 * 6 // light armour
         + 320 // precision cp
-        + 657; // slimecraw 1pc
-        crit_chance.multiplicative += 0.072;
+        + 657); // slimecraw 1pc
+        crit_chance.add_to_multiplicative(0.072);
         assert_eq!(crit_chance.calculate() * 100.0, 48.4249);
     }
 
     #[test]
     fn test_calculate_crit_damage() {
         let mut crit_damage = CriticalDamage::default();
-        crit_damage.additive
-        += 10 // animal companions (advanced species)
+        crit_damage.add_percent(
+        10 // animal companions (advanced species)
         + 2 // 1x medium armour
         + 12 // khajiit passive
-        + 10; // velothi amulet/minor force
-        assert_eq!(crit_damage.calculate(), 84u8);
+        + 10); // velothi amulet/minor force
+        assert_eq!(crit_damage.calculate(), 84u16);
     }
 }

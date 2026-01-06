@@ -33,7 +33,7 @@ impl CriticalDamage {
     }
 
     pub fn add_raw_stat_unchecked(&mut self, value: u16) {
-        self.critical_damage.add_to_additive(value);
+        self.critical_damage.add_percent(value);
     }
 
     pub fn remove_source(&mut self, id: &ID) {
@@ -44,7 +44,7 @@ impl CriticalDamage {
         self.critical_damage.reset();
         for (id, stacks) in &self.sources {
             if let Some(buff) = CRITICAL_DAMAGE_DONE_BY_ID.get(&id) {
-                self.critical_damage.add_to_additive((buff.value + buff.value_per_stack * *stacks as f64) as u16);
+                self.critical_damage.add_percent((buff.value + buff.value_per_stack * *stacks as f64) as u16);
             }
             // Malacath's add to multiplicative
         }
@@ -55,7 +55,7 @@ impl CriticalDamage {
         CRITICAL_DAMAGE_DONE_BY_ID.get(id).is_some()
     }
 
-    pub fn calculate(&self) -> u8 {
+    pub fn calculate(&self) -> u16 {
         self.critical_damage.calculate()
     }
 

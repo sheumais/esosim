@@ -470,6 +470,10 @@ impl GearPiece {
                 GearTrait::ArmorReinforced => (armour_value as f32 * get_armor_reinforced_value(&self.quality)) as u32,
                 GearTrait::ArmorNirnhoned => (armour_value as f32 + get_armor_nirnhoned_value(&self.quality)) as u32,
                 GearTrait::JewelryProtective => (get_jewelry_protective_value(&self.quality)) as u32,
+                GearTrait::WeaponDefending => {match is_two_handed_weapon(&self.get_item_type().unwrap_or(&ItemType::Mara)) {
+                    true => (get_weapon_defending_value(&self.quality) * 2.0) as u32,
+                    false => get_weapon_defending_value(&self.quality) as u32,
+                }},
                 _ => armour_value,
             }
         } else {

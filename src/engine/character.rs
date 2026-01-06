@@ -73,7 +73,7 @@ impl Character {
         self.handle_event(Event::BuffFaded);
     }
 
-    pub fn get_critical_damage_done(&mut self) -> u8 {
+    pub fn get_critical_damage_done(&mut self) -> u16 {
         self.critical_damage_done.calculate()
     }
 

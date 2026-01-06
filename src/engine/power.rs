@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use crate::data::critical_damage::{HEAVY_WEAPONS_ID, TWIN_BLADE_AND_BLUNT_ID};
 use crate::data::item_type::{EnchantType, GearSlot, GearTrait, ItemType};
-use crate::data::major_minor::{BRUTALITY_MAJOR_ID, BRUTALITY_MINOR_ID, SORCERY_MAJOR_ID, SORCERY_MINOR_ID};
-use crate::data::power::{POWER_INCREASES_ADDITIVE, POWER_INCREASES_MULTIPLICATIVE, TWIN_BLADE_AND_BLUNT};
+use crate::data::power::{POWER_INCREASES_ADDITIVE, POWER_INCREASES_MULTIPLICATIVE, SPELL_POWER_INCREASES_ADDITIVE, SPELL_POWER_INCREASES_MULTIPLICATIVE, WEAPON_POWER_INCREASES_ADDITIVE, WEAPON_POWER_INCREASES_MULTIPLICATIVE};
 use crate::data::sets::{SET_POWER_MAX, SetBonusType, get_number_of_bonus_type_from_active_set};
 use crate::data::skill::{EXPERT_MAGE_ID, SLAYER_ID, SkillLine};
 use crate::data::traits::get_jewelry_infused_value;
@@ -16,7 +15,8 @@ use crate::models::power::Power as PowerModel;
 pub struct Power {
     pub sources: HashMap<ID, STACKS>,
     gear_source: u32,
-    power: PowerModel,
+    weapon: PowerModel,
+    spell: PowerModel,
     pub is_dirty: bool,
 }
 
@@ -25,7 +25,8 @@ impl Power {
         Self {
             sources: HashMap::new(),
             gear_source: 0,
-            power: PowerModel::default(),
+            weapon: PowerModel::default(),
+            spell: PowerModel::default(),
             is_dirty: false,
         }
     }
@@ -41,67 +42,57 @@ impl Power {
         }
     }
 
-    pub fn add_raw_additive_unchecked(&mut self, value: u32) {
-        self.power.add_to_additive(value.into());
-    }
-    
-    pub fn add_raw_multiplicative_unchecked(&mut self, value: f32) {
-        self.power.add_to_multiplicative(value);
-    }
-
-    pub fn set_raw_bloodthirsty_unchecked(&mut self, value: u32) {
-        self.power.set_bloodthirsty(value);
-    }
-
     pub fn remove_source(&mut self, id: &ID) {
         self.is_dirty = self.sources.remove(id).is_some();
     }
 
     pub fn refresh(&mut self) {
-        self.power.reset();
-        let mut has_seen_minor_brutality = false;
-        let mut has_seen_major_brutality = false;
+        self.weapon.reset();
+        self.spell.reset();
         for (id, stacks) in &self.sources {
             if let Some(buff) = POWER_INCREASES_ADDITIVE.get(id) {
-                self.power.add_to_additive((buff.value + buff.value_per_stack * *stacks as f64) as u32);
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.weapon.add_to_additive(value);
+                self.spell.add_to_additive(value);
             } else if let Some(buff) = POWER_INCREASES_MULTIPLICATIVE.get(id) {
-                let is_major = matches!(buff.id, BRUTALITY_MAJOR_ID | SORCERY_MAJOR_ID);
-                let is_minor = matches!(buff.id, BRUTALITY_MINOR_ID | SORCERY_MINOR_ID);
-
-                if is_major {
-                    if has_seen_major_brutality {
-                        continue;
-                    }
-                    has_seen_major_brutality = true;
-                }
-
-                if is_minor {
-                    if has_seen_minor_brutality {
-                        continue;
-                    }
-                    has_seen_minor_brutality = true;
-                }
-
-                self.power.add_to_multiplicative(
-                    (buff.value + buff.value_per_stack * *stacks as f64) as f32 / 100.0
-                );
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as f32 / 100.0;
+                self.weapon.add_to_multiplicative(value);
+                self.spell.add_to_multiplicative(value);
+            } else if let Some(buff) = WEAPON_POWER_INCREASES_ADDITIVE.get(id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.weapon.add_to_additive(value);
+            } else if let Some(buff) = WEAPON_POWER_INCREASES_MULTIPLICATIVE.get(id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as f32 / 100.0;
+                self.spell.add_to_multiplicative(value);
+            } else if let Some(buff) = SPELL_POWER_INCREASES_ADDITIVE.get(id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.spell.add_to_additive(value);
+            } else if let Some(buff) = SPELL_POWER_INCREASES_MULTIPLICATIVE.get(id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as f32 / 100.0;
+                self.spell.add_to_multiplicative(value);
             }
         }
-        self.power.add_to_additive(self.gear_source);
+        self.weapon.add_to_additive(self.gear_source);
+        self.spell.add_to_additive(self.gear_source);
         self.is_dirty = false;
     }
 
     pub fn is_valid_source(id: &ID) -> bool {
-        POWER_INCREASES_ADDITIVE.get(id).is_some()
-        || POWER_INCREASES_MULTIPLICATIVE.get(id).is_some()
+        POWER_INCREASES_ADDITIVE.contains_key(id)
+        || POWER_INCREASES_MULTIPLICATIVE.contains_key(id)
+        || WEAPON_POWER_INCREASES_ADDITIVE.contains_key(id)
+        || WEAPON_POWER_INCREASES_MULTIPLICATIVE.contains_key(id)
+        || SPELL_POWER_INCREASES_ADDITIVE.contains_key(id)
+        || SPELL_POWER_INCREASES_MULTIPLICATIVE.contains_key(id)
     }
 
     pub fn calculate(&self) -> u32 {
-        self.power.calculate()
+        self.spell.calculate().max(self.weapon.calculate())
     }
 
     pub fn update_from_player(&mut self, player: &Player) {
-        self.power.reset();
+        self.spell.reset();
+        self.weapon.reset();
         self.sources.clear();
         for (id, stacks) in player.get_buffs() {
             if Self::is_valid_source(id) {
