@@ -103,6 +103,24 @@ pub fn is_two_handed_weapon(item: &ItemType) -> bool {
     )
 }
 
+pub fn is_two_handed_weapon_option(item: Option<&ItemType>) -> bool {
+    if let Some(item_type) = item {
+        matches!(
+        item_type,
+        ItemType::TwoHandedAxe
+            | ItemType::TwoHandedMace
+            | ItemType::TwoHandedSword
+            | ItemType::Bow
+            | ItemType::FrostStaff
+            | ItemType::FireStaff
+            | ItemType::LightningStaff
+            | ItemType::HealingStaff
+        )
+    } else {
+        false
+    }
+}
+
 pub fn is_armour(item: &ItemType) -> bool {
     matches!(item, ItemType::Light | ItemType::Medium | ItemType::Heavy | ItemType::Shield)
 }

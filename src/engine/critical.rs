@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 
+use crate::data::critical_chance::{CRITICAL_CHANCE_BOTH, CRITICAL_CHANCE_SPELL, CRITICAL_CHANCE_WEAPON};
 use crate::data::critical_damage::{CRITICAL_DAMAGE_DONE_BY_ID, CRITICAL_DAMAGE_TAKEN_BY_ID, DEXTERITY_ID, HEAVY_WEAPONS_ID, THE_SHADOW_ID, TWIN_BLADE_AND_BLUNT_ID};
-use crate::data::item_type::{GearTrait, ItemType};
+use crate::data::item_type::{GearTrait, ItemType, is_two_handed_weapon_option};
+use crate::data::sets::{SetBonusType, get_total_bonus};
+use crate::data::traits::get_weapon_precise_value;
 use crate::engine::{ID, STACKS};
-use crate::models::critical::CriticalDamage as CriticalDamageModel;
+use crate::models::critical::{CriticalDamage as CriticalDamageModel, CriticalChance as CriticalChanceModel};
 use crate::models::player::Player;
 
 pub struct CriticalDamage {
@@ -154,6 +157,100 @@ impl CriticalDamageTaken {
     }
 }
 
+pub struct CriticalChance {
+    pub sources: HashMap<ID, STACKS>,
+    weapon_critical: CriticalChanceModel,
+    spell_critical: CriticalChanceModel,
+    set_additive: u32,
+    pub is_dirty: bool,
+}
+
+impl CriticalChance {
+    pub fn new() -> Self {
+        Self {
+            sources: HashMap::new(),
+            weapon_critical: CriticalChanceModel::default(),
+            spell_critical: CriticalChanceModel::default(),
+            set_additive: 0,
+            is_dirty: false,
+        }
+    }
+
+    pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
+        self.sources.insert(id, stacks.unwrap_or(1));
+        self.is_dirty = true;
+    }
+
+    pub fn add_source_checked(&mut self, id: ID, stacks: Option<STACKS>) {
+        if Self::is_valid_source(&id) {
+            self.add_source(id, stacks);
+        }
+    }
+
+    pub fn remove_source(&mut self, id: &ID) {
+        self.is_dirty = self.sources.remove(id).is_some();
+    }
+
+    pub fn refresh(&mut self) {
+        self.weapon_critical.reset();
+        self.spell_critical.reset();
+        for (id, stacks) in &self.sources {
+            if let Some(buff) = CRITICAL_CHANCE_BOTH.get(&id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.weapon_critical.add_to_additive(value);
+                self.spell_critical.add_to_additive(value);
+            } else if let Some(buff) = CRITICAL_CHANCE_SPELL.get(&id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.spell_critical.add_to_additive(value);
+            } else if let Some(buff) = CRITICAL_CHANCE_WEAPON.get(&id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.weapon_critical.add_to_additive(value);
+            }
+        }
+        self.weapon_critical.add_to_additive(self.set_additive);
+        self.spell_critical.add_to_additive(self.set_additive);
+        self.is_dirty = false;
+    }
+
+    pub fn is_valid_source(id: &ID) -> bool {
+        CRITICAL_CHANCE_BOTH.contains_key(id) | CRITICAL_CHANCE_SPELL.contains_key(id) | CRITICAL_CHANCE_WEAPON.contains_key(id)
+    }
+
+    pub fn calculate(&self) -> f32 {
+        self.weapon_critical.calculate().max(self.spell_critical.calculate())
+    }
+
+    pub fn get_raw(&self) -> u32 {
+        self.weapon_critical.get_raw().max(self.spell_critical.get_raw())
+    }
+
+    pub fn update_from_player(&mut self, player: &Player) {
+        self.weapon_critical.reset();
+        self.spell_critical.reset();
+        self.sources.clear();
+        self.set_additive = 0;
+        
+        for (id, stacks) in player.get_buffs().iter() {
+            if Self::is_valid_source(id) {
+                self.add_source(*id, Some(*stacks));
+            }
+        }
+        self.add_source(141898, Some(2)); // Precision CP
+        let light = player.get_number_of_equipped_item_type(&ItemType::Light);
+        if light > 0 {self.add_source(45562, Some(light))};
+        for set in player.get_active_sets_counts() {
+            self.set_additive += get_total_bonus(&set,&SetBonusType::CriticalChance(None));
+        }
+        for gear_piece in player.get_active_gear() {
+            match gear_piece.gear_trait {
+                Some(GearTrait::WeaponPrecise) => {let value = get_weapon_precise_value(&gear_piece.quality); if is_two_handed_weapon_option(gear_piece.get_item_type()) {self.set_additive += value as u32} else {self.set_additive += (value / 2.0).round() as u32}},
+                _ => {},
+            }
+        }
+        self.refresh();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{data::{item_type::{GearSlot, ItemQuality}, major_minor::*}, engine::character::Character, models::player::GearPiece};
@@ -177,11 +274,13 @@ mod tests {
     fn add_and_remove_source_updates_value() {
         let mut crit = CriticalDamage::new();
 
-        crit.add_source(FORCE_MINOR_ID, None);
+        crit.add_source_checked(FORCE_MINOR_ID, Some(1));
+        crit.refresh();
         let with_force = crit.calculate();
-        assert!(with_force == 60);
+        assert!(with_force == 60, "was {}", crit.calculate());
 
         crit.remove_source(&FORCE_MINOR_ID);
+        crit.refresh();
         let without_force = crit.calculate();
         assert!(without_force < with_force);
     }
@@ -191,6 +290,7 @@ mod tests {
         let mut crit = CriticalDamage::new();
 
         crit.add_source(DEXTERITY_ID, Some(6));
+        crit.refresh();
         assert_eq!(crit.calculate(), 62);
     }
 

@@ -1,52 +1,109 @@
 use crate::models::player::ActiveSet;
 
-#[derive(PartialEq)]
 pub enum SetBonusType {
-    Health,
-    Stamina,
-    Magicka,
-    HealingTaken,
-    HealingDone,
-    Power,
-    Armour,
-    HealthRecovery,
-    StaminaRecovery,
-    MagickaRecovery,
-    CriticalChance,
+    Health(Option<u32>),
+    Stamina(Option<u32>),
+    Magicka(Option<u32>),
+    HealingTaken(Option<u32>),
+    HealingDone(Option<u32>),
+    Power(Option<u32>),
+    Armour(Option<u32>),
+    HealthRecovery(Option<u32>),
+    StaminaRecovery(Option<u32>),
+    MagickaRecovery(Option<u32>),
+    CriticalChance(Option<u32>),
     MinorAegis,
     MinorSlayer,
-    Penetration,
-    ReducePlayerDamageTaken,
+    Penetration(Option<u32>),
+    ReducePlayerDamageTaken(Option<u32>),
+    CriticalResistance(Option<u32>),
+}
+
+impl SetBonusType {
+    fn get_value(&self) -> u32 {
+        match self {
+            SetBonusType::Health(o) => o.unwrap_or(SET_HEALTH_DEFAULT),
+            SetBonusType::Stamina(o) => o.unwrap_or(SET_STAMINA_DEFAULT),
+            SetBonusType::Magicka(o) => o.unwrap_or(SET_MAGICKA_DEFAULT),
+            SetBonusType::HealingTaken(o) => o.unwrap_or(SET_HEALING_TAKEN_DEFAULT),
+            SetBonusType::HealingDone(o) => o.unwrap_or(SET_HEALING_DONE_DEFAULT),
+            SetBonusType::Power(o) => o.unwrap_or(SET_POWER_DEFAULT),
+            SetBonusType::Armour(o) => o.unwrap_or(SET_ARMOUR_DEFAULT),
+            SetBonusType::HealthRecovery(o) => o.unwrap_or(SET_HEALTH_RECOVERY_DEFAULT),
+            SetBonusType::StaminaRecovery(o) => o.unwrap_or(SET_STAMINA_RECOVERY_DEFAULT),
+            SetBonusType::MagickaRecovery(o) => o.unwrap_or(SET_MAGICKA_RECOVERY_DEFAULT),
+            SetBonusType::CriticalChance(o) => o.unwrap_or(SET_CRITICAL_CHANCE_DEFAULT),
+            SetBonusType::MinorAegis => SET_MINOR_AEGIS_DEFAULT,
+            SetBonusType::MinorSlayer => SET_MINOR_SLAYER_DEFAULT,
+            SetBonusType::Penetration(o) => o.unwrap_or(SET_PENETRATION_DEFAULT),
+            SetBonusType::ReducePlayerDamageTaken(o) => {
+                o.unwrap_or(SET_REDUCE_PLAYER_DAMAGE_TAKEN_DEFAULT)
+            }
+            SetBonusType::CriticalResistance(o) => {
+                o.unwrap_or(SET_CRITICAL_RESISTANCE_DEFAULT)
+            }
+        }
+    }
+
+    fn same_kind(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
 }
 
 pub struct Set {
     bonuses: &'static [&'static [SetBonusType]],
 }
 
-pub fn get_number_of_bonus_type_from_active_set(set_details: &ActiveSet, bonus: &SetBonusType) -> u8 {
-    get_number_of_bonus_type(&set_details.set_id, set_details.count, bonus)
-}
-
-fn get_number_of_bonus_type(set_id: &u32, count: u8, bonus: &SetBonusType) -> u8 {
-    if let Some(set_bonuses) = SET_BONUSES.get(set_id) {
+pub fn get_total_bonus(set_details: &ActiveSet, bonus: &SetBonusType) -> u32 {
+    if let Some(set_bonuses) = SET_BONUSES.get(&set_details.set_id) {
         return set_bonuses
             .bonuses
             .iter()
-            .take(count as usize)
+            .take(set_details.count as usize)
             .flat_map(|group| group.iter())
-            .filter(|s| *s == bonus)
-            .count() as u8;
+            .filter(|s| s.same_kind(bonus))
+            .map(|b| b.get_value())
+            .sum();
     }
     0
 }
 
-pub const SET_HEALTH_MAX: u32 = 1206;
-pub const SET_STAMINA_MAX: u32 = 1096;
-pub const SET_MAGICKA_MAX: u32 = 1096;
-pub const SET_POWER_MAX: u32 = 129;
-pub const SET_ARMOUR_MAX: u32 = 1487;
-pub const SET_CRITICAL_CHANCE_MAX: u32 = 657;
-pub const SET_PENETRATION_MAX: u32 = 1487;
+// todo: fix scaling
+pub const SET_HEALTH_DEFAULT: u32 = 1206;
+pub const SET_STAMINA_DEFAULT: u32 = 1096;
+pub const SET_MAGICKA_DEFAULT: u32 = 1096;
+pub const SET_POWER_DEFAULT: u32 = 129;
+pub const SET_ARMOUR_DEFAULT: u32 = 1487;
+pub const SET_CRITICAL_CHANCE_DEFAULT: u32 = 657;
+pub const SET_PENETRATION_DEFAULT: u32 = 1487;
+pub const SET_CRITICAL_RESISTANCE_DEFAULT: u32 = 424;
+pub const SET_REDUCE_PLAYER_DAMAGE_TAKEN_DEFAULT: u32 = 3;
+pub const SET_MINOR_AEGIS_DEFAULT: u32 = 1;
+pub const SET_MINOR_SLAYER_DEFAULT: u32 = 1;
+pub const SET_MAGICKA_RECOVERY_DEFAULT: u32 = 129;
+pub const SET_STAMINA_RECOVERY_DEFAULT: u32 = 129;
+pub const SET_HEALTH_RECOVERY_DEFAULT: u32 = 129;
+pub const SET_HEALING_DONE_DEFAULT: u32 = 4;
+pub const SET_HEALING_TAKEN_DEFAULT: u32 = 4;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reawakened_hierophant_magicka_bonus_is_summed_correctly() {
+        let active_set = ActiveSet {
+            set_id: 722,
+            count: 5,
+        };
+
+        let bonus = SetBonusType::Magicka(None);
+
+        let total = get_total_bonus(&active_set, &bonus);
+
+        assert_eq!(total, 731 * 3);
+    }
+}
 
 // Big thank you to UESP!
 // https://esoitem.uesp.net/viewlog.php?record=setSummary
@@ -763,247 +820,255 @@ pub static SET_BONUSES: phf::Map<u32, &'static Set> = phf::phf_map! {
 static ABYSSAL_BRACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(Some(1710))],
     ],
 };
 
 static ADAMANT_LURKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
 static ADEPT_RIDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static AEGIS_CALLER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static AEGIS_OF_GALENWE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static AERIES_CRY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static AETHERIAL_ASCENSION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(Some(7377))],
     ],
 };
 
 static AETHERIC_LANCER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static AFFLICTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static AGILITY: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Stamina(Some(1752))],
+        &[SetBonusType::Power(Some(206))]
     ],
 };
 
 static AKAVIRI_DRAGONGUARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static ALESSIAS_BULWARK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static ALESSIAN_ORDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static ALMALEXIAS_MERCY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static AMBER_PLASM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::MagickaRecovery(Some(245)), SetBonusType::StaminaRecovery(Some(245)), SetBonusType::HealthRecovery(Some(245))],
     ],
 };
 
 static ANCIENT_DRAGONGUARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ANSUULS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static ANTHELMIRS_CONSTRUCT: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static APOCRYPHAL_INSPIRATION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ARCHDRUID_DEVYRIC: Set = Set {
     bonuses: &[
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static ARCHERS_MIND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ARKASIS_GENIUS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static ARKAYS_CHARITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ARMOR_MASTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static ARMOR_OF_THE_CODE: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ARMOR_OF_THE_SEDUCER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static ARMOR_OF_THE_TRAINEE: Set = Set {
     bonuses: &[
+        &[SetBonusType::Health(Some(1454))],
+        &[SetBonusType::Magicka(Some(1454))],
+        &[SetBonusType::Stamina(Some(1454))],
     ],
 };
 
 static ARMOR_OF_THE_VEILED_HERITANCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static ARMOR_OF_TRUTH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -1011,16 +1076,16 @@ static ARMS_OF_INFERNACE: Set = Set {
     bonuses: &[
         &[],
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ARMS_OF_RELEQUEN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
@@ -1028,219 +1093,221 @@ static ARMS_OF_THE_ANCESTORS: Set = Set {
     bonuses: &[
         &[],
         &[],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static ASHEN_GRIP: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ASPECT_OF_MAZZATUN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ASSASSINS_GUILE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static AURORANS_THUNDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static AUTOMATED_DEFENSE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static AYLEID_REFUGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static AZUREBLIGHT_REAPER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static BAAN_DARS_BLESSING: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static BACK_ALLEY_GOURMAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static BAHRAHAS_CURSE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BAHSEIS_MANIA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static BALORGH: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static BANIS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BAR_SAKKA: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static BARKSKIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static BARON_THIRSK: Set = Set {
     bonuses: &[
-        &[SetBonusType::StaminaRecovery, SetBonusType::MagickaRecovery],
+        &[SetBonusType::StaminaRecovery(None), SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static BARON_ZAUDRUS: Set = Set {
     bonuses: &[
+        &[SetBonusType::Stamina(Some(548)), SetBonusType::Magicka(Some(548)), SetBonusType::Health(Some(603))],
     ],
 };
 
 static BASALT_BLOODED_WARRIOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static BASTION_OF_THE_DRAOIFE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BASTION_OF_THE_HEARTLAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::ReducePlayerDamageTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::ReducePlayerDamageTaken(None)],
     ],
 };
 
 static BATTALION_DEFENDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static BATTLEFIELD_ACROBAT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BEACON_OF_OBLIVION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static BECKONING_STEEL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static BEEKEEPERS_GEAR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealthRecovery(Some(900))],
     ],
 };
 
@@ -1252,94 +1319,95 @@ static BELHARZAS_BAND: Set = Set {
 static BERSERKING_WARRIOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static BLACK_FOUNDRY_STEEL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BLACK_GEM_MONSTROSITY: Set = Set {
     bonuses: &[
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static BLACK_ROSE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(Some(176))]
     ],
 };
 
 static BLACK_GLOVE_GROUNDING: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static BLACKFEATHER_FLIGHT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static BLESSING_OF_HIGH_ISLE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static BLESSING_OF_THE_POTENTATES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::ReducePlayerDamageTaken],
+        &[SetBonusType::ReducePlayerDamageTaken(None)],
     ],
 };
 
 static BLIND_PATH_INDUCTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static BLOOD_MOON: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static BLOODDRINKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -1350,132 +1418,132 @@ static BLOODLORDS_EMBRACE: Set = Set {
 
 static BLOODSPAWN: Set = Set {
     bonuses: &[
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static BLOODTHORNS_TOUCH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static BLUNTED_BLADES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static BOG_RAIDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BONE_PIRATES_TATTERS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static BRANDS_OF_IMPERIUM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static BRIARHEART: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static BRIGHT_THROATS_BOAST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static BROKEN_SOUL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static BUFFER_OF_THE_SWIFT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static BULWARK_RUINATION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static BURNING_SPELLWEAVE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static CALL_OF_THE_UNDERTAKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Health],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static CALUURIONS_LEGACY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static CAMONNA_TONG: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -1488,9 +1556,10 @@ static CAUSTIC_ARROW: Set = Set {
 static CHAMPION_OF_THE_HIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(Some(1600))],
     ],
 };
 
@@ -1503,75 +1572,75 @@ static CHAOTIC_WHIRLWIND: Set = Set {
 static CHIMERAS_REBUKE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static CHOKETHORN: Set = Set {
     bonuses: &[
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static CINDERS_OF_ANTHELMIR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static CLAW_OF_THE_FOREST_WRAITH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static CLAW_OF_YOLNAHKRIIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static CLEVER_ALCHEMIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static COLDHARBOURS_FAVORITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static COLOVIAN_HIGHLANDS_GENERAL: Set = Set {
     bonuses: &[
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static COMBAT_PHYSICIAN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -1584,79 +1653,83 @@ static CONCENTRATED_FORCE: Set = Set {
 static CORAL_RIPTIDE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static CORPSEBURSTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static COUP_DE_GRACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static COWARDS_GEAR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(Some(250))]
     ],
 };
 
 static CRAFTY_ALFIQ: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(Some(2550))],
     ],
 };
 
 static CREST_OF_CYRODIIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static CRIMSON_OATHS_RIVE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static CRIMSON_TWILIGHT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static CRITICAL_RIPOSTE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::CriticalResistance(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::CriticalResistance(None)],
     ],
 };
 
@@ -1669,9 +1742,9 @@ static CRUEL_FLURRY: Set = Set {
 static CRUSADER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -1689,110 +1762,111 @@ static CRYPTCANON_VESTMENTS: Set = Set {
 static CURSE_EATER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static CURSE_OF_DOYLEMISH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static DAEDRIC_TRICKERY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static DAGONS_DOMINION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static DARING_CORSAIR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static DARK_CONVERGENCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static DARKSTRIDE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static DAUNTLESS_COMBATANT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static DEAD_WATERS_GUILE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static DEADLANDS_ASSASSIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(Some(200))],
     ],
 };
 
 static DEADLANDS_DEMOLISHER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static DEADLY_STRIKE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -1804,36 +1878,36 @@ static DEATH_DEALERS_FETE: Set = Set {
 static DEATHS_WIND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static DEATH_DANCER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static DEEPROOT_ZEAL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static DEFENDING_WARRIOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
@@ -1846,18 +1920,18 @@ static DEFENSIVE_POSITION: Set = Set {
 static DEFILER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static DESERT_ROSE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
@@ -1870,18 +1944,18 @@ static DESTRUCTIVE_IMPACT: Set = Set {
 static DESTRUCTIVE_MAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static DIAMONDS_VICTORY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -1894,15 +1968,15 @@ static DISCIPLINED_SLASH: Set = Set {
 static DOLOROUS_ARENA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static DOMIHAUS: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina, SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None), SetBonusType::Magicka(None)],
     ],
 };
 
@@ -1914,213 +1988,224 @@ static DOV_RHA_SABATONS: Set = Set {
 static DRAGONS_APPETITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static DRAGONS_DEFILEMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static DRAGONGUARD_ELITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static DRAKES_RUSH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static DRAUGR_HULK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(Some(2550))],
     ],
 };
 
 static DRAUGRS_HERITAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static DRAUGRS_REST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static DRAUGRKINS_GRIP: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static DREAMERS_MANTLE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static DREUGH_KING_SLAYER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static DROZAKARS_CLAWS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static DRUIDS_BRAID: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(Some(1565))],
+        &[SetBonusType::Stamina(Some(1565))],
+        &[SetBonusType::Health(Some(1722))],
+        &[SetBonusType::Magicka(Some(1565))],
+        &[SetBonusType::Stamina(Some(1565))],
+        &[SetBonusType::Health(Some(1722))],
+        &[SetBonusType::Magicka(Some(1565))],
+        &[SetBonusType::Stamina(Some(1565))],
     ],
 };
 
 static DUNERIPPERS_SCALES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static DUROKS_BANE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static EAGLE_EYE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static EARTHGORE: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static EBON_ARMORY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static ELEMENTAL_CATALYST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ELEMENTAL_SUCCESSION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ELF_BANE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static EMBERSHIELD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static ENCRATIS_BEHEMOTH: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ENDURANCE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Health(Some(1928))],
+        &[SetBonusType::HealthRecovery(Some(618))],
     ],
 };
 
 static ENERVATING_AURA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static ENGINE_GUARDIAN: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
@@ -2132,43 +2217,43 @@ static ESOTERIC_ENVIRONMENT_GREAVES: Set = Set {
 static ESSENCE_THIEF: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ETERNAL_HUNT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static ETERNAL_VIGOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
 static ETERNAL_WARRIOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static EUPHOTIC_GATEKEEPER: Set = Set {
     bonuses: &[
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
@@ -2181,64 +2266,64 @@ static EXECUTIONERS_BLADE: Set = Set {
 static EXPLOSIVE_REBUKE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static EYE_OF_NAHVIINTAAS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static EYE_OF_THE_GRASP: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static EYES_OF_MARA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static FALSE_GODS_DEVOTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static FARSTRIDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static FASALLAS_GUILE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
@@ -2253,65 +2338,66 @@ static FELLOWSHIPS_FORTITUDE: Set = Set {
         &[],
         &[],
         &[],
+        &[SetBonusType::Armour(Some(7425))],
         &[],
         &[],
         &[],
         &[],
-        &[],
+        &[SetBonusType::Health(Some(6020))],
     ],
 };
 
 static FIORDS_LEGACY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static FLAME_BLOSSOM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static FLANKING_STRATEGIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static FLEDGLINGS_NEST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static FOOLKILLERS_WARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static FOOTMANS_FORTUNE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
@@ -2324,9 +2410,10 @@ static FORCE_OVERFLOW: Set = Set {
 static FORTIFIED_BRASS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(Some(3460))],
     ],
 };
 
@@ -2339,36 +2426,36 @@ static FRENZIED_MOMENTUM: Set = Set {
 static FROSTBITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static FROZEN_WATCHER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static FULL_BELLY_BARRICADE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static GALERIONS_REVENGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -2381,69 +2468,71 @@ static GALLANT_CHARGE: Set = Set {
 static GARDENER_OF_SEASONS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static GAZE_OF_SITHIS: Set = Set {
     bonuses: &[
+        &[SetBonusType::Health(Some(3276)), SetBonusType::HealthRecovery(Some(1025)), SetBonusType::Armour(Some(4000))]
     ],
 };
 
 static GIANT_SPIDER: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static GLACIAL_GUARDIAN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
 static GLORGOLOCH_THE_DESTROYER: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static GLORIOUS_DEFENDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static GOSSAMER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static GRACE_OF_GLOOM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static GRACE_OF_THE_ANCIENTS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(Some(2406))]
     ],
 };
 
@@ -2456,111 +2545,113 @@ static GRAND_REJUVENATION: Set = Set {
 static GRAVE_GUARDIAN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static GRAVE_INEVITABILITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static GRAVE_STAKE_COLLECTOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static GREEN_PACT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static GRISLY_GOURMET: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Stamina(Some(526))],
     ],
 };
 
 static GROTHDARR: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static GRUNDWULF: Set = Set {
     bonuses: &[
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static GRYPHONS_FEROCITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static GRYPHONS_REPRISAL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static HAGRAVENS_GARDEN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static HAND_OF_MEPHALA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static HANUS_COMPASSION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(Some(1963))],
     ],
 };
 
 static HARMONY_IN_CHAOS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -2572,200 +2663,202 @@ static HARPOONERS_WADING_KILT: Set = Set {
 static HATCHLINGS_SHELL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static HAVEN_OF_URSUS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static HAWKS_EYE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static HEALERS_HABIT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static HEALING_MAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static HEARTLAND_CONQUEROR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static HEEM_JAS_RETRIBUTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static HEROIC_UNITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static HEW_AND_SUNDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static HEX_SIPHON: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static HEXOS_WARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static HIDE_OF_MORIHAUS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static HIDE_OF_THE_WEREWOLF: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static HIGHLAND_SENTINEL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(Some(986))],
     ],
 };
 
 static HIRCINES_VENEER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static HIST_BARK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static HIST_WHISPERER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static HITIS_HEARTH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static HOLLOWFANG_THIRST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static HROTHGARS_CHILL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static HUNDINGS_RAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(Some(300))],
     ],
 };
 
 static HUNT_LEADER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -2776,350 +2869,358 @@ static HUNTSMANS_WARMASK: Set = Set {
 
 static ICEHEART: Set = Set {
     bonuses: &[
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ICY_CONJURER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static ILAMBRIS: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static IMMOLATOR_CHARR: Set = Set {
     bonuses: &[
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static IMMORTAL_WARRIOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static IMPERIAL_PHYSIQUE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static IMPREGNABLE_ARMOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalResistance(Some(1650))]
     ],
 };
 
 static INDOMITABLE_FURY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static INFALLIBLE_MAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static INFERNAL_GUARDIAN: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static INNATE_AXIOM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka, SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None), SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static INVENTORS_GUARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static IRON_FLASK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static IRONBLOOD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static JAILBREAKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(Some(142))],
     ],
 };
 
 static JAILERS_TENACITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static JERALL_MOUNTAINS_WARCHIEF: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static JERENSIS_BLADESTORM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static JOLTING_ARMS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static JORVULDS_GUIDANCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static JUDGMENT_OF_AKATOSH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(Some(2291))]
     ],
 };
 
 static KAGRENACS_HOPE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Health],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(Some(222))],
     ],
 };
 
 static KARGAEDA: Set = Set {
     bonuses: &[
+        &[SetBonusType::Magicka(Some(731)), SetBonusType::Stamina(Some(731))]
     ],
 };
 
 static KAZPIANS_CRUEL_SIGNET: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static KINRAS_WRATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static KJALNARS_NIGHTMARE: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static KNIGHT_SLAYER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static KNIGHT_ERRANTS_MAIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static KNIGHTMARE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static KRAGH: Set = Set {
     bonuses: &[
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static KRAGLENS_HOWL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static KVATCH_GLADIATOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static KYNES_KISS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static KYNES_WIND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static KYNMARCHERS_CRUELTY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static LADY_MALYGDA: Set = Set {
     bonuses: &[
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static LADY_THORN: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static LAMIAS_SONG: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static LAMP_KNIGHTS_ART: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(Some(100_000))]
     ],
 };
 
 static LANGUOR_OF_PERYITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalResistance(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static LAW_OF_JULIANOS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(Some(300))],
     ],
 };
 
 static LEECHING_PLATE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
@@ -3131,111 +3232,113 @@ static LEFTHANDERS_AEGIS_BELT: Set = Set {
 static LEGACY_OF_KARTH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static LEKIS_FOCUS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static LEVIATHAN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(Some(1528))],
     ],
 };
 
 static LIGHT_OF_CYRODIIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static LIGHT_SPEAKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static LIVEWIRE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static LORD_WARDEN: Set = Set {
     bonuses: &[
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static LUCENT_ECHOES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static LUCILLAS_WINDSHIELD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static LUNAR_BASTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static LUSTROUS_SOULWELL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static MAARSELOK: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static MACABRE_VINTAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(Some(150))],
     ],
 };
 
@@ -3247,33 +3350,33 @@ static MAD_GODS_DANCING_SHOES: Set = Set {
 static MAD_TINKERER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MAGICKA_FURNACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MAGMA_INCARNATE: Set = Set {
     bonuses: &[
-        &[SetBonusType::MagickaRecovery, SetBonusType::StaminaRecovery],
+        &[SetBonusType::MagickaRecovery(None), SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static MAGNUS_GIFT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -3285,53 +3388,54 @@ static MALACATHS_BAND_OF_BRUTALITY: Set = Set {
 static MALIGALIGS_MAELSTROM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MANTLE_OF_SIRORIA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MARAS_BALM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::CriticalResistance(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static MARAUDERS_HASTE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static MARK_OF_THE_PARIAH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static MARKSMANS_CREST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -3343,33 +3447,34 @@ static MARKYN_RING_OF_MAJESTY: Set = Set {
 static MASTER_ARCHITECT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MAW_OF_THE_INFERNAL: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MECHANICAL_ACUITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MEDUSA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(Some(892))],
     ],
 };
 
@@ -3388,59 +3493,59 @@ static MERCILESS_CHARGE: Set = Set {
 static MERIDIAS_BLESSED_ARMOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static MERITORIOUS_SERVICE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MIGHT_OF_THE_LOST_LEGION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static MIGHTY_CHUDAN: Set = Set {
     bonuses: &[
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static MIGHTY_GLACIER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::StaminaRecovery, SetBonusType::MagickaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::StaminaRecovery(None), SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static MOLAG_KENA: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MONOLITH_OF_STORMS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -3452,27 +3557,27 @@ static MONOMYTH_REFORGED: Set = Set {
 static MOON_HUNTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static MOONDANCER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MORA_SCRIBES_THESIS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -3484,204 +3589,208 @@ static MORAS_WHISPERS: Set = Set {
 static MORKULDIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static MOTHER_CIANNAIT: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static MOTHERS_SORROW: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(Some(1528))],
     ],
 };
 
 static NAGA_SHAMAN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static NAZARAY: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static NECROPOTENCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static NERIENETH: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static NETCH_OIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static NETCHS_TOUCH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static NEW_MOON_ACOLYTE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(Some(401))],
     ],
 };
 
 static NIBENAY_BAY_BATTLEREEVE: Set = Set {
     bonuses: &[
+        &[SetBonusType::CriticalResistance(None)]
     ],
 };
 
 static NIGHT_MOTHERS_EMBRACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(Some(171))],
     ],
 };
 
 static NIGHT_MOTHERS_GAZE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static NIGHT_TERROR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static NIGHTS_SILENCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static NIGHTFLAME: Set = Set {
     bonuses: &[
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static NIKULAS_HEAVY_ARMOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static NIX_HOUNDS_HOWL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static NOBILITY_IN_DECAY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static NOBLE_DUELISTS_SILKS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static NOBLES_CONQUEST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static NOCTURNALS_FAVOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static NOCTURNALS_PLOY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static NOXIOUS_BOULDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static NUNATAK: Set = Set {
     bonuses: &[
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
@@ -3693,121 +3802,125 @@ static OAKENSOUL_RING: Set = Set {
 static OAKFATHERS_RETRIBUTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static OBLIVIONS_EDGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(Some(258))],
     ],
 };
 
 static OBLIVIONS_FOE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static OLD_GROWTH_BREWER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
 static ORDER_OF_DIAGNA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::HealingTaken(Some(5))],
     ],
 };
 
 static ORDERS_WRATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(Some(943))],
     ],
 };
 
 static ORGNUMS_SCALES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static ORPHEON_THE_TACTICIAN: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static OVERWHELMING_SURGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static OZEZAN_THE_INFERNO: Set = Set {
     bonuses: &[
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static PANGRIT_DENMOTHER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Armour],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::Stamina(Some(1890))],
     ],
 };
 
 static PARA_BELLUM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static PEACE_AND_SERENITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PEARLESCENT_WARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
@@ -3819,555 +3932,585 @@ static PEARLS_OF_EHLNOFEY: Set = Set {
 static PELINALS_WRATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_AEGIS_OF_GALENWE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static PERFECTED_ANSUULS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static PERFECTED_ARMS_OF_RELEQUEN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_BAHSEIS_MANIA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_CAUSTIC_ARROW: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Power(Some(103))]
     ],
 };
 
 static PERFECTED_CHAOTIC_WHIRLWIND: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::CriticalChance(Some(526))]
     ],
 };
 
 static PERFECTED_CLAW_OF_YOLNAHKRIIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static PERFECTED_CONCENTRATED_FORCE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Power(Some(103))]
     ],
 };
 
 static PERFECTED_CORAL_RIPTIDE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static PERFECTED_CRUEL_FLURRY: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Power(Some(103))]
     ],
 };
 
 static PERFECTED_CRUSHING_WALL: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_DEFENSIVE_POSITION: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::StaminaRecovery(Some(103))]
     ],
 };
 
 static PERFECTED_DESTRUCTIVE_IMPACT: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Power(Some(103))]
     ],
 };
 
 static PERFECTED_DISCIPLINED_SLASH: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Stamina(Some(877))]
     ],
 };
 
 static PERFECTED_DOLOROUS_ARENA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static PERFECTED_EXECUTIONERS_BLADE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::CriticalChance(Some(526))]
     ],
 };
 
 static PERFECTED_EYE_OF_NAHVIINTAAS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static PERFECTED_FALSE_GODS_DEVOTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_FORCE_OVERFLOW: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Magicka(Some(877))]
     ],
 };
 
 static PERFECTED_FRENZIED_MOMENTUM: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Stamina(Some(877))]
     ],
 };
 
 static PERFECTED_GALLANT_CHARGE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Armour(Some(1190))]
     ],
 };
 
 static PERFECTED_GRAND_REJUVENATION: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Magicka(Some(877))]
     ],
 };
 
 static PERFECTED_HARMONY_IN_CHAOS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_KAZPIANS_CRUEL_SIGNET: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_KYNES_WIND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static PERFECTED_LUCENT_ECHOES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static PERFECTED_MANTLE_OF_SIRORIA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_MENDERS_WARD: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::MagickaRecovery(Some(103))]
     ],
 };
 
 static PERFECTED_MERCILESS_CHARGE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_MORA_SCRIBES_THESIS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static PERFECTED_PEACE_AND_SERENITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_PEARLESCENT_WARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static PERFECTED_PIERCING_SPRAY: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_PILLAGERS_PROFIT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static PERFECTED_POINT_BLANK_SNIPE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Power(Some(103))]
     ],
 };
 
 static PERFECTED_PRECISE_REGENERATION: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::CriticalChance(Some(526))]
     ],
 };
 
 static PERFECTED_PUNCTURING_REMEDY: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::HealingTaken(Some(3))]
     ],
 };
 
 static PERFECTED_RADIAL_UPPERCUT: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_RAMPAGING_SLASH: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::MagickaRecovery(Some(77)), SetBonusType::StaminaRecovery(Some(77))]
     ],
 };
 
 static PERFECTED_RECOVERY_CONVERGENCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static PERFECTED_ROARING_OPPORTUNIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static PERFECTED_SAXHLEEL_CHAMPION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static PERFECTED_SLIVERS_OF_THE_NULL_ARCA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERFECTED_SPECTRAL_CLOAK: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::StaminaRecovery(Some(103))]
     ],
 };
 
 static PERFECTED_STINGING_SLASHES: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::CriticalChance(Some(526))]
     ],
 };
 
 static PERFECTED_STONE_TALKERS_OATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static PERFECTED_SUL_XANS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static PERFECTED_TEST_OF_RESOLVE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static PERFECTED_THUNDEROUS_VOLLEY: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::CriticalChance(Some(526))]
     ],
 };
 
 static PERFECTED_TIMELESS_BLESSING: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Magicka(Some(877))]
     ],
 };
 
 static PERFECTED_TITANIC_CLEAVE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_TOOTH_OF_LOKKESTIIZ: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static PERFECTED_TRANSFORMATIVE_HOPE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static PERFECTED_VESTMENT_OF_OLORIME: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static PERFECTED_VIRULENT_SHOT: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::CriticalChance(Some(526))]
     ],
 };
 
 static PERFECTED_VOID_BASH: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Health(Some(965))]
     ],
 };
 
 static PERFECTED_VROLS_COMMAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static PERFECTED_WHORL_OF_THE_DEPTHS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static PERFECTED_WILD_IMPULSE: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_WRATH_OF_ELEMENTS: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Penetration(Some(1190))]
     ],
 };
 
 static PERFECTED_XORYNS_MASTERPIECE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static PERFECTED_YANDIRS_MIGHT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PERMAFROST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static PESTILENT_HOST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static PHOENIX: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PHOENIX_MOTH_THEURGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static PHYLACTERYS_GRASP: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -4380,51 +4523,52 @@ static PIERCING_SPRAY: Set = Set {
 static PILLAGERS_PROFIT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static PILLAR_OF_NIRN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PIRATE_SKELETON: Set = Set {
     bonuses: &[
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static PLAGUE_DOCTOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(Some(2804))],
     ],
 };
 
 static PLAGUE_SLINGER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PLAGUEBREAK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -4437,27 +4581,27 @@ static POINT_BLANK_SNIPE: Set = Set {
 static POISONOUS_SERPENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static POWERFUL_ASSAULT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PRAYER_SHAWL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
@@ -4469,22 +4613,22 @@ static PRECISE_REGENERATION: Set = Set {
 
 static PRIOR_THIERRIC: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static PRISONERS_RAGS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static PROPHETS: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
@@ -4497,27 +4641,27 @@ static PUNCTURING_REMEDY: Set = Set {
 static PYREBRAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static QUEENS_ELEGANCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static QUICK_SERPENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
@@ -4530,18 +4674,18 @@ static RADIAL_UPPERCUT: Set = Set {
 static RADIANT_BASTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static RAGE_OF_THE_URSAUK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -4553,9 +4697,9 @@ static RAKKHATS_VOIDMANTLE: Set = Set {
 static RALLYING_CRY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -4568,102 +4712,106 @@ static RAMPAGING_SLASH: Set = Set {
 static RANGERS_GAIT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static RATTLECAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(Some(171))],
     ],
 };
 
 static RAVAGER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static REACTIVE_ARMOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Health],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static REAWAKENED_HIEROPHANT: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Magicka(Some(731)), SetBonusType::Stamina(Some(731))],
+        &[SetBonusType::Magicka(Some(731)), SetBonusType::Stamina(Some(731))],
+        &[SetBonusType::Magicka(Some(731)), SetBonusType::Stamina(Some(731))],
     ],
 };
 
 static RECOVERY_CONVERGENCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static RED_EAGLES_FURY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static REDISTRIBUTOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static REFLECTED_FURY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static RELICS_OF_THE_PHYSICIAN_ANSUR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static RELICS_OF_THE_REBELLION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static RENALDS_RESOLVE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
@@ -4680,77 +4828,78 @@ static RING_OF_THE_WILD_HUNT: Set = Set {
 static RITEMASTERS_BOND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ROAR_OF_ALKOSH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ROARING_OPPORTUNIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ROBES_OF_ALTERATION_MASTERY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ROBES_OF_DESTRUCTION_MASTERY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ROBES_OF_THE_HIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ROBES_OF_THE_WITHERED_HAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Health],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static ROBES_OF_TRANSMUTATION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ROKSA_THE_WARPED: Set = Set {
     bonuses: &[
+        &[SetBonusType::StaminaRecovery(Some(70)), SetBonusType::MagickaRecovery(Some(70)), SetBonusType::HealthRecovery(Some(70))]
     ],
 };
 
@@ -4762,87 +4911,87 @@ static ROURKEN_STEAMGUARDS: Set = Set {
 static RUNECARVERS_BLAZE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static RUSH_OF_AGONY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static SALVATION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SANCTUARY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static SAVAGE_WEREWOLF: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static SAXHLEEL_CHAMPION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SCATHING_MAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SCAVENGING_DEMISE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SCORIONS_FEAST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SCOURGE_HARVESTER: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
@@ -4854,150 +5003,152 @@ static SEA_SERPENTS_COIL: Set = Set {
 static SEEKER_SYNTHESIS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SELENE: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SELLISTRIX: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SENCHAL_DEFENDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static SENCHES_BITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SENCHE_RAHTS_GRIT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static SENTINEL_OF_RKUGAMZ: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static SENTRY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SERGEANTS_MAIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SERPENTS_DISDAIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static SEVENTH_LEGION_BRUTE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::HealthRecovery],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::HealthRecovery(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SHACKLEBREAKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(Some(2065)), SetBonusType::Magicka(Some(2065))],
     ],
 };
 
 static SHADOW_DANCERS_RAIMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SHADOW_OF_THE_RED_MOUNTAIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SHADOW_WALKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static SHADOWREND: Set = Set {
     bonuses: &[
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static SHALIDORS_CURSE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static SHALK_EXOSKELETON: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(Some(171))],
     ],
 };
 
@@ -5009,18 +5160,18 @@ static SHAPESHIFTERS_CHAIN: Set = Set {
 static SHARED_BURDEN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static SHARED_PAIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -5030,144 +5181,147 @@ static SHATTERED_FATE: Set = Set {
         &[],
         &[],
         &[],
+        &[SetBonusType::Penetration(Some(7918))],
         &[],
         &[],
         &[],
         &[],
+        &[SetBonusType::Power(Some(687))],
         &[],
+        &[SetBonusType::CriticalChance(Some(1528))],
     ],
 };
 
 static SHEER_VENOM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SHELL_SPLITTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static SHIELD_BREAKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SHIELD_OF_THE_VALIANT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::ReducePlayerDamageTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::ReducePlayerDamageTaken(None)],
     ],
 };
 
 static SHROUD_OF_THE_LICH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static SIEGEMASTERS_FOCUS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static SILKS_OF_THE_SUN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SILVER_ROSE_VIGIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SITHIS_TOUCH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SKOOMA_SMUGGLER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SLIMECRAW: Set = Set {
     bonuses: &[
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SLIVERS_OF_THE_NULL_ARCA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SLOADS_SEMBLANCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SLUTHRUGS_HUNGER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static SNAKE_IN_THE_STARS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
@@ -5179,45 +5333,45 @@ static SNOW_TREADERS: Set = Set {
 static SOLDIER_OF_ANGUISH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SONG_OF_LAMAE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static SOULCLEAVER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SOULSHINE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SPATTERING_DISJUNCTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -5228,7 +5382,7 @@ static SPAULDER_OF_RUIN: Set = Set {
 
 static SPAWN_OF_MEPHALA: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
@@ -5241,123 +5395,125 @@ static SPECTRAL_CLOAK: Set = Set {
 static SPECTRES_EYE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static SPELL_PARASITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static SPELL_POWER_CURE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SPELL_STRATEGIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SPELLSHREDDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SPELUNKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SPIDER_CULTIST_COWL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SPINNERS_GARMENTS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(Some(3460))],
     ],
 };
 
 static SPRIGGANS_THORNS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(Some(3460))],
     ],
 };
 
 static SPRIGGANS_VIGOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SQUALL_OF_RETRIBUTION: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static STEADFAST_HERO: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static STEADFASTS_METTLE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static STENDARRS_EMBRACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
@@ -5369,72 +5525,73 @@ static STINGING_SLASHES: Set = Set {
 
 static STONE_HUSK: Set = Set {
     bonuses: &[
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static STONES_ACCORD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::HealingDone],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::HealingDone(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static STONE_TALKERS_OATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static STONEHULK_DOMINATION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static STONEKEEPER: Set = Set {
     bonuses: &[
+        &[SetBonusType::Stamina(Some(548)), SetBonusType::Magicka(Some(548)), SetBonusType::Health(Some(603))],
     ],
 };
 
 static STORM_KNIGHTS_PLATE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static STORM_MASTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static STORM_CURSEDS_REVENGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static STORMFIST: Set = Set {
     bonuses: &[
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
@@ -5446,102 +5603,102 @@ static STORMWEAVERS_CAVORT: Set = Set {
 static STRENGTH_OF_THE_AUTOMATON: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static STUHNS_FAVOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static STYGIAN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static SUL_XANS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SUNDERFLAME: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SWAMP_RAIDER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SWARM_MOTHER: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina, SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None), SetBonusType::Magicka(None)],
     ],
 };
 
 static SWORD_DANCER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static SWORD_SINGER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SYMMETRY_OF_THE_WEALD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static SYMPHONY_OF_BLADES: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static SYRABANES_GRIP: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
@@ -5553,96 +5710,96 @@ static SYRABANES_WARD: Set = Set {
 static SYSTRES_SCOWL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static SYVARRAS_SCALES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static TALFYGS_TREACHERY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static TARNISHED_NIGHTMARE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static TAVAS_FAVOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static TELVANNI_EFFICIENCY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static TELVANNI_ENFORCER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static TEST_OF_RESOLVE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static THARRIKERS_STRIKE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static THE_ARCH_MAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static THE_BLIND: Set = Set {
     bonuses: &[
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -5650,34 +5807,34 @@ static THE_DESTRUCTION_SUITE: Set = Set {
     bonuses: &[
         &[],
         &[],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static THE_ICE_FURNACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static THE_JUGGERNAUT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static THE_MORAG_TONG: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -5693,25 +5850,25 @@ static THE_SHADOW_QUEENS_COWL: Set = Set {
 
 static THE_TROLL_KING: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
     ],
 };
 
 static THE_WORMS_RAIMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static THEWS_OF_THE_HARBINGER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
@@ -5723,36 +5880,36 @@ static THRASSIAN_STRANGLERS: Set = Set {
 static THREADS_OF_WAR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static THREE_QUEENS_WELLSPRING: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static THUNDER_CALLER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static THUNDERBUGS_CARAPACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Power],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
@@ -5764,16 +5921,16 @@ static THUNDEROUS_VOLLEY: Set = Set {
 
 static THURVOKUN: Set = Set {
     bonuses: &[
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static TIDE_BORN_WILDSTALKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
@@ -5786,9 +5943,9 @@ static TIMELESS_BLESSING: Set = Set {
 static TITANBORN_STRENGTH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
@@ -5801,32 +5958,34 @@ static TITANIC_CLEAVE: Set = Set {
 static TOOLS_OF_THE_TRAPMASTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static TOOTH_OF_LOKKESTIIZ: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static TOOTHROW: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(Some(171))],
     ],
 };
 
 static TORC_OF_THE_LAST_AYLEID_KING: Set = Set {
     bonuses: &[
+        &[SetBonusType::Power(Some(1337)), SetBonusType::MagickaRecovery(Some(500)), SetBonusType::StaminaRecovery(Some(500))]
     ],
 };
 
@@ -5838,54 +5997,55 @@ static TORC_OF_TONAL_CONSTANCY: Set = Set {
 static TORMENTOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static TORUGS_PACT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static TRACKERS_LASH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static TRANSFORMATIVE_HOPE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::HealingDone],
+        &[SetBonusType::HealingDone(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static TRAPPINGS_OF_INVIGORATION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static TREASURE_HUNTER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(Some(171))],
     ],
 };
 
@@ -5893,355 +6053,357 @@ static TREASURES_OF_THE_EARTHFORGE: Set = Set {
     bonuses: &[
         &[],
         &[],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static TREMORSCALE: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static TRIAL_BY_FIRE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static TRINIMACS_VALOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static TRUE_SWORN_FURY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static TURNING_TIDE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static TWICE_BORN_STAR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static TWICE_FANGED_SERPENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static TWILIGHT_REMEDY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static TWILIGHTS_EMBRACE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static TWIN_SISTERS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static TZOGVINS_WARBAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static ULFNORS_FAVOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::MagickaRecovery, SetBonusType::StaminaRecovery],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::MagickaRecovery(None), SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static UMBRAL_EDGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static UNCHAINED_AGGRESSOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static UNDAUNTED_BASTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static UNDAUNTED_INFILTRATOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static UNDAUNTED_UNWEAVER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static UNFATHOMABLE_DARKNESS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static UNFLINCHING_ULTIMATE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static UNLEASHED_RITUALIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static UNLEASHED_TERROR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static VALKYN_SKORIA: Set = Set {
     bonuses: &[
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static VAMPIRE_CLOAK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(Some(171))],
     ],
 };
 
 static VAMPIRE_LORD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static VAMPIRES_KISS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina, SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None), SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VANDORALLENS_RESONANCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VANGUARDS_CHALLENGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Health],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static VARENS_LEGACY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static VASTARIES_TUTELAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery, SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None), SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static VELIDRETH: Set = Set {
     bonuses: &[
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VELOTHI_UR_MAGES_AMULET: Set = Set {
     bonuses: &[
+        &[SetBonusType::Penetration(Some(1650))]
     ],
 };
 
 static VENGEANCE_LEECH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static VENOMOUS_SMITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VESTMENT_OF_OLORIME: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static VESTMENTS_OF_THE_WARLOCK: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static VESTURE_OF_DARLOC_BRAE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static VICECANON_OF_VENOM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static VICIOUS_DEATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
     ],
 };
 
 static VICIOUS_SERPENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VIPERS_STING: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
@@ -6254,9 +6416,9 @@ static VIRULENT_SHOT: Set = Set {
 static VIVECS_DUALITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
@@ -6269,141 +6431,142 @@ static VOID_BASH: Set = Set {
 static VOIDCALLER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VROLS_COMMAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::Health],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static VYKANDS_SOULFURY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Penetration],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Penetration(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static VYKOSA: Set = Set {
     bonuses: &[
-        &[SetBonusType::HealingTaken],
+        &[SetBonusType::HealingTaken(None)],
     ],
 };
 
 static WAR_MACHINE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WAR_MAIDEN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WARD_OF_CYRODIIL: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static WARRIORS_FURY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Power],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WARRIOR_POET: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::Armour],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::Armour(None)],
     ],
 };
 
 static WAY_OF_AIR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::StaminaRecovery],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
     ],
 };
 
 static WAY_OF_FIRE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static WAY_OF_MARTIAL_KNOWLEDGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WAY_OF_THE_ARENA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Power(Some(165))]
     ],
 };
 
 static WHITESTRAKES_RETRIBUTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Armour],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Armour(None)],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
 static WHORL_OF_THE_DEPTHS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WIDOWMAKER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
@@ -6416,88 +6579,91 @@ static WILD_IMPULSE: Set = Set {
 static WILDERQUEENS_ARCH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Stamina],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Stamina(None)],
     ],
 };
 
 static WILLOWS_PATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::HealthRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::HealthRecovery(None)],
     ],
 };
 
 static WILLPOWER: Set = Set {
     bonuses: &[
         &[],
+        &[SetBonusType::Magicka(Some(1752))],
+        &[SetBonusType::Power(Some(206))]
     ],
 };
 
 static WINTERS_RESPITE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static WINTERBORN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WISDOM_OF_VANUS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WISE_MAGE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WITCH_KNIGHTS_DEFIANCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WITCHMAN_ARMOR: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Health],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Health(None)],
     ],
 };
 
 static WIZARDS_RIPOSTE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Health],
-        &[SetBonusType::Power],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::CriticalResistance(Some(660))]
     ],
 };
 
@@ -6510,99 +6676,100 @@ static WRATH_OF_ELEMENTS: Set = Set {
 static WRATH_OF_THE_IMPERIUM: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(Some(325))]
     ],
 };
 
 static WRATHSUN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WRETCHED_VITALITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::StaminaRecovery],
-        &[SetBonusType::Power],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::StaminaRecovery(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static WYRD_TREES_BLESSING: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static XANMEER_GENESIS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Stamina],
-        &[SetBonusType::Health],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Stamina(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static XANMEER_SPELLWEAVER: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Power],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static XORYNS_MASTERPIECE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::Magicka(None)],
         &[SetBonusType::MinorAegis],
-        &[SetBonusType::MagickaRecovery],
+        &[SetBonusType::MagickaRecovery(None)],
     ],
 };
 
 static YANDIRS_MIGHT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
         &[SetBonusType::MinorSlayer],
-        &[SetBonusType::Power],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static YSGRAMORS_BIRTHRIGHT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::CriticalChance],
-        &[SetBonusType::Magicka],
-        &[SetBonusType::Power],
+        &[SetBonusType::CriticalChance(None)],
+        &[SetBonusType::Magicka(None)],
+        &[SetBonusType::Power(None)],
     ],
 };
 
 static ZENS_REDRESS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonusType::MagickaRecovery],
-        &[SetBonusType::Power],
-        &[SetBonusType::Magicka],
+        &[SetBonusType::MagickaRecovery(None)],
+        &[SetBonusType::Power(None)],
+        &[SetBonusType::Magicka(None)],
     ],
 };
 
 static ZAAN: Set = Set {
     bonuses: &[
-        &[SetBonusType::CriticalChance],
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
 static ZOAL_THE_EVER_WAKEFUL: Set = Set {
     bonuses: &[
-        &[SetBonusType::Stamina],
+        &[SetBonusType::Stamina(None)],
     ],
 };

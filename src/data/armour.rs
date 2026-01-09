@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use crate::data::{StatBuff as Buff, item_type::{GearSlot, ItemQuality, ItemType, is_armour}, major_minor::*, skill::*};
+use crate::data::{StatBuff as Buff, critical_damage::TWIN_BLADE_AND_BLUNT_ID, item_type::{GearSlot, ItemQuality, ItemType, is_armour}, major_minor::*, skill::*};
 
 
 pub fn armour_from_armour_piece(item_type: &ItemType, item_slot: &GearSlot, quality: &ItemQuality) -> Option<u16> {
@@ -129,6 +129,7 @@ pub static SCALED_ARMOUR: Buff = Buff { id: SCALED_ARMOUR_ID, value: 2974f64, va
 pub static BULWARK: Buff = Buff { id: 64079, value: 1900f64, value_per_stack: 0f64}; // Blue CP.
 /// Fake ID. Doesn't show on logs
 pub static FORTIFIED: Buff = Buff { id: 4001000, value: 0f64, value_per_stack: 34.62}; // Red CP.
+pub static OZEZANS_PLATING: Buff = Buff { id: 188471, value: 4272f64, value_per_stack: 0.0};
 
 // Decrease
 pub static MAJOR_BREACH: Buff = Buff { id: BREACH_MAJOR_ID, value: -5948f64, value_per_stack: 0f64};
@@ -146,6 +147,7 @@ pub static ARMOUR_ALL_BY_ID: Map<u32, &'static Buff> = phf_map! {
     61742 => &MINOR_BREACH,
     17906 => &CRUSHER,
     64079 => &BULWARK,
+    188471 => &OZEZANS_PLATING,
 };
 
 // Spell Resistance Only
@@ -200,3 +202,36 @@ pub static POISON_DISEASE_RESISTANCE_BY_ID: Map<u32, &'static Buff> = phf_map! {
 // https://eso-sets.com/set/renalds-resolve
 // https://eso-sets.com/set/senche-rahts-grit
 // https://eso-sets.com/set/roar-of-alkosh
+
+
+
+
+// Balorgh
+// Pen CP
+pub static CONCENTRATION: Buff = Buff { id: 45562, value: 0f64, value_per_stack: 939f64};
+pub static DISMEMBER: Buff = Buff { id: DISMEMBER_ID, value: 3271f64, value_per_stack: 0f64};
+pub static FORCE_OF_NATURE: Buff = Buff { id: 174250, value: 0f64, value_per_stack: 660f64};
+pub static HEAVY_WEAPONS: Buff = Buff { id: 45430, value: 2974f64, value_per_stack: 0f64};
+// Hew and Sunder set
+pub static HUNTERS_EYE: Buff = Buff { id: 45296, value: 950f64, value_per_stack: 0f64};
+// Oakfather's Retribution
+// 2H Ultimate
+// Piercing Perfection vision
+// Shell Splitter
+pub static SPLINTERED_SECRETS: Buff = Buff { id: SPLINTERED_SECRETS_ID, value: 0f64, value_per_stack: 1240f64};
+// Stuhn's Favour
+// Titanborn
+// Twice-fanged Serpent
+pub static TWIN_BLADE_AND_BLUNT_MACE: Buff = Buff { id: TWIN_BLADE_AND_BLUNT_ID, value: 0f64, value_per_stack: 1487f64};
+pub static PIERCING: Buff = Buff { id: 141895, value: 0.0, value_per_stack: 350f64};
+
+pub static PENETRATION_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
+    45562 => &CONCENTRATION,
+    116194 => &DISMEMBER,
+    174250 => &FORCE_OF_NATURE,
+    45430 => &HEAVY_WEAPONS,
+    45296 => &HUNTERS_EYE,
+    184887 => &SPLINTERED_SECRETS,
+    45482 => &TWIN_BLADE_AND_BLUNT_MACE,
+    141895 => &PIERCING,
+};

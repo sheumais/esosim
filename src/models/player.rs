@@ -25,9 +25,9 @@ impl Player {
         }
     }
 
-    pub fn swap_bars(&mut self, choice: Option<ActiveBar>) {
+    pub fn swap_bars(&mut self, choice: Option<&ActiveBar>) {
         if let Some(choice) = choice {
-            self.active_bar = choice;
+            self.active_bar = choice.clone();
         } else {
             self.active_bar = match self.active_bar {
                 ActiveBar::Primary => ActiveBar::Backup,
@@ -102,13 +102,13 @@ impl Player {
         self.add_buff(id, stacks);
     }
 
-    pub fn get_bar_of_skill_id(&self, skill: &u32) -> Option<ActiveBar> {
+    pub fn get_bar_of_skill_id(&self, skill: &u32) -> Option<&ActiveBar> {
         let in_primary = self.primary_abilities.contains(skill);
         let in_backup = self.backup_abilities.contains(skill);
 
         match (in_primary, in_backup) {
-            (true, false) => Some(ActiveBar::Primary),
-            (false, true) => Some(ActiveBar::Backup),
+            (true, false) => Some(&ActiveBar::Primary),
+            (false, true) => Some(&ActiveBar::Backup),
             _ => None,
         }
     }
@@ -542,12 +542,12 @@ pub fn get_trait_value_for_item(gear: &GearPiece) -> Option<f32> {
 pub fn get_armour_enchant_multiplier(slot: &GearSlot) -> f32 {
     match slot {
         GearSlot::Head | GearSlot::OffHand | GearSlot::OffHandBackup | GearSlot::Chest | GearSlot::Legs => 1.0,
-        GearSlot::Waist | GearSlot::Shoulders | GearSlot::Hands | GearSlot::Feet => 0.4,
+        GearSlot::Waist | GearSlot::Shoulders | GearSlot::Hands | GearSlot::Feet => 0.40437788,
         _ => 0.0
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ActiveBar {
     Primary,
     Backup,

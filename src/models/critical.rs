@@ -11,7 +11,7 @@ impl CriticalDamage {
         let base = self.additive_scaled
             + (CRITICAL_DAMAGE_DEFAULT * CRIT_DAMAGE_SCALE);
 
-        CRITICAL_DAMAGE_MAXIMUM.min(base)
+        CRITICAL_DAMAGE_MAXIMUM.min(base / CRIT_DAMAGE_SCALE)
     }
 
     pub fn calculate_uncapped(&self) -> u16 {
@@ -38,7 +38,6 @@ impl Default for CriticalDamage {
 
 pub struct CriticalChance {
     additive: u32,
-    multiplicative: f32,
 }
 
 impl CriticalChance {
@@ -48,15 +47,19 @@ impl CriticalChance {
 
     pub fn calculate_with_level(&self, level: u8) -> f32 {
         let level_const = 2 * level as u32 * (100 + level as u32);
-        ((self.additive as f32 / level_const as f32) + CRITICAL_CHANCE_DEFAULT + self.multiplicative).min(1.0)
+        ((self.additive as f32 / level_const as f32) + CRITICAL_CHANCE_DEFAULT).min(1.0)
     }
 
     pub fn add_to_additive(&mut self, value: u32) {
         self.additive += value;
     }
 
-    pub fn add_to_multiplicative(&mut self, value: f32) {
-        self.multiplicative += value;
+    pub fn get_raw(&self) -> u32 {
+        self.additive
+    }
+
+    pub fn reset(&mut self) {
+        self.additive = 0;
     }
 }
 
@@ -64,7 +67,6 @@ impl Default for CriticalChance {
     fn default() -> Self {
         Self {
             additive: 0,
-            multiplicative: 0.0
         }
     }
 }
@@ -89,9 +91,9 @@ mod tests {
         + 1922 // thief mundus
         + 219 * 6 // light armour
         + 320 // precision cp
-        + 657); // slimecraw 1pc
-        crit_chance.add_to_multiplicative(0.072);
-        assert_eq!(crit_chance.calculate() * 100.0, 48.4249);
+        + 657 // slimecraw 1pc
+        + 1579); // precise weapon
+        assert_eq!(crit_chance.calculate() * 100.0, 48.421867);
     }
 
     #[test]

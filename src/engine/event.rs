@@ -10,6 +10,7 @@ pub enum Event<'a> {
     BuffGained,
     BuffFaded,
     BuffStacksUpdated,
+    ExternalResourceSource { health: u32, magicka: u32, stamina: u32 },
 }
 
 pub trait Context {

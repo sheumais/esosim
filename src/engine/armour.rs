@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 
 use crate::data::armour::*;
-use crate::data::item_type::{EnchantType, ItemType};
-use crate::data::sets::{SET_ARMOUR_MAX, SetBonusType, get_number_of_bonus_type_from_active_set};
-use crate::data::skill::{FROZEN_ARMOUR_ID, SkillLine};
+use crate::data::critical_damage::TWIN_BLADE_AND_BLUNT_ID;
+use crate::data::item_type::{EnchantType, GearTrait, ItemType, is_two_handed_weapon_option};
+use crate::data::sets::{SetBonusType, get_total_bonus};
+use crate::data::skill::{FROZEN_ARMOUR_ID, SPLINTERED_SECRETS_ID, SkillLine};
 use crate::data::enchant::*;
+use crate::data::traits::get_weapon_sharpened_value;
 use crate::engine::{ID, STACKS};
-use crate::models::armour::{Armour as ArmourModel};
+use crate::models::armour::{Armour as ArmourModel, Penetration as PenetrationModel};
 use crate::models::damage::DamageType;
 use crate::models::player::Player;
 
@@ -127,6 +129,7 @@ impl Armour {
         self.physical.reset();
         self.poison.reset();
         self.shock.reset();
+        self.spell.reset();
         self.is_dirty = true;
     }
 
@@ -172,7 +175,7 @@ impl Armour {
             player_armour += (34.62f32 * 50.0).round() as u32; // Assume players wearing heavy armour (tanks) always have this CP because it is never shown on logs so there is no way to know until reverse engineering the damage taken numbers.
         }
         for set in player.get_active_sets_counts() {
-            self.player_armour += SET_ARMOUR_MAX * get_number_of_bonus_type_from_active_set(&set, &SetBonusType::Armour) as u32;
+            player_armour += get_total_bonus(&set, &SetBonusType::Armour(None));
         }
 
         self.player_armour = player_armour;
@@ -193,5 +196,100 @@ impl Armour {
                 }
             }
         }
+    }
+}
+
+pub struct Penetration {
+    pub sources: HashMap<ID, STACKS>,
+    physical: PenetrationModel,
+    spell: PenetrationModel,
+    gear_source: u32,
+    pub is_dirty: bool,
+}
+
+impl Penetration {
+    pub fn new() -> Self {
+        Self {
+            sources: HashMap::new(),
+            physical: PenetrationModel::new(),
+            spell: PenetrationModel::new(),
+            gear_source: 0,
+            is_dirty: false,
+        }
+    }
+
+    pub fn add_source(&mut self, id: ID, stacks: Option<STACKS>) {
+        self.sources.insert(id, stacks.unwrap_or(1));
+        self.is_dirty = true;
+    }
+
+    pub fn add_source_checked(&mut self, id: ID, stacks: Option<STACKS>) {
+        if Self::is_valid_source(&id) {
+            self.add_source(id, stacks);
+        }
+    }
+
+    pub fn remove_source(&mut self, id: &ID) {
+        self.is_dirty = self.sources.remove(id).is_some();
+    }
+
+    pub fn refresh(&mut self) {
+        self.reset_all();
+        for (id, stacks) in &self.sources {
+            if let Some(buff) = PENETRATION_ADDITIVE.get(&id) {
+                let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
+                self.physical.add_to_additive(value);
+                self.spell.add_to_additive(value);
+            }
+        }
+        self.physical.add_to_additive(self.gear_source);
+        self.spell.add_to_additive(self.gear_source);
+        self.is_dirty = false;
+    }
+
+    fn reset_all(&mut self) {
+        self.physical.reset();
+        self.spell.reset();
+        self.is_dirty = true;
+    }
+
+    pub fn is_valid_source(id: &ID) -> bool {
+        PENETRATION_ADDITIVE.contains_key(id)
+    }
+
+    pub fn calculate(&self) -> u32 {
+        self.physical.calculate().max(self.spell.calculate())
+    }
+
+    pub fn update_from_player(&mut self, player: &Player) {
+        self.reset_all();
+        self.sources.clear();
+        self.gear_source = 0;
+        for (id, stacks) in player.get_buffs().iter() {
+            if Self::is_valid_source(id) {
+                self.add_source(*id, Some(*stacks))
+            }
+        }
+        let light = player.get_number_of_equipped_item_type(&ItemType::Light);
+        let maces = player.get_number_of_equipped_item_type(&ItemType::Mace);
+        let hott = player.get_number_of_active_skills_from_skill_line(&SkillLine::HeraldOfTheTome);
+        if light > 0 {self.add_source(45562, Some(light))};
+        if maces > 0 {self.add_source(TWIN_BLADE_AND_BLUNT_ID, Some(maces))};
+        if hott > 0 {self.add_source(SPLINTERED_SECRETS_ID, Some(hott))};
+        self.add_source(141895, Some(2)); // pen CP, assumed to exist
+
+        for set in player.get_active_sets_counts() {
+            self.gear_source += get_total_bonus(&set, &SetBonusType::Penetration(None));
+        }
+        for gear in player.get_active_gear() {
+            if let Some(trait_) = &gear.gear_trait {
+                match trait_ {
+                    GearTrait::WeaponSharpened => {{let value = get_weapon_sharpened_value(&gear.quality); if is_two_handed_weapon_option(gear.get_item_type()) {self.gear_source += value as u32} else {self.gear_source += (value / 2.0).round() as u32}}},
+                    _ => {},
+                }
+            }
+        }
+
+        self.refresh();
     }
 }

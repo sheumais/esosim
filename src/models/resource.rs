@@ -1,5 +1,6 @@
-use crate::models::LEVEL;
+use crate::{models::LEVEL};
 
+#[derive(Debug)]
 pub enum PlayerAttributeType {
     Health,
     Magicka,
@@ -60,16 +61,6 @@ impl PlayerMaxResource {
 
     pub fn get_type(self) -> PlayerAttributeType {
         self.resource_type
-    }
-
-    pub fn calculate_attribute_count_from_target(&mut self, target_resource_amount: u32) -> Option<u8> {
-        for i in 0..=64 {
-            self.attribute = i;
-            if self.calculate() == target_resource_amount {
-                return Some(i);
-            }
-        }
-        None
     }
 }
 

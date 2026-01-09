@@ -5,7 +5,6 @@ use crate::data::{StatBuff as Buff, major_minor::*, skill::*};
 // *todo, all the fucking foods. like a hundred foods. ugh.
 
 /* ALL */
-// Undaunted Mettle
 pub static UNDAUNTED_METTLE: Buff = Buff { id: UNDAUNTED_METTLE_ID, value: 0f64, value_per_stack: 2f64}; // Multiplicative
 pub static LUNAR_BLESSINGS: Buff = Buff { id: 117848, value: 965f64, value_per_stack: 0f64};
 pub static BLOOD_SCION: Buff = Buff { id: 32624, value: 10000f64, value_per_stack: 0f64};
@@ -29,6 +28,7 @@ pub static WEREWOLF_TRANSFORMATION: Buff = Buff { id: 33469, value: 30f64, value
 pub static BRAWNY: Buff = Buff { id: 45309, value: 1000f64, value_per_stack: 0f64};
 pub static CONDITIONING: Buff = Buff { id: 117754, value: 2000f64, value_per_stack: 0f64};
 pub static RESIST_AFFLICTION: Buff = Buff { id: 45319, value: 2000f64, value_per_stack: 0f64};
+pub static TIRELESS_DISCIPLINE: Buff = Buff { id: 147888, value: 0f64, value_per_stack: 260f64};
 pub static EXPERT_SUMMONER_STAMINA: Buff = Buff { id: EXPERT_SUMMONER_ID, value: 5f64, value_per_stack: 0f64}; // Multiplicative
 
 pub static RESOURCE_STAMINA_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
@@ -43,6 +43,7 @@ pub static RESOURCE_STAMINA_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
     45309 => &BRAWNY,
     117754 => &CONDITIONING,
     45319 => &RESIST_AFFLICTION,
+    147888 => &TIRELESS_DISCIPLINE,
 };
 
 pub static RESOURCE_STAMINA_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
@@ -73,7 +74,7 @@ pub static EXPERT_SUMMONER_HEALTH: Buff = Buff { id: EXPERT_SUMMONER_ID, value: 
 pub static MINOR_MANGLE: Buff = Buff { id: 61733, value: -10f64, value_per_stack: 0f64}; // Multiplicative
 // https://eso-sets.com/set/green-pact
 // Dread Cellar buff ( Grim Warden's Accession )
-// Hero's Vigor CP
+pub static HEROS_VIGOR: Buff = Buff { id: 149311, value: 0f64, value_per_stack: 280f64};
 // Black Drake Villa buff ( Ice Avatar )
 pub static JUGGERNAUT: Buff = Buff { id: 45546, value: 0f64, value_per_stack: 2f64}; // Multiplicative
 pub static LAST_GASP: Buff = Buff { id: LAST_GASP_ID, value: 2412f64, value_per_stack: 0f64};
@@ -83,6 +84,7 @@ pub static RESIST_FROST: Buff = Buff { id: 45304, value: 1000f64, value_per_stac
 pub static ARGONIAN_RESISTANCE: Buff = Buff { id: 45255, value: 1000f64, value_per_stack: 0f64};
 pub static TOUGH: Buff = Buff { id: 50907, value: 2000f64, value_per_stack: 0f64};
 pub static UNFLINCHING_RAGE: Buff = Buff { id: 84672, value: 1000f64, value_per_stack: 0f64};
+
 // Ayleid well bonus
 
 pub static RESOURCE_HEALTH_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
@@ -97,6 +99,7 @@ pub static RESOURCE_HEALTH_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
     45255 => &ARGONIAN_RESISTANCE,
     50907 => &TOUGH,
     84672 => &UNFLINCHING_RAGE,
+    149311 => &HEROS_VIGOR,
 };
 
 pub static RESOURCE_HEALTH_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
@@ -112,6 +115,7 @@ pub static RESOURCE_HEALTH_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
 // https://eso-sets.com/set/grace-of-the-ancients
 // https://eso-sets.com/set/bright-throats-boast
 // Magical Expiration IA Verse
+// Inner light has unique 2%
 pub static MAGICKA_CONTROLLER: Buff = Buff { id: MAGICKA_CONTROLLER_ID, value: 0f64, value_per_stack: 2f64}; // Multiplicative
 pub static MAGICKA_FLOOD: Buff = Buff {id: MAGICKA_FLOOD_ID, value: 6f64, value_per_stack: 0f64}; // Multiplicative
 // Magicka Reserves IA Vision
@@ -119,6 +123,7 @@ pub static MAGICKA_FLOOD: Buff = Buff {id: MAGICKA_FLOOD_ID, value: 6f64, value_
 // Horns
 pub static SYRABANES_BOON: Buff = Buff { id: 117970, value: 2000f64, value_per_stack: 0f64};
 pub static GIFT_OF_MAGNUS: Buff = Buff { id: 45260, value: 2000f64, value_per_stack: 0f64};
+pub static ELDRITCH_INSIGHT: Buff = Buff { id: 149305, value: 0f64, value_per_stack: 260f64};
 pub static EXPERT_SUMMONER_MAGICKA: Buff = Buff { id: EXPERT_SUMMONER_ID, value: 5f64, value_per_stack: 0f64}; // Multiplicative
 
 pub static RESOURCE_MAGICKA_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
@@ -132,6 +137,7 @@ pub static RESOURCE_MAGICKA_ADDITIVE: Map<u32, &'static Buff> = phf_map! {
     45247 => &RESOURCEFUL,
     117970 => &SYRABANES_BOON,
     45260 => &GIFT_OF_MAGNUS,
+    149305 => &ELDRITCH_INSIGHT,
 };
 
 pub static RESOURCE_MAGICKA_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
@@ -251,3 +257,41 @@ pub static PARSE_MAGICKA: FoodBuff = FoodBuff {
 pub static CANDIED_JESTERS_COINS: FoodBuff = FoodBuff {
     id: 89955, max_health: None, max_magicka: None, max_stamina: Some(4592), health_recovery: None, magicka_recovery: Some(459), stamina_recovery: None,
 };
+
+
+// Health
+// 28x + 122y = z (0 <= x <= 50, 0 <= y <= 64)
+// 28(x+4y) = z
+// z/28 = x+4y
+
+// Mag & Stam
+// 26x + 111y = z (0 <= x <= 50, 0 <= y <= 64)
+// 2*13x + 3*37y = z
+
+// /// Returns (CP, ATTRIBUTE)
+// pub fn lookup_resource(value: usize) -> Option<(u8, u8)> {
+//     if value > resource_lookup::MAX_Z {
+//         return None;
+//     }
+//     resource_lookup::RESOURCE_LOOKUP[value].get(0).copied()
+// }
+
+// /// Value is divided by 28 from real value
+// /// Returns CP
+// pub fn lookup_health(value: usize, attributes: u8) -> Option<u8> {
+//     if value > health_lookup::MAX_V {
+//         return None;
+//     }
+
+//     for &(row_y, x) in health_lookup::HEALTH_LOOKUP[value] {
+//         if row_y == attributes {
+//             return Some(x);
+//         }
+//     }
+//     None
+// }
+
+// /// Returns CP
+// pub fn lookup_health_from_raw(value: usize, attributes: u8) -> Option<u8> {
+//     lookup_health(value / 28, attributes)
+// }

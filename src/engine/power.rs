@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::data::critical_damage::{HEAVY_WEAPONS_ID, TWIN_BLADE_AND_BLUNT_ID};
 use crate::data::item_type::{EnchantType, GearSlot, GearTrait, ItemType};
 use crate::data::power::{POWER_INCREASES_ADDITIVE, POWER_INCREASES_MULTIPLICATIVE, SPELL_POWER_INCREASES_ADDITIVE, SPELL_POWER_INCREASES_MULTIPLICATIVE, WEAPON_POWER_INCREASES_ADDITIVE, WEAPON_POWER_INCREASES_MULTIPLICATIVE};
-use crate::data::sets::{SET_POWER_MAX, SetBonusType, get_number_of_bonus_type_from_active_set};
+use crate::data::sets::{SetBonusType, get_total_bonus};
 use crate::data::skill::{EXPERT_MAGE_ID, SLAYER_ID, SkillLine};
 use crate::data::traits::get_jewelry_infused_value;
 use crate::data::enchant::get_enchant_jewellery_increase_weapon_damage;
@@ -63,7 +63,7 @@ impl Power {
                 self.weapon.add_to_additive(value);
             } else if let Some(buff) = WEAPON_POWER_INCREASES_MULTIPLICATIVE.get(id) {
                 let value = (buff.value + buff.value_per_stack * *stacks as f64) as f32 / 100.0;
-                self.spell.add_to_multiplicative(value);
+                self.weapon.add_to_multiplicative(value);
             } else if let Some(buff) = SPELL_POWER_INCREASES_ADDITIVE.get(id) {
                 let value = (buff.value + buff.value_per_stack * *stacks as f64) as u32;
                 self.spell.add_to_additive(value);
@@ -148,7 +148,7 @@ impl Power {
             }
         }
         for set in player.get_active_sets_counts() {
-            self.gear_source += SET_POWER_MAX * get_number_of_bonus_type_from_active_set(&set, &SetBonusType::Power) as u32;
+            self.gear_source += get_total_bonus(&set, &SetBonusType::Power(None));
         }
 
         self.refresh();

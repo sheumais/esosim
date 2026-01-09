@@ -22,11 +22,11 @@ pub fn get_weapon_charged_value(q: &ItemQuality) -> f32 {
 
 pub fn get_weapon_precise_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.016,
-        ItemQuality::Fine => 1.021,
-        ItemQuality::Superior => 1.026,
-        ItemQuality::Epic => 1.031,
-        ItemQuality::Legendary => 1.036,
+        ItemQuality::Normal => 701.0,
+        ItemQuality::Fine => 920.0,
+        ItemQuality::Superior => 1139.0,
+        ItemQuality::Epic => 1359.0,
+        ItemQuality::Legendary => 1578.0,
     }
 }
 

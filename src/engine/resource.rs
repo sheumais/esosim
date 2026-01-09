@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{data::{item_type::{EnchantType, GearTrait, ItemType}, resource::{DARK_VIGOR, FOOD_BUFFS, JUGGERNAUT, RESOURCE_HEALTH_ADDITIVE, RESOURCE_HEALTH_MULTIPLICATIVE, RESOURCE_MAGICKA_ADDITIVE, RESOURCE_MAGICKA_MULTIPLICATIVE, RESOURCE_STAMINA_ADDITIVE, RESOURCE_STAMINA_MULTIPLICATIVE}, sets::{SET_HEALTH_MAX, SET_MAGICKA_MAX, SET_STAMINA_MAX, SetBonusType, get_number_of_bonus_type_from_active_set}, skill::{SkillLine, UNDAUNTED_METTLE_ID}, traits::{get_armor_infused_value, get_jewelry_arcane_value, get_jewelry_healthy_value, get_jewelry_robust_value}}, engine::{ID, STACKS}, models::{player::{Player, get_armour_enchant_multiplier}, resource::{PlayerAttributeType, PlayerMaxResource}}};
+use crate::{data::{item_type::{EnchantType, GearTrait, ItemType}, resource::{DARK_VIGOR, FOOD_BUFFS, JUGGERNAUT, RESOURCE_HEALTH_ADDITIVE, RESOURCE_HEALTH_MULTIPLICATIVE, RESOURCE_MAGICKA_ADDITIVE, RESOURCE_MAGICKA_MULTIPLICATIVE, RESOURCE_STAMINA_ADDITIVE, RESOURCE_STAMINA_MULTIPLICATIVE}, sets::{SetBonusType, get_total_bonus}, skill::{MAGICKA_FLOOD_ID, SkillLine, UNDAUNTED_METTLE_ID}, traits::{get_armor_infused_value, get_jewelry_arcane_value, get_jewelry_healthy_value, get_jewelry_robust_value}}, engine::{ID, STACKS}, models::{player::{Player, get_armour_enchant_multiplier}, resource::{PlayerAttributeType, PlayerMaxResource}}};
 use crate::data::enchant::*;
 
 pub struct Resources {
@@ -12,6 +12,7 @@ pub struct Resources {
     stamina: u32,
     max_stamina: PlayerMaxResource,
     gear_stats: (u32, u32, u32),
+    attributes: (u8, u8, u8),
     food: Option<u32>,
     pub is_dirty: bool,
 }
@@ -27,6 +28,7 @@ impl Resources {
             stamina: 0,
             max_stamina: PlayerMaxResource::new(PlayerAttributeType::Stamina),
             gear_stats: (0, 0, 0),
+            attributes: (0, 0, 0),
             food: None,
             is_dirty: false,
         }
@@ -102,23 +104,21 @@ impl Resources {
         self.max_health.set_attribute(player_attributes.0);
         self.max_magicka.set_attribute(player_attributes.1);
         self.max_stamina.set_attribute(player_attributes.2);
-        let (light, medium, heavy) = ((player.get_number_of_equipped_item_type(&ItemType::Light) > 0) as u8, (player.get_number_of_equipped_item_type(&ItemType::Medium) > 0) as u8, (player.get_number_of_equipped_item_type(&ItemType::Heavy) > 0) as u8);
         for (id, stacks) in player.get_buffs() {
             if Self::is_valid_source(id) {
-                self.add_source(*id, Some(*stacks));
-                match id {
-                    &UNDAUNTED_METTLE_ID => self.add_source(*id, Some(light+medium+heavy)),
-                    _ => {},
-                }
+                self.add_source(*id, Some(*stacks))
             }
-            if FOOD_BUFFS.get(id).is_some() {
+            if FOOD_BUFFS.contains_key(id) {
                 self.food = Some(*id);
             }
         }
+        self.add_source(UNDAUNTED_METTLE_ID, Some((player.get_number_of_equipped_item_type(&ItemType::Light) > 0) as u8 + (player.get_number_of_equipped_item_type(&ItemType::Medium) > 0) as u8 + (player.get_number_of_equipped_item_type(&ItemType::Heavy) > 0) as u8));
         let shadow = player.get_number_of_active_skills_from_skill_line(&SkillLine::Shadow);
         self.add_source(DARK_VIGOR.id, Some(shadow));
         let heavy = player.get_number_of_equipped_item_type(&ItemType::Heavy);
         self.add_source(JUGGERNAUT.id, Some(heavy));
+        let siphoning = player.get_number_of_active_skills_from_skill_line(&SkillLine::Siphoning);
+        self.add_source(MAGICKA_FLOOD_ID, Some(siphoning));
 
         self.gear_stats = (0, 0, 0);
         let (ref mut health, ref mut magicka, ref mut stamina) = self.gear_stats;
@@ -152,9 +152,9 @@ impl Resources {
             }
         }
         for set in player.get_active_sets_counts() {
-            *health += SET_HEALTH_MAX * get_number_of_bonus_type_from_active_set(&set, &SetBonusType::Health) as u32;
-            *magicka += SET_MAGICKA_MAX * get_number_of_bonus_type_from_active_set(&set, &SetBonusType::Magicka) as u32;
-            *stamina += SET_STAMINA_MAX * get_number_of_bonus_type_from_active_set(&set, &SetBonusType::Stamina) as u32;
+            *health += get_total_bonus(&set, &SetBonusType::Health(None));
+            *magicka += get_total_bonus(&set, &SetBonusType::Magicka(None));
+            *stamina += get_total_bonus(&set, &SetBonusType::Stamina(None));
         }
         self.refresh();
     }

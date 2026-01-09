@@ -8,6 +8,9 @@ pub mod armour;
 pub mod resource;
 pub mod enchant;
 pub mod sets;
+// pub mod health_lookup;
+// pub mod resource_lookup;
+pub mod critical_chance;
 
 #[derive(PartialEq, Debug)]
 pub struct StatBuff {
