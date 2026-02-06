@@ -1,23 +1,15 @@
-use std::collections::HashMap;
-
 use crate::data::item_type::GearSlot;
-use crate::engine::sets::SET_REGISTRY;
+use crate::engine::world::event::Event;
 use crate::engine::{ID, STACKS};
-use crate::engine::armour::{Armour, Penetration};
-use crate::engine::critical::{CriticalDamage, CriticalDamageTaken, CriticalChance};
-use crate::engine::event::{Context, Event, SetInstance};
-use crate::engine::power::Power;
-use crate::engine::resource::Resources as ResourceModel;
+use crate::engine::player::armour::{Armour, Penetration};
+use crate::engine::player::critical::{CriticalDamage, CriticalDamageTaken, CriticalChance};
+use crate::engine::player::power::Power;
+use crate::engine::player::resource::Resources as ResourceModel;
 use crate::models::damage::DamageType;
 use crate::models::player::{ActiveBar, GearPiece, Player as PlayerModel};
 
-pub struct CharacterContext<'a> {
-    player: &'a mut PlayerModel,
-}
-
 pub struct Character {
     player: PlayerModel,
-    active_sets: HashMap<u16, Box<dyn SetInstance>>,
     critical_damage_done: CriticalDamage,
     power: Power,
     armour: Armour,
@@ -31,7 +23,6 @@ impl Character {
     pub fn new(id: u32) -> Self {
         Self {
             player: PlayerModel::new(id),
-            active_sets: HashMap::new(),
             critical_damage_done: CriticalDamage::new(),
             power: Power::new(),
             armour: Armour::new(),
@@ -43,15 +34,29 @@ impl Character {
     }
 
     pub fn handle_event(&mut self, event: Event) {
-        self.emit_event_to_sets(&event);
-
         match event {
-            Event::EquipChanged | Event::PlayerUpdated | Event::BarSwapped => {
-                self.evaluate_sets();
-                self.recompute_all_supplemental_state();
+            Event::EquipChanged {player} | Event::PlayerUpdated { player} => {
+                if player == self.player.id() {
+                    self.recompute_all_supplemental_state();
+                }
             }
-            Event::BuffFaded | Event::BuffGained | Event::BuffStacksUpdated => {
-                self.recompute_buff_supplemental_state();
+            Event::BarSwapped {player} => {
+                if player == self.player.id() {
+                    self.swap_bars(None);
+                    self.recompute_all_supplemental_state();
+                }
+            }
+            Event::BuffFaded {target, buff_id,} => {
+                if target == self.player.id() {
+                    self.remove_buff(buff_id);
+                    self.recompute_buff_supplemental_state();
+                }
+            } 
+            Event::BuffGained {source, target, buff_id, stacks} => {
+                if target == self.player.id() {
+                    self.add_buff(buff_id, stacks);
+                    self.recompute_buff_supplemental_state();
+                }
             }
             // Event::ExternalResourceSource { health, magicka, stamina } => {
             //     self.handle_external_resource_source(health, magicka, stamina);
@@ -69,7 +74,6 @@ impl Character {
         self.resources.add_source_checked(id, Some(stacks));
         self.critical_chance.add_source_checked(id, Some(stacks));
         self.penetration.add_source_checked(id, Some(stacks));
-        self.handle_event(Event::BuffGained);
     }
 
     pub fn remove_buff(&mut self, id: ID) {
@@ -81,7 +85,14 @@ impl Character {
         self.resources.remove_source(&id);
         self.critical_chance.remove_source(&id);
         self.penetration.remove_source(&id);
-        self.handle_event(Event::BuffFaded);
+    }
+
+    pub fn has_buff(&self, buff_id: u32) -> bool {
+        self.player.has_buff(&buff_id)
+    }
+
+    pub fn get_set_piece_count(&self, set_id: &u16) -> u8 {
+        self.player.get_number_of_equipped_set(set_id)
     }
 
     pub fn get_critical_damage_done(&self) -> u16 {
@@ -130,17 +141,14 @@ impl Character {
 
     pub fn swap_bars(&mut self, choice: Option<&ActiveBar>) {
         self.player.swap_bars(choice);
-        self.handle_event(Event::BarSwapped);
     }
 
     pub fn set_gear_piece(&mut self, slot: &GearSlot, gear: GearPiece) {
         self.player.set_gear_piece(slot, gear);
-        self.handle_event(Event::EquipChanged);
     }
 
     pub fn set_skills_on_bar(&mut self, bar: &ActiveBar, skills: Vec<u32>) {
         self.player.set_skills(&bar, skills);
-        self.handle_event(Event::EquipChanged);
     }
 
     pub fn get_bar_of_skill_id(&self, skill: &ID) -> Option<&ActiveBar> {
@@ -151,43 +159,11 @@ impl Character {
         self.player.get_active_bar()
     }
 
-    pub fn evaluate_sets(&mut self) {
-        let player_id = *self.player.id();
-
-        let mut ctx = CharacterContext {
-            player: &mut self.player,
-        };
-
-        for desc in SET_REGISTRY {
-            let pieces = ctx.player_set_piece_count(&player_id, &desc.id);
-            let active = self.active_sets.contains_key(&desc.id);
-
-            if pieces >= desc.min_pieces && !active {
-                let mut instance = (desc.instance_factory)();
-                instance.on_activate(&player_id, &mut ctx);
-                self.active_sets.insert(desc.id, instance);
-            } else if pieces < desc.min_pieces && active {
-                if let Some(mut inst) = self.active_sets.remove(&desc.id) {
-                    inst.on_deactivate(&player_id, &mut ctx);
-                }
-            }
-        }
-        self.recompute_all_supplemental_state();
+    pub fn get_number_of_set_id(&self, set_id: &u16) -> u8 {
+        self.player.get_number_of_equipped_set(set_id)
     }
 
-    fn emit_event_to_sets(&mut self, event: &Event) {
-        let player_id = *self.player.id();
-
-        let mut ctx = CharacterContext {
-            player: &mut self.player,
-        };
-
-        for inst in self.active_sets.values_mut() {
-            inst.on_event(&player_id, event, &mut ctx);
-        }
-    }
-
-    fn recompute_all_supplemental_state(&mut self) {
+    pub fn recompute_all_supplemental_state(&mut self) {
         self.critical_damage_done.update_from_player(&self.player);
         self.power.update_from_player(&self.player);
         self.armour.update_from_player(&self.player);
@@ -197,7 +173,7 @@ impl Character {
         self.penetration.update_from_player(&self.player);
     }
 
-    fn recompute_buff_supplemental_state(&mut self) {
+    pub fn recompute_buff_supplemental_state(&mut self) {
         if self.critical_damage_done.is_dirty {self.critical_damage_done.refresh()};
         if self.power.is_dirty {self.power.refresh()};
         // self.armour.refresh(); todo
@@ -209,35 +185,10 @@ impl Character {
         if self.penetration.is_dirty {self.penetration.refresh()};
     }
 
-    // fn handle_external_resource_source(&mut self, health: u32, magicka: u32, stamina: u32) {
-    //     if let Some((h, m, s)) = self.resources.calculate_attributes((health, magicka, stamina)) {
-    //         self.set_attributes(h, m, s);
-    //     }
-    // }
-
     pub fn set_attributes(&mut self, health: u8, magicka: u8, stamina: u8) {
         self.player.set_attributes((health, magicka, stamina));
     }
 }
-
-impl<'a> Context for CharacterContext<'a> {
-    fn player_set_piece_count(&self, _player_id: &ID, set_id: &u16) -> u8 {
-        self.player.get_number_of_equipped_set(set_id)
-    }
-
-    fn add_player_buff(&mut self, _player_id: &ID, buff_id: ID, stacks: STACKS) {
-        self.player.add_buff(buff_id, stacks);
-    }
-
-    fn remove_player_buff(&mut self, _player_id: &ID, buff_id: &ID) {
-        self.player.remove_buff(buff_id);
-    }
-
-    fn player_has_item(&self, _player_id: &ID, item_id: &u32) -> bool {
-        self.player.is_specific_item_equipped(item_id)
-    }
-}
-
 
 #[cfg(test)]
 mod character_integration_test {

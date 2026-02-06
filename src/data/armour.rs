@@ -202,6 +202,7 @@ pub static POISON_DISEASE_RESISTANCE_BY_ID: Map<u32, &'static Buff> = phf_map! {
 // https://eso-sets.com/set/renalds-resolve
 // https://eso-sets.com/set/senche-rahts-grit
 // https://eso-sets.com/set/roar-of-alkosh
+// Balanced Warrior passive (aedric spear)
 
 
 

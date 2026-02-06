@@ -11,6 +11,7 @@ pub mod sets;
 // pub mod health_lookup;
 // pub mod resource_lookup;
 pub mod critical_chance;
+pub mod damage_modifier;
 
 #[derive(PartialEq, Debug)]
 pub struct StatBuff {

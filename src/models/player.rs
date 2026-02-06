@@ -113,8 +113,8 @@ impl Player {
         }
     }
 
-    pub fn id(&self) -> &u32 {
-        &self.id
+    pub fn id(&self) -> u32 {
+        self.id
     }
 
     pub fn get_gear_piece(&self, slot: &GearSlot) -> Option<&GearPiece> {

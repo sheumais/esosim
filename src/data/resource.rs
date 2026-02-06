@@ -115,7 +115,7 @@ pub static RESOURCE_HEALTH_MULTIPLICATIVE: Map<u32, &'static Buff> = phf_map! {
 // https://eso-sets.com/set/grace-of-the-ancients
 // https://eso-sets.com/set/bright-throats-boast
 // Magical Expiration IA Verse
-// Inner light has unique 2%
+// Inner light has unique 2-5%
 pub static MAGICKA_CONTROLLER: Buff = Buff { id: MAGICKA_CONTROLLER_ID, value: 0f64, value_per_stack: 2f64}; // Multiplicative
 pub static MAGICKA_FLOOD: Buff = Buff {id: MAGICKA_FLOOD_ID, value: 6f64, value_per_stack: 0f64}; // Multiplicative
 // Magicka Reserves IA Vision

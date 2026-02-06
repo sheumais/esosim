@@ -253,7 +253,7 @@ impl CriticalChance {
 
 #[cfg(test)]
 mod tests {
-    use crate::{data::{item_type::{GearSlot, ItemQuality}, major_minor::*}, engine::character::Character, models::player::GearPiece};
+    use crate::{data::{item_type::{GearSlot, ItemQuality}, major_minor::*}, engine::player::character::Character, models::player::GearPiece};
 
     use super::*;
 
