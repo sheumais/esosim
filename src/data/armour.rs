@@ -124,7 +124,7 @@ pub static MINOR_RESOLVE: Buff = Buff { id: RESOLVE_MINOR_ID, value: 2974f64, va
 pub static FROZEN_ARMOUR: Buff = Buff { id: FROZEN_ARMOUR_ID, value: 0f64, value_per_stack: 1240f64}; // Winter's Embrace passive
 pub static RESOLVE: Buff = Buff { id: 45533, value: 0f64, value_per_stack: 343.2}; // Heavy armour passive
 pub static RUGGED: Buff = Buff { id: 45306, value: 2600f64, value_per_stack: 0f64}; // Nord passive
-pub static SCALED_ARMOUR: Buff = Buff { id: SCALED_ARMOUR_ID, value: 2974f64, value_per_stack: 0f64}; // Draconic Power passive
+pub static HEART_OF_STONE: Buff = Buff { id: HEART_OF_STONE_ID, value: 2974f64, value_per_stack: 0f64}; // Draconic Power passive
 /// Only shows up for the person logging.
 pub static BULWARK: Buff = Buff { id: 64079, value: 1900f64, value_per_stack: 0f64}; // Blue CP.
 /// Fake ID. Doesn't show on logs
@@ -142,7 +142,7 @@ pub static ARMOUR_ALL_BY_ID: Map<u32, &'static Buff> = phf_map! {
     86190 => &FROZEN_ARMOUR,
     45533 => &RESOLVE,
     45306 => &RUGGED,
-    44953 => &SCALED_ARMOUR,
+    44996 => &HEART_OF_STONE,
     61743 => &MAJOR_BREACH,
     61742 => &MINOR_BREACH,
     17906 => &CRUSHER,

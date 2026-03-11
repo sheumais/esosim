@@ -4,6 +4,7 @@ use crate::data::{StatBuff as Buff, major_minor::*};
 pub static CRITICAL_DAMAGE_DONE_BY_ID: Map<u32, &'static Buff> = phf_map! {
     13984 => &THE_SHADOW,
     44046 => &PIERCING_SPEAR,
+    45001 => &BLESSING_AT_THE_PEAK,
     45060 => &HEMORRHAGE_PASSIVE,
     45301 => &FELINE_AMBUSH,
     45430 => &HEAVY_WEAPONS,
@@ -86,6 +87,9 @@ pub static LUCENT_ECHOES: Buff = Buff { id: LUCENT_ECHOES_ID, value: 11f64, valu
 
 pub const MORA_SCRIBES_THESIS_ID: u32 = 220315;
 pub static MORA_SCRIBES_THESIS: Buff = Buff { id: MORA_SCRIBES_THESIS_ID, value: 0f64, value_per_stack: 1f64};
+
+pub const BLESSING_AT_THE_PEAK_ID: u32 = 45001;
+pub static BLESSING_AT_THE_PEAK: Buff = Buff { id: BLESSING_AT_THE_PEAK_ID, value: 10f64, value_per_stack: 0f64};
 
 // pub const MALACATHS_BAND_OF_BRUTALITY_ID: u32 = ;
 // pub static MALACATHS_BAND_OF_BRUTALITY: Buff = Buff {

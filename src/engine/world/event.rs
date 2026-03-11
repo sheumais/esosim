@@ -74,13 +74,13 @@ pub struct GameState {
     set_manager: SetManager,
 }
 
-impl World for GameState {
+impl World for HashMap<UnitId, Character> {
     fn character(&self, id: UnitId) -> &Character {
-        &self.players[&id]
+        &self[&id]
     }
 
     fn character_mut(&mut self, id: UnitId) -> &mut Character {
-        self.players.get_mut(&id).expect("invalid UnitId")
+        self.get_mut(&id).expect("invalid UnitId")
     }
 
     fn add_buff(&mut self, target: UnitId, buff_id: ID, stacks: STACKS) {
@@ -99,24 +99,38 @@ impl World for GameState {
 
 impl GameState {
     pub fn evaluate_sets_for_player(&mut self, player: UnitId) {
-        let active_sets = self
-            .set_manager
-            .active_sets
-            .entry(player)
-            .or_default();
+        let mut sets_to_activate = Vec::new();
+        let mut sets_to_deactivate = Vec::new();
 
-        for (set_id, reference) in &SET_REGISTRY_MAP {
-            let pieces = self.character(player).get_set_piece_count(&reference.id);
-            let active = active_sets.contains_key(&reference.id);
+        {
+            for (set_id, reference) in &SET_REGISTRY_MAP {
+                let pieces = self.players.character(player).get_set_piece_count(&reference.id);
+                let active_sets = self
+                    .set_manager
+                    .active_sets
+                    .entry(player)
+                    .or_default();
+                let active = active_sets.contains_key(&reference.id);
 
-            if pieces >= reference.min_pieces && !active {
-                let mut inst = (reference.instance_factory)();
-                inst.on_activate(player, self);
-                active_sets.insert(reference.id, inst);
-            } else if pieces < reference.min_pieces && active {
-                let mut inst = active_sets.remove(&reference.id).unwrap();
-                inst.on_deactivate(player, self);
+                if pieces >= reference.min_pieces && !active {
+                    sets_to_activate.push(*set_id);
+                } else if pieces < reference.min_pieces && active {
+                    sets_to_deactivate.push(*set_id);
+                }
             }
+        }
+
+        for set_id in sets_to_activate {
+            let reference = &SET_REGISTRY_MAP[&set_id];
+            let mut inst = (reference.instance_factory)();
+            inst.on_activate(player, &mut self.players);
+            self.set_manager.active_sets.get_mut(&player).unwrap().insert(reference.id, inst);
+        }
+
+        for set_id in sets_to_deactivate {
+            let reference = &SET_REGISTRY_MAP[&set_id];
+            let mut inst = self.set_manager.active_sets.get_mut(&player).unwrap().remove(&reference.id).unwrap();
+            inst.on_deactivate(player, &mut self.players);
         }
     }
 
@@ -130,15 +144,15 @@ impl GameState {
             | Event::PlayerUpdated { player }
             | Event::BarSwapped { player } => {
                 self.evaluate_sets_for_player(player);
-                self.character_mut(player).recompute_all_supplemental_state();
+                self.players.character_mut(player).recompute_all_supplemental_state();
             }
 
             Event::BuffGained { target, buff_id, stacks, .. } => {
-                self.add_buff(target, buff_id, stacks);
+                self.players.character_mut(target).add_buff(buff_id, stacks);
             }
 
             Event::BuffFaded { target, buff_id } => {
-                self.remove_buff(target, buff_id);
+                self.players.character_mut(target).remove_buff(buff_id);
             }
 
             Event::Tick { .. } => {}
@@ -151,4 +165,15 @@ impl GameState {
         //
     }
 
+    pub fn emit_event_to_sets(&mut self, event: &Event) {
+        let players: Vec<UnitId> = self.set_manager.active_sets.keys().copied().collect();
+        for player in players {
+            let sets: Vec<u16> = self.set_manager.active_sets[&player].keys().copied().collect();
+            for set_id in sets {
+                if let Some(set_inst) = self.set_manager.active_sets.get_mut(&player).and_then(|m| m.get_mut(&set_id)) {
+                    set_inst.on_event(player, event, &mut self.players);
+                }
+            }
+        }
+    }
 }
