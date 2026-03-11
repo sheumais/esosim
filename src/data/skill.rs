@@ -189,7 +189,7 @@
 // ** _Returns:_ *integer* _skillLineId_
 // /script for t=0,9 do for i=1,300 do local id=GetSkillLineId(t,i) if id then local n=GetSkillLineNameById(id) if n and n~="" then d(t.." "..i.." "..id.." "..n) end end end end
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum SkillLine {
     AedricSpear = 22,
     LightArmour = 24,
