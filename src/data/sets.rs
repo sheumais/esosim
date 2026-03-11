@@ -815,6 +815,11 @@ pub static SET_BONUSES: phf::Map<u32, &'static Set> = phf::phf_map! {
     832 => &UNFLINCHING_ULTIMATE,
     845 => &HUNTSMANS_WARMASK,
     846 => &XANMEER_GENESIS,
+    848 => &SHATTERED_PATHS_SIGNET,
+    849 => &GLITTERING_GOAD,
+    850 => &THOUSAND_EYES,
+    851 => &THE_RUCKUS,
+    855 => &GORETHIEF,
 };
 
 static ABYSSAL_BRACE: Set = Set {
@@ -2495,6 +2500,12 @@ static GLACIAL_GUARDIAN: Set = Set {
     ],
 };
 
+static GLITTERING_GOAD: Set = Set {
+    bonuses: &[
+        &[SetBonusType::Power(None)],
+    ],
+};
+
 static GLORGOLOCH_THE_DESTROYER: Set = Set {
     bonuses: &[
         &[SetBonusType::Health(None)],
@@ -2505,6 +2516,15 @@ static GLORIOUS_DEFENDER: Set = Set {
     bonuses: &[
         &[],
         &[SetBonusType::Health(None)],
+        &[SetBonusType::Health(None)],
+        &[SetBonusType::Power(None)],
+    ],
+};
+
+static GORETHIEF: Set = Set {
+    bonuses: &[
+        &[],
+        &[SetBonusType::Stamina(None)],
         &[SetBonusType::Health(None)],
         &[SetBonusType::Power(None)],
     ],
@@ -5192,6 +5212,12 @@ static SHATTERED_FATE: Set = Set {
     ],
 };
 
+static SHATTERED_PATHS_SIGNET: Set = Set {
+    bonuses: &[
+        &[],
+    ],
+};
+
 static SHEER_VENOM: Set = Set {
     bonuses: &[
         &[],
@@ -5838,6 +5864,12 @@ static THE_MORAG_TONG: Set = Set {
     ],
 };
 
+static THE_RUCKUS: Set = Set {
+    bonuses: &[
+        &[SetBonusType::Health(None)],
+    ],
+};
+
 static THE_SAINT_AND_THE_SEDUCER: Set = Set {
     bonuses: &[
     ],
@@ -5869,6 +5901,12 @@ static THEWS_OF_THE_HARBINGER: Set = Set {
         &[SetBonusType::Health(None)],
         &[SetBonusType::Health(None)],
         &[SetBonusType::Stamina(None)],
+    ],
+};
+
+static THOUSAND_EYES: Set = Set {
+    bonuses: &[
+        &[SetBonusType::CriticalChance(None)],
     ],
 };
 
