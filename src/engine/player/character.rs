@@ -40,9 +40,9 @@ impl Character {
                     self.recompute_all_supplemental_state();
                 }
             }
-            Event::BarSwapped {player} => {
+            Event::BarSwapped {player, ref choice} => {
                 if player == self.player.id() {
-                    self.swap_bars(None);
+                    self.swap_bars(choice.as_ref());
                     self.recompute_all_supplemental_state();
                 }
             }
@@ -242,6 +242,8 @@ mod character_integration_test {
             },
         );
 
+        character.recompute_all_supplemental_state();
+
         let crit_damage = character.get_critical_damage_done();
 
         assert!(crit_damage == 125, "crit damage incorrect (is {}%)", crit_damage);
@@ -249,6 +251,8 @@ mod character_integration_test {
         character.remove_buff(FORCE_MAJOR_ID);
         character.remove_buff(LUCENT_ECHOES_ID);
         character.remove_buff(FATED_FORTUNE_ID);
+
+        character.recompute_buff_supplemental_state();
 
         let crit_damage = character.get_critical_damage_done();
 
@@ -397,6 +401,8 @@ mod character_integration_test {
 
         character.set_skills_on_bar(&ActiveBar::Primary, vec![CAMOUFLAGED_HUNTER_ID]);
 
+        character.recompute_all_supplemental_state();
+
         let power = character.get_power();
 
         assert!(power == 4554, "power incorrect (is {})", power);
@@ -497,6 +503,8 @@ mod character_integration_test {
                 enchant: None
             }
         );
+
+        character.recompute_all_supplemental_state();
 
         let physical_resistance = character.get_armour(&DamageType::PHYSICAL);
         let spell_resistance = character.get_armour(&DamageType::MAGIC);

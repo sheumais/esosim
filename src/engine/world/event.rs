@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::engine::{ID, STACKS, player::{character::Character, sets::SET_REGISTRY_MAP}};
+use crate::{engine::{ID, STACKS, player::{character::Character, sets::SET_REGISTRY_MAP}}, models::player::ActiveBar};
 
 pub type UnitId = ID;
 
@@ -43,6 +43,7 @@ pub enum Event {
     },
     BarSwapped {
         player: UnitId,
+        choice: Option<ActiveBar>
     },
 }
 
@@ -137,15 +138,19 @@ impl GameState {
     pub fn handle_event(&mut self, event: Event) {
         match event {
             Event::SkillUsed { caster, target, skill_id } => {
-                self.resolve_skill(caster, target, skill_id);
+                // self.resolve_skill(caster, target, skill_id);
             }
 
             Event::EquipChanged { player }
-            | Event::PlayerUpdated { player }
-            | Event::BarSwapped { player } => {
+            | Event::PlayerUpdated { player } => {
                 self.evaluate_sets_for_player(player);
                 self.players.character_mut(player).recompute_all_supplemental_state();
             }
+
+            Event::BarSwapped { player, ref choice } => {
+                self.players.character_mut(player).swap_bars(choice.as_ref());
+            }
+
 
             Event::BuffGained { target, buff_id, stacks, .. } => {
                 self.players.character_mut(target).add_buff(buff_id, stacks);
@@ -159,10 +164,6 @@ impl GameState {
         }
 
         self.emit_event_to_sets(&event);
-    }
-
-    fn resolve_skill(&mut self, caster: UnitId, target: UnitId, skill_id: u32) {
-        //
     }
 
     pub fn emit_event_to_sets(&mut self, event: &Event) {
