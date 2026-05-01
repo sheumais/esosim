@@ -321,6 +321,8 @@ mod tests {
             },
         );
 
+        character.recompute_all_supplemental_state();
+
         let crit = character.get_critical_damage_done();
         assert!(crit == 62);
     }
@@ -341,6 +343,8 @@ mod tests {
             },
         );
 
+        character.recompute_all_supplemental_state();
+
         let crit = character.get_critical_damage_done();
         assert!(crit == 62);
     }
@@ -360,6 +364,8 @@ mod tests {
                 enchant: None,
             },
         );
+
+        character.recompute_all_supplemental_state();
 
         let crit = character.get_critical_damage_done();
         assert!(crit == 60);
