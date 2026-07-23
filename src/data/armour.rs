@@ -2,6 +2,9 @@ use phf::{Map, phf_map};
 
 use crate::data::{StatBuff as Buff, critical_damage::TWIN_BLADE_AND_BLUNT_ID, item_type::{GearSlot, ItemQuality, ItemType, is_armour}, major_minor::*, skill::*};
 
+const BASE_VALUE: f32 = 349f32;
+const WEIGHT_DIFF: f32 = 258f32;
+const PENALTY_BASE: u16 = 12;
 
 pub fn armour_from_armour_piece(item_type: &ItemType, item_slot: &GearSlot, quality: &ItemQuality) -> Option<u16> {
     use ItemType as T;
@@ -10,112 +13,59 @@ pub fn armour_from_armour_piece(item_type: &ItemType, item_slot: &GearSlot, qual
 
     if !is_armour(item_type) {return None}
 
-    Some(match item_type {
-        T::Light => match item_slot {
-            G::Chest => match quality {
-                Q::Normal => 1220,
-                Q::Fine => 1268,
-                Q::Superior => 1316,
-                Q::Epic => 1348,
-                Q::Legendary => 1396,
-            },
-            G::Head | G::Shoulders | G::Legs | G::Feet => match quality {
-                Q::Normal => 1067,
-                Q::Fine => 1109,
-                Q::Superior => 1151,
-                Q::Epic => 1179,
-                Q::Legendary => 1221,
-            },
-            G::Hands => match quality {
-                Q::Normal => 610,
-                Q::Fine => 634,
-                Q::Superior => 658,
-                Q::Epic => 674,
-                Q::Legendary => 698,
-            },
-            G::Waist => match quality {
-                Q::Normal => 457,
-                Q::Fine => 475,
-                Q::Superior => 493,
-                Q::Epic => 505,
-                Q::Legendary => 523,
-            },
-            _ => return None,
-        },
-        T::Medium => match item_slot {
-            G::Chest => match quality {
-                Q::Normal => 1820,
-                Q::Fine => 1892,
-                Q::Superior => 1964,
-                Q::Epic => 2012,
-                Q::Legendary => 2084,
-            },
-            G::Head | G::Shoulders | G::Legs | G::Feet => match quality {
-                Q::Normal => 1592,
-                Q::Fine => 1655,
-                Q::Superior => 1718,
-                Q::Epic => 1760,
-                Q::Legendary => 1823,
-            },
-            G::Hands => match quality {
-                Q::Normal => 910,
-                Q::Fine => 946,
-                Q::Superior => 982,
-                Q::Epic => 1006,
-                Q::Legendary => 1042,
-            },
-            G::Waist => match quality {
-                Q::Normal => 682,
-                Q::Fine => 709,
-                Q::Superior => 736,
-                Q::Epic => 754,
-                Q::Legendary => 781,
-            },
-            _ => return None,
-        },
-        T::Heavy => match item_slot {
-            G::Chest => match quality {
-                Q::Normal => 2420,
-                Q::Fine => 2516,
-                Q::Superior => 2612,
-                Q::Epic => 2676,
-                Q::Legendary => 2772,
-            },
-            G::Head | G::Shoulders | G::Legs | G::Feet => match quality {
-                Q::Normal => 2117,
-                Q::Fine => 2201,
-                Q::Superior => 2285,
-                Q::Epic => 2341,
-                Q::Legendary => 2425,
-            },
-            G::Hands => match quality {
-                Q::Normal => 1210,
-                Q::Fine => 1258,
-                Q::Superior => 1306,
-                Q::Epic => 1338,
-                Q::Legendary => 1386,
-            },
-            G::Waist => match quality {
-                Q::Normal => 907,
-                Q::Fine => 943,
-                Q::Superior => 979,
-                Q::Epic => 1003,
-                Q::Legendary => 1039,
-            },
-            _ => return None,
-        },
-        T::Shield => match item_slot {
-            G::OffHand | G::OffHandBackup => match quality {
-                Q::Normal => 1500,
-                Q::Fine => 1560,
-                Q::Superior => 1620,
-                Q::Epic => 1660,
+    let slot_coef = match item_slot {
+        G::Chest        => 8,
+        G::Head
+        | G::Shoulders
+        | G::Legs
+        | G::Feet       => 7,
+        G::Hands        => 4,
+        G::Waist        => 3,
+
+        // Shields
+        G::OffHand
+        | G::OffHandBackup
+        if matches!(item_type, T::Shield) => {
+            let base = match quality { // 1500 + quality * 60
                 Q::Legendary => 1720,
-            },
-            _ => return None,
-        },
+                Q::Epic      => 1660,
+                Q::Superior  => 1620,
+                Q::Fine      => 1560,
+                Q::Normal    => 1500,
+            };
+            return Some(base);
+        }
         _ => return None,
-    })
+    };
+
+    let weight_idx: f32 = match item_type {
+        T::Light  => 0.,
+        T::Medium => 1.,
+        T::Heavy  => 2.,
+        _ => return None,
+    };
+
+    let legendary = ((BASE_VALUE  * slot_coef as f32) / 2.0
+           + weight_idx * (WEIGHT_DIFF * slot_coef as f32  / 3.0)) as u16;
+
+    let (weight_num, weight_den) = match item_type {
+        T::Heavy  => (1, 1),
+        T::Medium => (3, 4),
+        T::Light  => (1, 2),
+        _ => return None,
+    };
+
+    let quality_num  = match quality {
+        Q::Legendary => return Some(legendary),
+        Q::Epic      => 3,
+        Q::Superior  => 5,
+        Q::Fine      => 8,
+        Q::Normal    => 11,
+    };
+
+    let penalty = (PENALTY_BASE * slot_coef * weight_num * quality_num + (weight_den * 3 / 2)) / (weight_den * 3);
+
+    Some(legendary - penalty)
 }
 
 // Both
@@ -127,8 +77,8 @@ pub static RUGGED: Buff = Buff { id: 45306, value: 2600f64, value_per_stack: 0f6
 pub static HEART_OF_STONE: Buff = Buff { id: HEART_OF_STONE_ID, value: 2974f64, value_per_stack: 0f64}; // Draconic Power passive
 /// Only shows up for the person logging.
 pub static BULWARK: Buff = Buff { id: 64079, value: 1900f64, value_per_stack: 0f64}; // Blue CP.
-/// Fake ID. Doesn't show on logs
-pub static FORTIFIED: Buff = Buff { id: 4001000, value: 0f64, value_per_stack: 34.62}; // Red CP.
+/// Doesn't show on logs
+pub static FORTIFIED: Buff = Buff { id: 142035, value: 0f64, value_per_stack: 34.62}; // Red CP.
 pub static OZEZANS_PLATING: Buff = Buff { id: 188471, value: 4272f64, value_per_stack: 0.0};
 
 // Decrease
