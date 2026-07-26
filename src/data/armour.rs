@@ -33,7 +33,8 @@ pub fn armour_from_armour_piece(item_type: &ItemType, item_slot: &GearSlot, qual
                 Q::Fine      => 1560,
                 Q::Normal    => 1500,
             };
-            return Some(base);
+            return Some(1500 + *quality as u16 * 60);
+            // return Some(base);
         }
         _ => return None,
     };

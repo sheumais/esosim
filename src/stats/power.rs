@@ -1,10 +1,9 @@
-use crate::models::LEVEL;
+const LEVEL: u8 = 50;
 
 #[derive(Default)]
 pub struct Power {
     additive: u32,
     multiplicative: f32,
-    bloodthirsty: u32,
 }
 
 impl Power {
@@ -17,7 +16,7 @@ impl Power {
         let base =
             level as u32 * 20
             + self.additive;
-        (base as f32 * (1.0 + self.multiplicative)).round() as u32 + self.bloodthirsty
+        (base as f32 * (1.0 + self.multiplicative)).round() as u32 /* + bloodthirsty */
     }
 
     pub fn add_to_additive(&mut self, value: u32) {
@@ -28,27 +27,22 @@ impl Power {
         self.multiplicative += value;
     }
 
-    pub fn set_bloodthirsty(&mut self, value: u32) {
-        self.bloodthirsty = value;
-    }
-
     pub fn reset(&mut self) {
         self.additive = 0;
         self.multiplicative = 0.0;
-        self.bloodthirsty = 0;
     }
 
     pub fn new() -> Self {
         Self {
             additive: 0,
             multiplicative: 0.0,
-            bloodthirsty: 0,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::data::tables::power::OFFHAND_MULTIPLIER;
     use super::*;
 
     #[test]
@@ -60,14 +54,14 @@ mod tests {
     #[test]
     fn test_dual_wield() {
         let mut power = Power::new();
-        power.additive = ((0.1765 + 0.06) as f32 * 1335.0).round() as u32 + 1535; // offhand and passive plus mainhand
+        power.additive = ((OFFHAND_MULTIPLIER + 0.06) as f32 * 1335.0).round() as u32 + 1535; // offhand and passive plus mainhand
         assert_eq!(power.calculate(), 2851);
     }
 
     #[test]
     fn test_dual_wield_fleshed_out_example() {
         let mut power = Power::new();
-        power.additive = ((0.1765 + 0.06) as f32 * 1335.0).round() as u32 + 1535;
+        power.additive = ((OFFHAND_MULTIPLIER + 0.06) as f32 * 1335.0).round() as u32 + 1535;
         power.multiplicative = 0.03; // one fighters guild skill
         assert_eq!(power.calculate(), 2937);
         power.multiplicative += 0.12; // 6 medium pieces

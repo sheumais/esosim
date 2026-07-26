@@ -1,14 +1,10 @@
 use std::collections::HashMap;
-use lazy_static::lazy_static;
 
-lazy_static! {
-    // Item type from game using https://github.com/sheumais/ItemTypeDataExtractTool
-    pub static ref ITEM_TYPES: HashMap<u32, ItemType> = parse_item_types_into_hashmap();
-}
+use crate::data::enums::gear::{GearTrait, ItemType};
 
 pub fn parse_item_types_into_hashmap() -> HashMap<u32, ItemType> {
     let mut item_type_table = HashMap::new();
-    let data = include_str!("item_types.csv");
+    let data = include_str!("../item_types.csv");
 
     for line in data.lines() {
         let parts: Vec<&str> = line.split(',').collect();
@@ -24,28 +20,6 @@ pub fn parse_item_types_into_hashmap() -> HashMap<u32, ItemType> {
     }
 
     item_type_table
-}
-
-#[derive(PartialEq, Debug, Clone, Copy)]
-pub enum ItemType {
-    Axe,
-    Dagger,
-    Mace,
-    Sword,
-    TwoHandedAxe,
-    TwoHandedMace,
-    TwoHandedSword,
-    FrostStaff,
-    FireStaff,
-    LightningStaff,
-    HealingStaff,
-    Shield,
-    Bow,
-    Light,
-    Medium,
-    Heavy,
-    Mara,
-    Unknown,
 }
 
 pub fn calculate_item_type(str: &str) -> ItemType {
@@ -123,118 +97,6 @@ pub fn is_two_handed_weapon_option(item: Option<&ItemType>) -> bool {
 
 pub fn is_armour(item: &ItemType) -> bool {
     matches!(item, ItemType::Light | ItemType::Medium | ItemType::Heavy | ItemType::Shield)
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ItemQuality {
-    Normal,
-    Fine,
-    Superior,
-    Epic,
-    Legendary,
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum GearSlot {
-    Head,
-    Shoulders,
-    Chest,
-    Hands,
-    Waist,
-    Legs,
-    Feet,
-    Necklace,
-    Ring1,
-    Ring2,
-    MainHand,
-    MainHandBackup,
-    Poison,
-    OffHand,
-    OffHandBackup,
-    BackupPoison,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum GearTrait {
-    JewelryBloodthirsty,
-    JewelryHarmony,
-    JewelryProtective,
-    JewelrySwift,
-    JewelryTriune,
-    JewelryInfused,
-    JewelryArcane,
-    JewelryRobust,
-    JewelryHealthy,
-    JewelryIntricate,
-    JewelryOrnate,
-
-    ArmorSturdy,
-    ArmorImpenetrable,
-    ArmorReinforced,
-    ArmorWellFitted,
-    ArmorDivines,
-    ArmorNirnhoned,
-    ArmorInfused,
-    ArmorTraining,
-    ArmorInvigorating,
-    ArmorIntricate,
-    ArmorOrnate,
-
-    WeaponInfused,
-    WeaponNirnhoned,
-    WeaponCharged,
-    WeaponDecisive,
-    WeaponDefending,
-    WeaponPowered,
-    WeaponPrecise,
-    WeaponSharpened,
-    WeaponTraining,
-    WeaponIntricate,
-    WeaponOrnate,
-}
-
-// Note that enchants are only bound to specific gear pieces by the rules of what can be applied in the game. This is why they are listed here as one enum.
-// In fact, bugged items exist on live servers from trials that have armour enchantments on weapons, such as a +Max Stamina Lightning Staff
-// If such an item exists but with traits instead of enchants then please let me know.
-#[derive(Debug, PartialEq)]
-pub enum EnchantType {
-    AbsorbHealth,
-    AbsorbMagicka,
-    AbsorbStamina,
-    BefouledWeapon,
-    Beserker,
-    ChargedWeapon,
-    DamageShield,
-    DiseaseResistance,
-    FieryWeapon,
-    FireResistance,
-    FrostResistance,
-    FrozenWeapon,
-    Health,
-    HealthRegen,
-    IncreaseBashDamage,
-    IncreasePhysicalDamage,
-    IncreasePotionEffectiveness,
-    IncreaseSpellDamage,
-    Magicka,
-    MagickaRegen,
-    OblivionDamage,
-    PhysicalResistance,
-    PoisonedWeapon,
-    PoisonResistance,
-    PrismaticDefense,
-    PrismaticOnslaught,
-    PrismaticRecovery,
-    ReduceArmor,
-    ReduceBlockAndBash,
-    ReduceFeatCost,
-    ReducePotionCooldown,
-    ReducePower,
-    ReduceSpellCost,
-    ShockResistance,
-    SpellResistance,
-    Stamina,
-    StaminaRegen,
 }
 
 /// Doubles the effectiveness of the trait when applied to a two-handed weapon compared to one handed.

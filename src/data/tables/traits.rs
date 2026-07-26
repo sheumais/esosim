@@ -1,4 +1,4 @@
-use crate::data::item_type::ItemQuality;
+use crate::data::enums::gear::ItemQuality;
 
 pub fn get_weapon_powered_value(q: &ItemQuality) -> f32 {
     match q {

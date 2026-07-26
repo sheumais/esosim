@@ -1,6 +1,8 @@
-use crate::models::{CRITICAL_CHANCE_DEFAULT, CRITICAL_DAMAGE_DEFAULT, CRITICAL_DAMAGE_MAXIMUM, EFFECTIVE_LEVEL};
-
 pub const CRIT_DAMAGE_SCALE: u16 = 66;
+const CRITICAL_DAMAGE_DEFAULT: u16 = 50;
+const CRITICAL_DAMAGE_MAXIMUM_DEFAULT: u16 = 125;
+const CRITICAL_CHANCE_DEFAULT: f32 = 0.1;
+const EFFECTIVE_LEVEL: u8 = 66;
 
 pub struct CriticalDamage {
     additive_scaled: u16,
@@ -8,13 +10,6 @@ pub struct CriticalDamage {
 
 impl CriticalDamage {
     pub fn calculate(&self) -> u16 {
-        let base = self.additive_scaled
-            + (CRITICAL_DAMAGE_DEFAULT * CRIT_DAMAGE_SCALE);
-
-        CRITICAL_DAMAGE_MAXIMUM.min(base / CRIT_DAMAGE_SCALE)
-    }
-
-    pub fn calculate_uncapped(&self) -> u16 {
         self.additive_scaled
             + (CRITICAL_DAMAGE_DEFAULT * CRIT_DAMAGE_SCALE)
     }
@@ -46,7 +41,7 @@ impl CriticalChance {
     }
 
     pub fn calculate_with_level(&self, level: u8) -> f32 {
-        let level_const = 2 * level as u32 * (100 + level as u32);
+        let level_const = 2 * level as u32 * (100 + level as u32); // 21912
         ((self.additive as f32 / level_const as f32) + CRITICAL_CHANCE_DEFAULT).min(1.0)
     }
 
@@ -78,7 +73,7 @@ mod tests {
     #[test]
     fn test_calculate_defaults() {
         let crit_dmg = CriticalDamage::default();
-        assert_eq!(crit_dmg.calculate(), CRITICAL_DAMAGE_DEFAULT);
+        assert_eq!(crit_dmg.calculate(), CRITICAL_DAMAGE_DEFAULT * CRIT_DAMAGE_SCALE);
         let crit_chance = CriticalChance::default();
         assert_eq!(crit_chance.calculate(), CRITICAL_CHANCE_DEFAULT);
     }
@@ -93,7 +88,7 @@ mod tests {
         + 320 // precision cp
         + 657 // slimecraw 1pc
         + 1579); // precise weapon
-        assert_eq!(crit_chance.calculate() * 100.0, 48.421867);
+        assert!(crit_chance.calculate() - (CRITICAL_CHANCE_DEFAULT + 0.384309959) < 1e-7); // read from /script d(GetCriticalStrikeChance(8421))
     }
 
     #[test]
@@ -104,6 +99,6 @@ mod tests {
         + 2 // 1x medium armour
         + 12 // khajiit passive
         + 10); // velothi amulet/minor force
-        assert_eq!(crit_damage.calculate(), 84u16);
+        assert_eq!(crit_damage.calculate(), 84 * CRIT_DAMAGE_SCALE);
     }
 }

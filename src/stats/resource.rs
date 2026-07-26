@@ -1,4 +1,4 @@
-use crate::{models::LEVEL};
+const LEVEL: u8 = 50;
 
 #[derive(Debug)]
 pub enum PlayerAttributeType {
