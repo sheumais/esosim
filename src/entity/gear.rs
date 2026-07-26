@@ -1,4 +1,4 @@
-use crate::data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::armour_from_armour_piece, item_type::*, power::power_from_weapon_type, traits::*}};
+use crate::{data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::armour_from_armour_piece, enchant::*, item_type::*, power::power_from_weapon_type, traits::*}}, entity::gear::EnchantValueWrapper::{F32, Prismatic}};
 
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -17,6 +17,12 @@ pub struct GearPiece {
     pub quality: ItemQuality,
     pub set_id: Option<u16>,
     pub enchant: Option<GearEnchant>,
+}
+
+pub enum EnchantValueWrapper {
+    F32(f32),
+    /// Health, Magicka, Stamina
+    Prismatic((f32, f32, f32)),
 }
 
 impl GearPiece {
@@ -46,6 +52,18 @@ impl GearPiece {
 
     pub fn get_enchant(&self) -> Option<GearEnchant> {
         self.enchant
+    }
+
+    pub fn get_effective_level(&self) -> u8 {
+        self.effective_level
+    }
+
+    pub fn get_effective_enchant_quality(&self) -> Option<ItemQuality> {
+        if let Some(e) = self.get_enchant() {
+            Some(e.quality.find_lower_quality(self.get_quality()))
+        } else {
+            None
+        }
     }
 
     pub fn get_trait_value(&self) -> Option<f32> {
@@ -100,8 +118,23 @@ impl GearPiece {
         {
             value *= 2.0;
         }
+        if trait_.is_infused() {
+            value += 1.0;
+        }
 
         Some(value)
+    }
+
+    pub fn get_infused_value(&self) -> f32 {
+        if let Some(i) = self.get_item_trait() {
+            if i.is_infused() {
+                return self.get_trait_value().unwrap_or(1.0);
+            } else {
+                return 1f32
+            }
+        } else {
+            return 1.0
+        }
     }
 
     /// multiply by offhand_multipler + 0.06 afterward, then round() and cast to u32
@@ -138,6 +171,46 @@ impl GearPiece {
 
     pub fn is_two_handed_weapon(&self) -> bool {
         is_two_handed_weapon(&self.get_item_type())
+    }
+
+    /// Gets the nominal value of the enchant.
+    pub fn get_enchant_value(&self) -> Option<EnchantValueWrapper> {
+        if let Some(e) = self.get_enchant() {
+            let v = match e.glyph {
+                EnchantType::DiseaseResistance => {get_enchant_jewellery_increase_disease_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::FlameResistance => {get_enchant_jewellery_increase_flame_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::FrostResistance => {get_enchant_jewellery_increase_frost_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::Health => {get_enchant_armour_health_value(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::HealthRegen => {get_enchant_jewellery_increase_health_recovery(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                // EnchantType::IncreaseBashDamage => {},
+                EnchantType::IncreasePhysicalDamage => {get_enchant_jewellery_increase_weapon_damage(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                // EnchantType::IncreasePotionEffectiveness => {},
+                EnchantType::IncreaseSpellDamage => {get_enchant_jewellery_increase_spell_damage(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::Magicka => {get_enchant_armour_magicka_value(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::MagickaRegen => {get_enchant_jewellery_increase_magicka_recovery(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::PhysicalResistance => {get_enchant_jewellery_increase_physical_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::PoisonResistance => {get_enchant_jewellery_increase_poison_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                // EnchantType::ReduceBlockAndBash => {},
+                // EnchantType::ReduceFeatCost => {},
+                // EnchantType::ReducePotionCooldown => {},
+                // EnchantType::ReduceSpellCost => {},
+                EnchantType::ShockResistance => {get_enchant_jewellery_increase_shock_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::SpellResistance => {get_enchant_jewellery_increase_spell_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::Stamina => {get_enchant_armour_stamina_value(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::StaminaRegen => {get_enchant_jewellery_increase_stamina_recovery(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                _ => {
+                    let p = match e.glyph {
+                        EnchantType::PrismaticDefense => {get_enchant_armour_prismatic_values(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                        EnchantType::PrismaticRecovery => {get_enchant_jewellery_prismatic_recovery_values(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                        _ => {return None},
+                    };
+                    return Some(Prismatic(p))
+                },
+            };
+            return Some(F32(v))
+        }
+
+        return None
     }
 }
 

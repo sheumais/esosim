@@ -59,14 +59,33 @@ pub enum GearTrait {
     WeaponOrnate,
 }
 
+impl GearTrait {
+    pub fn is_infused(&self) -> bool {
+        match self {
+            Self::ArmorInfused | Self::WeaponInfused | Self::JewelryInfused => true,
+            _ => false,
+        }
+    }
+}
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum ItemQuality {
     Normal,
     Fine,
     Superior,
     Epic,
     Legendary,
+}
+
+impl ItemQuality {
+    pub fn find_higher_quality(&self, other: Self) -> ItemQuality {
+        (*self).max(other)
+    }
+
+    pub fn find_lower_quality(&self, other: Self) -> ItemQuality {
+        (*self).min(other)
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -112,7 +131,7 @@ pub enum EnchantType {
     DamageShield,
     DiseaseResistance,
     FieryWeapon,
-    FireResistance,
+    FlameResistance,
     FrostResistance,
     FrozenWeapon,
     Health,

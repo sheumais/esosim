@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use eso_skill_data::enums::skill_line::SkillLine;
 
-use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::SET_BONUSES}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::Channel, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout}, player::ActiveBar::*}};
+use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::SET_BONUSES}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{EnchantValueWrapper, GearPiece, Loadout}, player::ActiveBar::*}};
 
 pub enum ActiveBar {
     Front,
@@ -109,7 +109,7 @@ impl Player {
         self.channels = channels;
     }
 
-    pub fn apply_gear(&self, channels: &mut ChannelSet) {
+    pub fn apply_gear(&self, channels: &mut ChannelSet) { // todo add tests
         for (slot, gear) in self.get_active_gear_with_slots() {
             let power = gear.get_weapon_power();
             if power > 0f32 {
@@ -160,32 +160,54 @@ impl Player {
                 }
             }
             if let Some(e) = gear.get_enchant() {
-                let v = gear.get_trait_value().unwrap_or(0f32);
-                match e.glyph {
-                    EnchantType::DiseaseResistance => {},
-                    EnchantType::FireResistance => {},
-                    EnchantType::FrostResistance => {},
-                    EnchantType::Health => {},
-                    EnchantType::HealthRegen => {},
-                    EnchantType::IncreaseBashDamage => {},
-                    EnchantType::IncreasePhysicalDamage => {},
-                    EnchantType::IncreasePotionEffectiveness => {},
-                    EnchantType::IncreaseSpellDamage => {},
-                    EnchantType::Magicka => {},
-                    EnchantType::MagickaRegen => {},
-                    EnchantType::PhysicalResistance => {},
-                    EnchantType::PoisonResistance => {},
-                    EnchantType::PrismaticDefense => {},
-                    EnchantType::PrismaticRecovery => {},
-                    EnchantType::ReduceBlockAndBash => {},
-                    EnchantType::ReduceFeatCost => {},
-                    EnchantType::ReducePotionCooldown => {},
-                    EnchantType::ReduceSpellCost => {},
-                    EnchantType::ShockResistance => {},
-                    EnchantType::SpellResistance => {},
-                    EnchantType::Stamina => {},
-                    EnchantType::StaminaRegen => {},
-                    _ => {},
+                let wrapper = gear.get_enchant_value().expect("An enchant should always have a value");
+                let infused_multiplier = gear.get_infused_value();
+                match wrapper {
+                    EnchantValueWrapper::F32(v_) => {
+                        let v = v_ * infused_multiplier;
+                        match e.glyph {
+                            EnchantType::DiseaseResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Disease), v as i64)},
+                            EnchantType::FlameResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Flame), v as i64)},
+                            EnchantType::FrostResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Frost), v as i64)},
+                            EnchantType::Health => {channels.add_additive(Channel::Resource(ResourceKind::Health, AggKind::Additive), v as i64)},
+                            EnchantType::HealthRegen => {channels.add_additive(Channel::Recovery(ResourceKind::Health, AggKind::Additive), v as i64)},
+                            EnchantType::IncreaseBashDamage => {todo!()},
+                            EnchantType::IncreasePhysicalDamage => {channels.add_additive(Channel::Power, v as i64); channels.add_additive(Channel::Recovery(ResourceKind::Stamina, AggKind::Additive), 10i64)},
+                            EnchantType::IncreasePotionEffectiveness => {todo!()},
+                            EnchantType::IncreaseSpellDamage => {channels.add_additive(Channel::Power, v as i64); channels.add_additive(Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), 10i64)},
+                            EnchantType::Magicka => {channels.add_additive(Channel::Resource(ResourceKind::Magicka, AggKind::Additive), v as i64)},
+                            EnchantType::MagickaRegen => {channels.add_additive(Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), v as i64)},
+                            EnchantType::PhysicalResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Martial), v as i64)},
+                            EnchantType::PoisonResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Poison), v as i64)},
+                            EnchantType::PrismaticDefense => {todo!()},
+                            EnchantType::PrismaticRecovery => {todo!()},
+                            EnchantType::ReduceBlockAndBash => {todo!()},
+                            EnchantType::ReduceFeatCost => {todo!()},
+                            EnchantType::ReducePotionCooldown => {todo!()},
+                            EnchantType::ReduceSpellCost => {todo!()},
+                            EnchantType::ShockResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Shock), v as i64)},
+                            EnchantType::SpellResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Spell), v as i64)},
+                            EnchantType::Stamina => {channels.add_additive(Channel::Resource(ResourceKind::Stamina, AggKind::Additive), v as i64)},
+                            EnchantType::StaminaRegen => {channels.add_additive(Channel::Recovery(ResourceKind::Stamina, AggKind::Additive), v as i64)},
+                            _ => {},
+                        }
+                    },
+                    EnchantValueWrapper::Prismatic(v_) => {
+                        let v = (v_.0 * infused_multiplier, v_.1 * infused_multiplier, v_.2 * infused_multiplier);
+                        match e.glyph {
+                            EnchantType::PrismaticDefense => {
+                                channels.add_additive(Channel::Resource(ResourceKind::Health, AggKind::Additive), v.0 as i64);
+                                channels.add_additive(Channel::Resource(ResourceKind::Magicka, AggKind::Additive), v.1 as i64);
+                                channels.add_additive(Channel::Resource(ResourceKind::Stamina, AggKind::Additive), v.2 as i64);
+                            },
+                            EnchantType::PrismaticRecovery => {
+                                channels.add_additive(Channel::Recovery(ResourceKind::Health, AggKind::Additive), v.0 as i64);
+                                channels.add_additive(Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), v.1 as i64);
+                                channels.add_additive(Channel::Recovery(ResourceKind::Stamina, AggKind::Additive), v.2 as i64);
+                            },
+                            _ => {},
+                        }
+                    }
                 }
             }
         }

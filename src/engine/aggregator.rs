@@ -5,9 +5,7 @@ use super::effect::Channel;
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Aggregator {
     additive: i64,
-    // Basis points (1 bps = 0.01%) so the multiplicative side never has to
-    // touch floats after this point — matches the "verified to the exact
-    // integer" discipline §6 insists on for everything downstream.
+    /// Basis points (1 = 0.01%)
     multiplicative_bps: i64,
 }
 

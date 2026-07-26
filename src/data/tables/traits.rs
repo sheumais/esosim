@@ -32,11 +32,11 @@ pub fn get_weapon_precise_value(q: &ItemQuality) -> f32 {
 
 pub fn get_weapon_infused_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.10,
-        ItemQuality::Fine => 1.15,
-        ItemQuality::Superior => 1.20,
-        ItemQuality::Epic => 1.25,
-        ItemQuality::Legendary => 1.30,
+        ItemQuality::Normal => 0.10,
+        ItemQuality::Fine => 0.15,
+        ItemQuality::Superior => 0.20,
+        ItemQuality::Epic => 0.25,
+        ItemQuality::Legendary => 0.30,
     }
 }
 
@@ -142,11 +142,11 @@ pub fn get_armor_training_value(q: &ItemQuality) -> f32 {
 
 pub fn get_armor_infused_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.09,
-        ItemQuality::Fine => 1.13,
-        ItemQuality::Superior => 1.17,
-        ItemQuality::Epic => 1.21,
-        ItemQuality::Legendary => 1.25,
+        ItemQuality::Normal => 0.09,
+        ItemQuality::Fine => 0.13,
+        ItemQuality::Superior => 0.17,
+        ItemQuality::Epic => 0.21,
+        ItemQuality::Legendary => 0.25,
     }
 }
 
@@ -232,15 +232,15 @@ pub fn get_jewelry_harmony_value(q: &ItemQuality) -> f32 {
 
 pub fn get_jewelry_infused_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.24,
-        ItemQuality::Fine => 1.33,
-        ItemQuality::Superior => 1.42,
-        ItemQuality::Epic => 1.51,
-        ItemQuality::Legendary => 1.60,
+        ItemQuality::Normal => 0.24,
+        ItemQuality::Fine => 0.33,
+        ItemQuality::Superior => 0.42,
+        ItemQuality::Epic => 0.51,
+        ItemQuality::Legendary => 0.60,
     }
 }
 
-// Health, Magicka, Stamina
+/// Health, Magicka, Stamina
 pub fn get_jewelry_triune_value(q: &ItemQuality) -> (f32, f32, f32) {
     match q {
         ItemQuality::Normal => (418.0, 380.0, 380.0),
