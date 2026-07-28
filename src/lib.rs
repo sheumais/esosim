@@ -6,7 +6,7 @@ pub mod data {
     pub mod effects {
     }
     pub mod skill_data {
-
+        pub mod major_minor;
     }
     pub mod tables {
         pub mod armour;

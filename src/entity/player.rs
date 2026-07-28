@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use eso_skill_data::enums::skill_line::SkillLine;
 
-use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::SET_BONUSES}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{EnchantValueWrapper, GearPiece, Loadout}, player::ActiveBar::*}};
+use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::{PERFECTED_TO_SET, SET_BONUSES}}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{EnchantValueWrapper, GearPiece, Loadout}, player::ActiveBar::*}};
 
 pub enum ActiveBar {
     Front,
@@ -122,6 +122,7 @@ impl Player {
             } 
             channels.add_additive(Channel::Armour(ResistableDamageType::All), gear.get_armour_value(&slot) as i64);
             if let Some(v) = gear.get_item_trait() {
+                let value = gear.get_trait_value().expect("An item with a trait should always have a trait value");
                 match v {
                     GearTrait::JewelryBloodthirsty => {},
                     GearTrait::JewelryHarmony => {},
@@ -227,8 +228,12 @@ impl Player {
     pub fn get_active_sets_counts(&self) -> HashMap<u16, u8> {
         let mut sets = HashMap::new();
         for piece in self.get_active_gear() {
+            let contribution = 1 + piece.is_two_handed_weapon() as u8;
             if let Some(set_id) = piece.set_id {
-                *sets.entry(set_id).or_insert(0) += 1 + piece.is_two_handed_weapon() as u8;
+                *sets.entry(set_id).or_insert(0) += contribution;
+                if let Some(unperfected) = PERFECTED_TO_SET.get(&set_id) {
+                    *sets.entry(*unperfected).or_insert(0) += contribution;
+                }
             }
         }
         sets

@@ -2,10 +2,9 @@ use phf::{Map, phf_map};
 
 use crate::{data::enums::damage::ResistableDamageType, engine::effect::*};
 
-pub struct ActiveSet {
-    pub set_id: u32,
-    pub count: u8,
-}
+// Big thank you to UESP!
+// https://esoitem.uesp.net/viewlog.php?record=setSummary
+// And thank you to Baertram for keeping LibSets updated :)
 
 #[derive(Debug)]
 pub struct SetBonus {
@@ -45,8 +44,8 @@ mod tests {
     fn reawakened_hierophant_magicka_bonus_is_summed_correctly() {
         let mut channels = ChannelSet::new();
         let mut player = Player::new();
-        let hierophant_item = GearPiece::new(ItemType::Heavy, 66, None, ItemQuality::Legendary, Some(722), None);
-        let hierophant_weapon= GearPiece::new(ItemType::LightningStaff, 66, None, ItemQuality::Legendary, Some(722), None);
+        let hierophant_item = GearPiece::new(ItemType::Heavy, 66, None, ItemQuality::Legendary, Some(REAWAKENED_HIEROPHANT_SET_ID), None);
+        let hierophant_weapon= GearPiece::new(ItemType::LightningStaff, 66, None, ItemQuality::Legendary, Some(REAWAKENED_HIEROPHANT_SET_ID), None);
         player.set_gear_piece(GearSlot::Chest, hierophant_item.clone());
         player.set_gear_piece(GearSlot::Legs, hierophant_item.clone());
         player.set_gear_piece(GearSlot::Hands, hierophant_item.clone());
@@ -54,10 +53,746 @@ mod tests {
         player.apply_set_bonuses(&mut channels);
         assert_eq!(channels.get(Channel::Resource(ResourceKind::Magicka, AggKind::Additive)), 731 * 3);
     }
+
+    #[test]
+    fn reawakened_coral_riptide_perfected_bonus_is_summed_correctly() {
+        let mut channels = ChannelSet::new();
+        let mut player = Player::new();
+        let armour = GearPiece::new(ItemType::Heavy, 66, None, ItemQuality::Legendary, Some(PERFECTED_CORAL_RIPTIDE_SET_ID), None);
+        let weapon = GearPiece::new(ItemType::LightningStaff, 66, None, ItemQuality::Legendary, Some(PERFECTED_CORAL_RIPTIDE_SET_ID), None);
+        player.set_gear_piece(GearSlot::Chest, armour.clone());
+        player.set_gear_piece(GearSlot::Legs, armour.clone());
+        player.set_gear_piece(GearSlot::Hands, armour.clone());
+        player.set_gear_piece(GearSlot::MainHand, weapon);
+        player.apply_set_bonuses(&mut channels);
+        assert!(player.get_active_sets_counts().contains_key(&CORAL_RIPTIDE_SET_ID));
+        assert_eq!(channels.get(Channel::CriticalChance), (SET_CRITICAL_CHANCE_DEFAULT * 2) as i64);
+        assert_eq!(channels.get(Channel::Power), SET_POWER_DEFAULT as i64);
+    }
+
+    #[test]
+    fn test_forward_and_backward_from_perfected() {
+        for i in 0..999 {
+            if let Some(non_to_perf) = SET_TO_PERFECTED.get(&i) {
+                let _ = PERFECTED_TO_SET.get(non_to_perf).unwrap();
+            }
+        }
+    }
 }
 
-// Big thank you to UESP!
-// https://esoitem.uesp.net/viewlog.php?record=setSummary
+pub const VESTMENTS_OF_THE_WARLOCK_SET_ID: u16 = 19;
+pub const WITCHMAN_ARMOR_SET_ID: u16 = 20;
+pub const AKAVIRI_DRAGONGUARD_SET_ID: u16 = 21;
+pub const DREAMERS_MANTLE_SET_ID: u16 = 22;
+pub const ARCHERS_MIND_SET_ID: u16 = 23;
+pub const FOOTMANS_FORTUNE_SET_ID: u16 = 24;
+pub const DESERT_ROSE_SET_ID: u16 = 25;
+pub const PRISONERS_RAGS_SET_ID: u16 = 26;
+pub const FIORDS_LEGACY_SET_ID: u16 = 27;
+pub const BARKSKIN_SET_ID: u16 = 28;
+pub const SERGEANTS_MAIL_SET_ID: u16 = 29;
+pub const THUNDERBUGS_CARAPACE_SET_ID: u16 = 30;
+pub const SILKS_OF_THE_SUN_SET_ID: u16 = 31;
+pub const HEALERS_HABIT_SET_ID: u16 = 32;
+pub const VIPERS_STING_SET_ID: u16 = 33;
+pub const NIGHT_MOTHERS_EMBRACE_SET_ID: u16 = 34;
+pub const KNIGHTMARE_SET_ID: u16 = 35;
+pub const ARMOR_OF_THE_VEILED_HERITANCE_SET_ID: u16 = 36;
+pub const DEATHS_WIND_SET_ID: u16 = 37;
+pub const TWILIGHTS_EMBRACE_SET_ID: u16 = 38;
+pub const ALESSIAN_ORDER_SET_ID: u16 = 39;
+pub const NIGHTS_SILENCE_SET_ID: u16 = 40;
+pub const WHITESTRAKES_RETRIBUTION_SET_ID: u16 = 41;
+pub const ARMOR_OF_THE_SEDUCER_SET_ID: u16 = 43;
+pub const VAMPIRES_KISS_SET_ID: u16 = 44;
+pub const NOBLE_DUELISTS_SILKS_SET_ID: u16 = 46;
+pub const ROBES_OF_THE_WITHERED_HAND_SET_ID: u16 = 47;
+pub const MAGNUS_GIFT_SET_ID: u16 = 48;
+pub const SHADOW_OF_THE_RED_MOUNTAIN_SET_ID: u16 = 49;
+pub const THE_MORAG_TONG_SET_ID: u16 = 50;
+pub const NIGHT_MOTHERS_GAZE_SET_ID: u16 = 51;
+pub const BECKONING_STEEL_SET_ID: u16 = 52;
+pub const THE_ICE_FURNACE_SET_ID: u16 = 53;
+pub const ASHEN_GRIP_SET_ID: u16 = 54;
+pub const PRAYER_SHAWL_SET_ID: u16 = 55;
+pub const STENDARRS_EMBRACE_SET_ID: u16 = 56;
+pub const SYRABANES_GRIP_SET_ID: u16 = 57;
+pub const HIDE_OF_THE_WEREWOLF_SET_ID: u16 = 58;
+pub const KYNES_KISS_SET_ID: u16 = 59;
+pub const DARKSTRIDE_SET_ID: u16 = 60;
+pub const DREUGH_KING_SLAYER_SET_ID: u16 = 61;
+pub const HATCHLINGS_SHELL_SET_ID: u16 = 62;
+pub const THE_JUGGERNAUT_SET_ID: u16 = 63;
+pub const SHADOW_DANCERS_RAIMENT_SET_ID: u16 = 64;
+pub const BLOODTHORNS_TOUCH_SET_ID: u16 = 65;
+pub const ROBES_OF_THE_HIST_SET_ID: u16 = 66;
+pub const SHADOW_WALKER_SET_ID: u16 = 67;
+pub const STYGIAN_SET_ID: u16 = 68;
+pub const RANGERS_GAIT_SET_ID: u16 = 69;
+pub const SEVENTH_LEGION_BRUTE_SET_ID: u16 = 70;
+pub const DUROKS_BANE_SET_ID: u16 = 71;
+pub const NIKULAS_HEAVY_ARMOR_SET_ID: u16 = 72;
+pub const OBLIVIONS_FOE_SET_ID: u16 = 73;
+pub const SPECTRES_EYE_SET_ID: u16 = 74;
+pub const TORUGS_PACT_SET_ID: u16 = 75;
+pub const ROBES_OF_ALTERATION_MASTERY_SET_ID: u16 = 76;
+pub const CRUSADER_SET_ID: u16 = 77;
+pub const HIST_BARK_SET_ID: u16 = 78;
+pub const WILLOWS_PATH_SET_ID: u16 = 79;
+pub const HUNDINGS_RAGE_SET_ID: u16 = 80;
+pub const SONG_OF_LAMAE_SET_ID: u16 = 81;
+pub const ALESSIAS_BULWARK_SET_ID: u16 = 82;
+pub const ELF_BANE_SET_ID: u16 = 83;
+pub const ORGNUMS_SCALES_SET_ID: u16 = 84;
+pub const ALMALEXIAS_MERCY_SET_ID: u16 = 85;
+pub const QUEENS_ELEGANCE_SET_ID: u16 = 86;
+pub const EYES_OF_MARA_SET_ID: u16 = 87;
+pub const ROBES_OF_DESTRUCTION_MASTERY_SET_ID: u16 = 88;
+pub const SENTRY_SET_ID: u16 = 89;
+pub const SENCHES_BITE_SET_ID: u16 = 90;
+pub const OBLIVIONS_EDGE_SET_ID: u16 = 91;
+pub const KAGRENACS_HOPE_SET_ID: u16 = 92;
+pub const STORM_KNIGHTS_PLATE_SET_ID: u16 = 93;
+pub const MERIDIAS_BLESSED_ARMOR_SET_ID: u16 = 94;
+pub const SHALIDORS_CURSE_SET_ID: u16 = 95;
+pub const ARMOR_OF_TRUTH_SET_ID: u16 = 96;
+pub const THE_ARCH_MAGE_SET_ID: u16 = 97;
+pub const NECROPOTENCE_SET_ID: u16 = 98;
+pub const SALVATION_SET_ID: u16 = 99;
+pub const HAWKS_EYE_SET_ID: u16 = 100;
+pub const AFFLICTION_SET_ID: u16 = 101;
+pub const DUNERIPPERS_SCALES_SET_ID: u16 = 102;
+pub const MAGICKA_FURNACE_SET_ID: u16 = 103;
+pub const CURSE_EATER_SET_ID: u16 = 104;
+pub const TWIN_SISTERS_SET_ID: u16 = 105;
+pub const WILDERQUEENS_ARCH_SET_ID: u16 = 106;
+pub const WYRD_TREES_BLESSING_SET_ID: u16 = 107;
+pub const RAVAGER_SET_ID: u16 = 108;
+pub const LIGHT_OF_CYRODIIL_SET_ID: u16 = 109;
+pub const SANCTUARY_SET_ID: u16 = 110;
+pub const WARD_OF_CYRODIIL_SET_ID: u16 = 111;
+pub const NIGHT_TERROR_SET_ID: u16 = 112;
+pub const CREST_OF_CYRODIIL_SET_ID: u16 = 113;
+pub const SOULSHINE_SET_ID: u16 = 114;
+pub const THE_DESTRUCTION_SUITE_SET_ID: u16 = 116;
+pub const RELICS_OF_THE_PHYSICIAN_ANSUR_SET_ID: u16 = 117;
+pub const TREASURES_OF_THE_EARTHFORGE_SET_ID: u16 = 118;
+pub const RELICS_OF_THE_REBELLION_SET_ID: u16 = 119;
+pub const ARMS_OF_INFERNACE_SET_ID: u16 = 120;
+pub const ARMS_OF_THE_ANCESTORS_SET_ID: u16 = 121;
+pub const EBON_ARMORY_SET_ID: u16 = 122;
+pub const HIRCINES_VENEER_SET_ID: u16 = 123;
+pub const THE_WORMS_RAIMENT_SET_ID: u16 = 124;
+pub const WRATH_OF_THE_IMPERIUM_SET_ID: u16 = 125;
+pub const GRACE_OF_THE_ANCIENTS_SET_ID: u16 = 126;
+pub const DEADLY_STRIKE_SET_ID: u16 = 127;
+pub const BLESSING_OF_THE_POTENTATES_SET_ID: u16 = 128;
+pub const VENGEANCE_LEECH_SET_ID: u16 = 129;
+pub const EAGLE_EYE_SET_ID: u16 = 130;
+pub const BASTION_OF_THE_HEARTLAND_SET_ID: u16 = 131;
+pub const SHIELD_OF_THE_VALIANT_SET_ID: u16 = 132;
+pub const BUFFER_OF_THE_SWIFT_SET_ID: u16 = 133;
+pub const SHROUD_OF_THE_LICH_SET_ID: u16 = 134;
+pub const DRAUGRS_HERITAGE_SET_ID: u16 = 135;
+pub const IMMORTAL_WARRIOR_SET_ID: u16 = 136;
+pub const BERSERKING_WARRIOR_SET_ID: u16 = 137;
+pub const DEFENDING_WARRIOR_SET_ID: u16 = 138;
+pub const WISE_MAGE_SET_ID: u16 = 139;
+pub const DESTRUCTIVE_MAGE_SET_ID: u16 = 140;
+pub const HEALING_MAGE_SET_ID: u16 = 141;
+pub const QUICK_SERPENT_SET_ID: u16 = 142;
+pub const POISONOUS_SERPENT_SET_ID: u16 = 143;
+pub const TWICE_FANGED_SERPENT_SET_ID: u16 = 144;
+pub const WAY_OF_FIRE_SET_ID: u16 = 145;
+pub const WAY_OF_AIR_SET_ID: u16 = 146;
+pub const WAY_OF_MARTIAL_KNOWLEDGE_SET_ID: u16 = 147;
+pub const WAY_OF_THE_ARENA_SET_ID: u16 = 148;
+pub const UNDAUNTED_BASTION_SET_ID: u16 = 155;
+pub const UNDAUNTED_INFILTRATOR_SET_ID: u16 = 156;
+pub const UNDAUNTED_UNWEAVER_SET_ID: u16 = 157;
+pub const EMBERSHIELD_SET_ID: u16 = 158;
+pub const SUNDERFLAME_SET_ID: u16 = 159;
+pub const BURNING_SPELLWEAVE_SET_ID: u16 = 160;
+pub const TWICE_BORN_STAR_SET_ID: u16 = 161;
+pub const SPAWN_OF_MEPHALA_SET_ID: u16 = 162;
+pub const BLOODSPAWN_SET_ID: u16 = 163;
+pub const LORD_WARDEN_SET_ID: u16 = 164;
+pub const SCOURGE_HARVESTER_SET_ID: u16 = 165;
+pub const ENGINE_GUARDIAN_SET_ID: u16 = 166;
+pub const NIGHTFLAME_SET_ID: u16 = 167;
+pub const NERIENETH_SET_ID: u16 = 168;
+pub const VALKYN_SKORIA_SET_ID: u16 = 169;
+pub const MAW_OF_THE_INFERNAL_SET_ID: u16 = 170;
+pub const ETERNAL_WARRIOR_SET_ID: u16 = 171;
+pub const INFALLIBLE_MAGE_SET_ID: u16 = 172;
+pub const VICIOUS_SERPENT_SET_ID: u16 = 173;
+pub const NOBLES_CONQUEST_SET_ID: u16 = 176;
+pub const REDISTRIBUTOR_SET_ID: u16 = 177;
+pub const ARMOR_MASTER_SET_ID: u16 = 178;
+pub const BLACK_ROSE_SET_ID: u16 = 179;
+pub const POWERFUL_ASSAULT_SET_ID: u16 = 180;
+pub const MERITORIOUS_SERVICE_SET_ID: u16 = 181;
+pub const MOLAG_KENA_SET_ID: u16 = 183;
+pub const BRANDS_OF_IMPERIUM_SET_ID: u16 = 184;
+pub const SPELL_POWER_CURE_SET_ID: u16 = 185;
+pub const JOLTING_ARMS_SET_ID: u16 = 186;
+pub const SWAMP_RAIDER_SET_ID: u16 = 187;
+pub const STORM_MASTER_SET_ID: u16 = 188;
+pub const SCATHING_MAGE_SET_ID: u16 = 190;
+pub const OVERWHELMING_SURGE_SET_ID: u16 = 193;
+pub const COMBAT_PHYSICIAN_SET_ID: u16 = 194;
+pub const SHEER_VENOM_SET_ID: u16 = 195;
+pub const LEECHING_PLATE_SET_ID: u16 = 196;
+pub const TORMENTOR_SET_ID: u16 = 197;
+pub const ESSENCE_THIEF_SET_ID: u16 = 198;
+pub const SHIELD_BREAKER_SET_ID: u16 = 199;
+pub const PHOENIX_SET_ID: u16 = 200;
+pub const REACTIVE_ARMOR_SET_ID: u16 = 201;
+pub const ENDURANCE_SET_ID: u16 = 204;
+pub const WILLPOWER_SET_ID: u16 = 205;
+pub const AGILITY_SET_ID: u16 = 206;
+pub const LAW_OF_JULIANOS_SET_ID: u16 = 207;
+pub const TRIAL_BY_FIRE_SET_ID: u16 = 208;
+pub const ARMOR_OF_THE_CODE_SET_ID: u16 = 209;
+pub const MARK_OF_THE_PARIAH_SET_ID: u16 = 210;
+pub const PERMAFROST_SET_ID: u16 = 211;
+pub const BRIARHEART_SET_ID: u16 = 212;
+pub const GLORIOUS_DEFENDER_SET_ID: u16 = 213;
+pub const PARA_BELLUM_SET_ID: u16 = 214;
+pub const ELEMENTAL_SUCCESSION_SET_ID: u16 = 215;
+pub const HUNT_LEADER_SET_ID: u16 = 216;
+pub const WINTERBORN_SET_ID: u16 = 217;
+pub const TRINIMACS_VALOR_SET_ID: u16 = 218;
+pub const MORKULDIN_SET_ID: u16 = 219;
+pub const TAVAS_FAVOR_SET_ID: u16 = 224;
+pub const CLEVER_ALCHEMIST_SET_ID: u16 = 225;
+pub const ETERNAL_HUNT_SET_ID: u16 = 226;
+pub const BAHRAHAS_CURSE_SET_ID: u16 = 227;
+pub const SYVARRAS_SCALES_SET_ID: u16 = 228;
+pub const TWILIGHT_REMEDY_SET_ID: u16 = 229;
+pub const MOONDANCER_SET_ID: u16 = 230;
+pub const LUNAR_BASTION_SET_ID: u16 = 231;
+pub const ROAR_OF_ALKOSH_SET_ID: u16 = 232;
+pub const MARKSMANS_CREST_SET_ID: u16 = 234;
+pub const ROBES_OF_TRANSMUTATION_SET_ID: u16 = 235;
+pub const VICIOUS_DEATH_SET_ID: u16 = 236;
+pub const LEKIS_FOCUS_SET_ID: u16 = 237;
+pub const FASALLAS_GUILE_SET_ID: u16 = 238;
+pub const WARRIORS_FURY_SET_ID: u16 = 239;
+pub const KVATCH_GLADIATOR_SET_ID: u16 = 240;
+pub const VARENS_LEGACY_SET_ID: u16 = 241;
+pub const PELINALS_WRATH_SET_ID: u16 = 242;
+pub const HIDE_OF_MORIHAUS_SET_ID: u16 = 243;
+pub const FLANKING_STRATEGIST_SET_ID: u16 = 244;
+pub const SITHIS_TOUCH_SET_ID: u16 = 245;
+pub const GALERIONS_REVENGE_SET_ID: u16 = 246;
+pub const VICECANON_OF_VENOM_SET_ID: u16 = 247;
+pub const THEWS_OF_THE_HARBINGER_SET_ID: u16 = 248;
+pub const IMPERIAL_PHYSIQUE_SET_ID: u16 = 253;
+pub const MIGHTY_CHUDAN_SET_ID: u16 = 256;
+pub const VELIDRETH_SET_ID: u16 = 257;
+pub const AMBER_PLASM_SET_ID: u16 = 258;
+pub const HEEM_JAS_RETRIBUTION_SET_ID: u16 = 259;
+pub const ASPECT_OF_MAZZATUN_SET_ID: u16 = 260;
+pub const GOSSAMER_SET_ID: u16 = 261;
+pub const WIDOWMAKER_SET_ID: u16 = 262;
+pub const HAND_OF_MEPHALA_SET_ID: u16 = 263;
+pub const GIANT_SPIDER_SET_ID: u16 = 264;
+pub const SHADOWREND_SET_ID: u16 = 265;
+pub const KRAGH_SET_ID: u16 = 266;
+pub const SWARM_MOTHER_SET_ID: u16 = 267;
+pub const SENTINEL_OF_RKUGAMZ_SET_ID: u16 = 268;
+pub const CHOKETHORN_SET_ID: u16 = 269;
+pub const SLIMECRAW_SET_ID: u16 = 270;
+pub const SELLISTRIX_SET_ID: u16 = 271;
+pub const INFERNAL_GUARDIAN_SET_ID: u16 = 272;
+pub const ILAMBRIS_SET_ID: u16 = 273;
+pub const ICEHEART_SET_ID: u16 = 274;
+pub const STORMFIST_SET_ID: u16 = 275;
+pub const TREMORSCALE_SET_ID: u16 = 276;
+pub const PIRATE_SKELETON_SET_ID: u16 = 277;
+pub const THE_TROLL_KING_SET_ID: u16 = 278;
+pub const SELENE_SET_ID: u16 = 279;
+pub const GROTHDARR_SET_ID: u16 = 280;
+pub const ARMOR_OF_THE_TRAINEE_SET_ID: u16 = 281;
+pub const VAMPIRE_CLOAK_SET_ID: u16 = 282;
+pub const SWORD_SINGER_SET_ID: u16 = 283;
+pub const ORDER_OF_DIAGNA_SET_ID: u16 = 284;
+pub const VAMPIRE_LORD_SET_ID: u16 = 285;
+pub const SPRIGGANS_THORNS_SET_ID: u16 = 286;
+pub const GREEN_PACT_SET_ID: u16 = 287;
+pub const BEEKEEPERS_GEAR_SET_ID: u16 = 288;
+pub const SPINNERS_GARMENTS_SET_ID: u16 = 289;
+pub const SKOOMA_SMUGGLER_SET_ID: u16 = 290;
+pub const SHALK_EXOSKELETON_SET_ID: u16 = 291;
+pub const MOTHERS_SORROW_SET_ID: u16 = 292;
+pub const PLAGUE_DOCTOR_SET_ID: u16 = 293;
+pub const YSGRAMORS_BIRTHRIGHT_SET_ID: u16 = 294;
+pub const JAILBREAKER_SET_ID: u16 = 295;
+pub const SPELUNKER_SET_ID: u16 = 296;
+pub const SPIDER_CULTIST_COWL_SET_ID: u16 = 297;
+pub const LIGHT_SPEAKER_SET_ID: u16 = 298;
+pub const TOOTHROW_SET_ID: u16 = 299;
+pub const NETCHS_TOUCH_SET_ID: u16 = 300;
+pub const STRENGTH_OF_THE_AUTOMATON_SET_ID: u16 = 301;
+pub const LEVIATHAN_SET_ID: u16 = 302;
+pub const LAMIAS_SONG_SET_ID: u16 = 303;
+pub const MEDUSA_SET_ID: u16 = 304;
+pub const TREASURE_HUNTER_SET_ID: u16 = 305;
+pub const DRAUGR_HULK_SET_ID: u16 = 307;
+pub const BONE_PIRATES_TATTERS_SET_ID: u16 = 308;
+pub const KNIGHT_ERRANTS_MAIL_SET_ID: u16 = 309;
+pub const SWORD_DANCER_SET_ID: u16 = 310;
+pub const RATTLECAGE_SET_ID: u16 = 311;
+pub const TITANIC_CLEAVE_SET_ID: u16 = 313;
+pub const PUNCTURING_REMEDY_SET_ID: u16 = 314;
+pub const STINGING_SLASHES_SET_ID: u16 = 315;
+pub const CAUSTIC_ARROW_SET_ID: u16 = 316;
+pub const DESTRUCTIVE_IMPACT_SET_ID: u16 = 317;
+pub const GRAND_REJUVENATION_SET_ID: u16 = 318;
+pub const WAR_MAIDEN_SET_ID: u16 = 320;
+pub const DEFILER_SET_ID: u16 = 321;
+pub const WARRIOR_POET_SET_ID: u16 = 322;
+pub const ASSASSINS_GUILE_SET_ID: u16 = 323;
+pub const DAEDRIC_TRICKERY_SET_ID: u16 = 324;
+pub const SHACKLEBREAKER_SET_ID: u16 = 325;
+pub const VANGUARDS_CHALLENGE_SET_ID: u16 = 326;
+pub const COWARDS_GEAR_SET_ID: u16 = 327;
+pub const KNIGHT_SLAYER_SET_ID: u16 = 328;
+pub const WIZARDS_RIPOSTE_SET_ID: u16 = 329;
+pub const AUTOMATED_DEFENSE_SET_ID: u16 = 330;
+pub const WAR_MACHINE_SET_ID: u16 = 331;
+pub const MASTER_ARCHITECT_SET_ID: u16 = 332;
+pub const INVENTORS_GUARD_SET_ID: u16 = 333;
+pub const IMPREGNABLE_ARMOR_SET_ID: u16 = 334;
+pub const DRAUGRS_REST_SET_ID: u16 = 335;
+pub const PILLAR_OF_NIRN_SET_ID: u16 = 336;
+pub const IRONBLOOD_SET_ID: u16 = 337;
+pub const FLAME_BLOSSOM_SET_ID: u16 = 338;
+pub const BLOODDRINKER_SET_ID: u16 = 339;
+pub const HAGRAVENS_GARDEN_SET_ID: u16 = 340;
+pub const EARTHGORE_SET_ID: u16 = 341;
+pub const DOMIHAUS_SET_ID: u16 = 342;
+pub const CALUURIONS_LEGACY_SET_ID: u16 = 343;
+pub const TRAPPINGS_OF_INVIGORATION_SET_ID: u16 = 344;
+pub const ULFNORS_FAVOR_SET_ID: u16 = 345;
+pub const JORVULDS_GUIDANCE_SET_ID: u16 = 346;
+pub const PLAGUE_SLINGER_SET_ID: u16 = 347;
+pub const CURSE_OF_DOYLEMISH_SET_ID: u16 = 348;
+pub const THURVOKUN_SET_ID: u16 = 349;
+pub const ZAAN_SET_ID: u16 = 350;
+pub const INNATE_AXIOM_SET_ID: u16 = 351;
+pub const FORTIFIED_BRASS_SET_ID: u16 = 352;
+pub const MECHANICAL_ACUITY_SET_ID: u16 = 353;
+pub const MAD_TINKERER_SET_ID: u16 = 354;
+pub const UNFATHOMABLE_DARKNESS_SET_ID: u16 = 355;
+pub const LIVEWIRE_SET_ID: u16 = 356;
+pub const PERFECTED_DISCIPLINED_SLASH_SET_ID: u16 = 357;
+pub const PERFECTED_DEFENSIVE_POSITION_SET_ID: u16 = 358;
+pub const PERFECTED_CHAOTIC_WHIRLWIND_SET_ID: u16 = 359;
+pub const PERFECTED_PIERCING_SPRAY_SET_ID: u16 = 360;
+pub const PERFECTED_CONCENTRATED_FORCE_SET_ID: u16 = 361;
+pub const PERFECTED_TIMELESS_BLESSING_SET_ID: u16 = 362;
+pub const DISCIPLINED_SLASH_SET_ID: u16 = 363;
+pub const DEFENSIVE_POSITION_SET_ID: u16 = 364;
+pub const CHAOTIC_WHIRLWIND_SET_ID: u16 = 365;
+pub const PIERCING_SPRAY_SET_ID: u16 = 366;
+pub const CONCENTRATED_FORCE_SET_ID: u16 = 367;
+pub const TIMELESS_BLESSING_SET_ID: u16 = 368;
+pub const MERCILESS_CHARGE_SET_ID: u16 = 369;
+pub const RAMPAGING_SLASH_SET_ID: u16 = 370;
+pub const CRUEL_FLURRY_SET_ID: u16 = 371;
+pub const THUNDEROUS_VOLLEY_SET_ID: u16 = 372;
+pub const CRUSHING_WALL_SET_ID: u16 = 373;
+pub const PRECISE_REGENERATION_SET_ID: u16 = 374;
+pub const PROPHETS_SET_ID: u16 = 380;
+pub const BROKEN_SOUL_SET_ID: u16 = 381;
+pub const GRACE_OF_GLOOM_SET_ID: u16 = 382;
+pub const GRYPHONS_FEROCITY_SET_ID: u16 = 383;
+pub const WISDOM_OF_VANUS_SET_ID: u16 = 384;
+pub const ADEPT_RIDER_SET_ID: u16 = 385;
+pub const SLOADS_SEMBLANCE_SET_ID: u16 = 386;
+pub const NOCTURNALS_FAVOR_SET_ID: u16 = 387;
+pub const AEGIS_OF_GALENWE_SET_ID: u16 = 388;
+pub const ARMS_OF_RELEQUEN_SET_ID: u16 = 389;
+pub const MANTLE_OF_SIRORIA_SET_ID: u16 = 390;
+pub const VESTMENT_OF_OLORIME_SET_ID: u16 = 391;
+pub const PERFECTED_AEGIS_OF_GALENWE_SET_ID: u16 = 392;
+pub const PERFECTED_ARMS_OF_RELEQUEN_SET_ID: u16 = 393;
+pub const PERFECTED_MANTLE_OF_SIRORIA_SET_ID: u16 = 394;
+pub const PERFECTED_VESTMENT_OF_OLORIME_SET_ID: u16 = 395;
+pub const BALORGH_SET_ID: u16 = 397;
+pub const VYKOSA_SET_ID: u16 = 398;
+pub const HANUS_COMPASSION_SET_ID: u16 = 399;
+pub const BLOOD_MOON_SET_ID: u16 = 400;
+pub const HAVEN_OF_URSUS_SET_ID: u16 = 401;
+pub const MOON_HUNTER_SET_ID: u16 = 402;
+pub const SAVAGE_WEREWOLF_SET_ID: u16 = 403;
+pub const JAILERS_TENACITY_SET_ID: u16 = 404;
+pub const BRIGHT_THROATS_BOAST_SET_ID: u16 = 405;
+pub const DEAD_WATERS_GUILE_SET_ID: u16 = 406;
+pub const CHAMPION_OF_THE_HIST_SET_ID: u16 = 407;
+pub const GRAVE_STAKE_COLLECTOR_SET_ID: u16 = 408;
+pub const NAGA_SHAMAN_SET_ID: u16 = 409;
+pub const MIGHT_OF_THE_LOST_LEGION_SET_ID: u16 = 410;
+pub const GALLANT_CHARGE_SET_ID: u16 = 411;
+pub const RADIAL_UPPERCUT_SET_ID: u16 = 412;
+pub const SPECTRAL_CLOAK_SET_ID: u16 = 413;
+pub const VIRULENT_SHOT_SET_ID: u16 = 414;
+pub const WILD_IMPULSE_SET_ID: u16 = 415;
+pub const MENDERS_WARD_SET_ID: u16 = 416;
+pub const INDOMITABLE_FURY_SET_ID: u16 = 417;
+pub const SPELL_STRATEGIST_SET_ID: u16 = 418;
+pub const BATTLEFIELD_ACROBAT_SET_ID: u16 = 419;
+pub const SOLDIER_OF_ANGUISH_SET_ID: u16 = 420;
+pub const STEADFAST_HERO_SET_ID: u16 = 421;
+pub const BATTALION_DEFENDER_SET_ID: u16 = 422;
+pub const PERFECTED_GALLANT_CHARGE_SET_ID: u16 = 423;
+pub const PERFECTED_RADIAL_UPPERCUT_SET_ID: u16 = 424;
+pub const PERFECTED_SPECTRAL_CLOAK_SET_ID: u16 = 425;
+pub const PERFECTED_VIRULENT_SHOT_SET_ID: u16 = 426;
+pub const PERFECTED_WILD_IMPULSE_SET_ID: u16 = 427;
+pub const PERFECTED_MENDERS_WARD_SET_ID: u16 = 428;
+pub const MIGHTY_GLACIER_SET_ID: u16 = 429;
+pub const TZOGVINS_WARBAND_SET_ID: u16 = 430;
+pub const ICY_CONJURER_SET_ID: u16 = 431;
+pub const STONEKEEPER_SET_ID: u16 = 432;
+pub const FROZEN_WATCHER_SET_ID: u16 = 433;
+pub const SCAVENGING_DEMISE_SET_ID: u16 = 434;
+pub const AURORANS_THUNDER_SET_ID: u16 = 435;
+pub const SYMPHONY_OF_BLADES_SET_ID: u16 = 436;
+pub const COLDHARBOURS_FAVORITE_SET_ID: u16 = 437;
+pub const SENCHE_RAHTS_GRIT_SET_ID: u16 = 438;
+pub const VASTARIES_TUTELAGE_SET_ID: u16 = 439;
+pub const CRAFTY_ALFIQ_SET_ID: u16 = 440;
+pub const VESTURE_OF_DARLOC_BRAE_SET_ID: u16 = 441;
+pub const CALL_OF_THE_UNDERTAKER_SET_ID: u16 = 442;
+pub const EYE_OF_NAHVIINTAAS_SET_ID: u16 = 443;
+pub const FALSE_GODS_DEVOTION_SET_ID: u16 = 444;
+pub const TOOTH_OF_LOKKESTIIZ_SET_ID: u16 = 445;
+pub const CLAW_OF_YOLNAHKRIIN_SET_ID: u16 = 446;
+pub const PERFECTED_EYE_OF_NAHVIINTAAS_SET_ID: u16 = 448;
+pub const PERFECTED_FALSE_GODS_DEVOTION_SET_ID: u16 = 449;
+pub const PERFECTED_TOOTH_OF_LOKKESTIIZ_SET_ID: u16 = 450;
+pub const PERFECTED_CLAW_OF_YOLNAHKRIIN_SET_ID: u16 = 451;
+pub const HOLLOWFANG_THIRST_SET_ID: u16 = 452;
+pub const DROZAKARS_CLAWS_SET_ID: u16 = 453;
+pub const RENALDS_RESOLVE_SET_ID: u16 = 454;
+pub const ZENS_REDRESS_SET_ID: u16 = 455;
+pub const AZUREBLIGHT_REAPER_SET_ID: u16 = 456;
+pub const DRAGONS_DEFILEMENT_SET_ID: u16 = 457;
+pub const GRUNDWULF_SET_ID: u16 = 458;
+pub const MAARSELOK_SET_ID: u16 = 459;
+pub const SENCHAL_DEFENDER_SET_ID: u16 = 465;
+pub const MARAUDERS_HASTE_SET_ID: u16 = 466;
+pub const DRAGONGUARD_ELITE_SET_ID: u16 = 467;
+pub const DARING_CORSAIR_SET_ID: u16 = 468;
+pub const ANCIENT_DRAGONGUARD_SET_ID: u16 = 469;
+pub const NEW_MOON_ACOLYTE_SET_ID: u16 = 470;
+pub const HITIS_HEARTH_SET_ID: u16 = 471;
+pub const TITANBORN_STRENGTH_SET_ID: u16 = 472;
+pub const BANIS_TORMENT_SET_ID: u16 = 473;
+pub const DRAUGRKINS_GRIP_SET_ID: u16 = 474;
+pub const AEGIS_CALLER_SET_ID: u16 = 475;
+pub const GRAVE_GUARDIAN_SET_ID: u16 = 476;
+pub const MOTHER_CIANNAIT_SET_ID: u16 = 478;
+pub const KJALNARS_NIGHTMARE_SET_ID: u16 = 479;
+pub const CRITICAL_RIPOSTE_SET_ID: u16 = 480;
+pub const UNCHAINED_AGGRESSOR_SET_ID: u16 = 481;
+pub const DAUNTLESS_COMBATANT_SET_ID: u16 = 482;
+pub const WINTERS_RESPITE_SET_ID: u16 = 487;
+pub const VENOMOUS_SMITE_SET_ID: u16 = 488;
+pub const ETERNAL_VIGOR_SET_ID: u16 = 489;
+pub const STUHNS_FAVOR_SET_ID: u16 = 490;
+pub const DRAGONS_APPETITE_SET_ID: u16 = 491;
+pub const KYNES_WIND_SET_ID: u16 = 492;
+pub const PERFECTED_KYNES_WIND_SET_ID: u16 = 493;
+pub const VROLS_COMMAND_SET_ID: u16 = 494;
+pub const PERFECTED_VROLS_COMMAND_SET_ID: u16 = 495;
+pub const ROARING_OPPORTUNIST_SET_ID: u16 = 496;
+pub const PERFECTED_ROARING_OPPORTUNIST_SET_ID: u16 = 497;
+pub const YANDIRS_MIGHT_SET_ID: u16 = 498;
+pub const PERFECTED_YANDIRS_MIGHT_SET_ID: u16 = 499;
+pub const THRASSIAN_STRANGLERS_SET_ID: u16 = 501;
+pub const RING_OF_THE_WILD_HUNT_SET_ID: u16 = 503;
+pub const TORC_OF_TONAL_CONSTANCY_SET_ID: u16 = 505;
+pub const SPELL_PARASITE_SET_ID: u16 = 506;
+pub const TALFYGS_TREACHERY_SET_ID: u16 = 513;
+pub const UNLEASHED_TERROR_SET_ID: u16 = 514;
+pub const CRIMSON_TWILIGHT_SET_ID: u16 = 515;
+pub const ELEMENTAL_CATALYST_SET_ID: u16 = 516;
+pub const KRAGLENS_HOWL_SET_ID: u16 = 517;
+pub const ARKASIS_GENIUS_SET_ID: u16 = 518;
+pub const SNOW_TREADERS_SET_ID: u16 = 519;
+pub const MALACATHS_BAND_OF_BRUTALITY_SET_ID: u16 = 520;
+pub const BLOODLORDS_EMBRACE_SET_ID: u16 = 521;
+pub const PERFECTED_MERCILESS_CHARGE_SET_ID: u16 = 522;
+pub const PERFECTED_RAMPAGING_SLASH_SET_ID: u16 = 523;
+pub const PERFECTED_CRUEL_FLURRY_SET_ID: u16 = 524;
+pub const PERFECTED_THUNDEROUS_VOLLEY_SET_ID: u16 = 525;
+pub const PERFECTED_CRUSHING_WALL_SET_ID: u16 = 526;
+pub const PERFECTED_PRECISE_REGENERATION_SET_ID: u16 = 527;
+pub const PERFECTED_TITANIC_CLEAVE_SET_ID: u16 = 528;
+pub const PERFECTED_PUNCTURING_REMEDY_SET_ID: u16 = 529;
+pub const PERFECTED_STINGING_SLASHES_SET_ID: u16 = 530;
+pub const PERFECTED_CAUSTIC_ARROW_SET_ID: u16 = 531;
+pub const PERFECTED_DESTRUCTIVE_IMPACT_SET_ID: u16 = 532;
+pub const PERFECTED_GRAND_REJUVENATION_SET_ID: u16 = 533;
+pub const STONE_HUSK_SET_ID: u16 = 534;
+pub const LADY_THORN_SET_ID: u16 = 535;
+pub const RADIANT_BASTION_SET_ID: u16 = 536;
+pub const VOIDCALLER_SET_ID: u16 = 537;
+pub const WITCH_KNIGHTS_DEFIANCE_SET_ID: u16 = 538;
+pub const RED_EAGLES_FURY_SET_ID: u16 = 539;
+pub const LEGACY_OF_KARTH_SET_ID: u16 = 540;
+pub const AETHERIAL_ASCENSION_SET_ID: u16 = 541;
+pub const HEX_SIPHON_SET_ID: u16 = 542;
+pub const PESTILENT_HOST_SET_ID: u16 = 543;
+pub const EXPLOSIVE_REBUKE_SET_ID: u16 = 544;
+pub const EXECUTIONERS_BLADE_SET_ID: u16 = 557;
+pub const VOID_BASH_SET_ID: u16 = 558;
+pub const FRENZIED_MOMENTUM_SET_ID: u16 = 559;
+pub const POINT_BLANK_SNIPE_SET_ID: u16 = 560;
+pub const WRATH_OF_ELEMENTS_SET_ID: u16 = 561;
+pub const FORCE_OVERFLOW_SET_ID: u16 = 562;
+pub const PERFECTED_EXECUTIONERS_BLADE_SET_ID: u16 = 563;
+pub const PERFECTED_VOID_BASH_SET_ID: u16 = 564;
+pub const PERFECTED_FRENZIED_MOMENTUM_SET_ID: u16 = 565;
+pub const PERFECTED_POINT_BLANK_SNIPE_SET_ID: u16 = 566;
+pub const PERFECTED_WRATH_OF_ELEMENTS_SET_ID: u16 = 567;
+pub const PERFECTED_FORCE_OVERFLOW_SET_ID: u16 = 568;
+pub const TRUE_SWORN_FURY_SET_ID: u16 = 569;
+pub const KINRAS_WRATH_SET_ID: u16 = 570;
+pub const DRAKES_RUSH_SET_ID: u16 = 571;
+pub const UNLEASHED_RITUALIST_SET_ID: u16 = 572;
+pub const DAGONS_DOMINION_SET_ID: u16 = 573;
+pub const FOOLKILLERS_WARD_SET_ID: u16 = 574;
+pub const RING_OF_THE_PALE_ORDER_SET_ID: u16 = 575;
+pub const PEARLS_OF_EHLNOFEY_SET_ID: u16 = 576;
+pub const ENCRATIS_BEHEMOTH_SET_ID: u16 = 577;
+pub const BARON_ZAUDRUS_SET_ID: u16 = 578;
+pub const FROSTBITE_SET_ID: u16 = 579;
+pub const DEADLANDS_ASSASSIN_SET_ID: u16 = 580;
+pub const BOG_RAIDER_SET_ID: u16 = 581;
+pub const HIST_WHISPERER_SET_ID: u16 = 582;
+pub const HEARTLAND_CONQUEROR_SET_ID: u16 = 583;
+pub const DIAMONDS_VICTORY_SET_ID: u16 = 584;
+pub const SAXHLEEL_CHAMPION_SET_ID: u16 = 585;
+pub const SUL_XANS_TORMENT_SET_ID: u16 = 586;
+pub const BAHSEIS_MANIA_SET_ID: u16 = 587;
+pub const STONE_TALKERS_OATH_SET_ID: u16 = 588;
+pub const PERFECTED_SAXHLEEL_CHAMPION_SET_ID: u16 = 589;
+pub const PERFECTED_SUL_XANS_TORMENT_SET_ID: u16 = 590;
+pub const PERFECTED_BAHSEIS_MANIA_SET_ID: u16 = 591;
+pub const PERFECTED_STONE_TALKERS_OATH_SET_ID: u16 = 592;
+pub const GAZE_OF_SITHIS_SET_ID: u16 = 593;
+pub const HARPOONERS_WADING_KILT_SET_ID: u16 = 594;
+pub const DEATH_DEALERS_FETE_SET_ID: u16 = 596;
+pub const SHAPESHIFTERS_CHAIN_SET_ID: u16 = 597;
+pub const ZOAL_THE_EVER_WAKEFUL_SET_ID: u16 = 598;
+pub const IMMOLATOR_CHARR_SET_ID: u16 = 599;
+pub const GLORGOLOCH_THE_DESTROYER_SET_ID: u16 = 600;
+pub const CRIMSON_OATHS_RIVE_SET_ID: u16 = 602;
+pub const SCORIONS_FEAST_SET_ID: u16 = 603;
+pub const RUSH_OF_AGONY_SET_ID: u16 = 604;
+pub const SILVER_ROSE_VIGIL_SET_ID: u16 = 605;
+pub const THUNDER_CALLER_SET_ID: u16 = 606;
+pub const GRISLY_GOURMET_SET_ID: u16 = 607;
+pub const PRIOR_THIERRIC_SET_ID: u16 = 608;
+pub const MAGMA_INCARNATE_SET_ID: u16 = 609;
+pub const WRETCHED_VITALITY_SET_ID: u16 = 610;
+pub const DEADLANDS_DEMOLISHER_SET_ID: u16 = 611;
+pub const IRON_FLASK_SET_ID: u16 = 612;
+pub const EYE_OF_THE_GRASP_SET_ID: u16 = 613;
+pub const HEXOS_WARD_SET_ID: u16 = 614;
+pub const KYNMARCHERS_CRUELTY_SET_ID: u16 = 615;
+pub const DARK_CONVERGENCE_SET_ID: u16 = 616;
+pub const PLAGUEBREAK_SET_ID: u16 = 617;
+pub const HROTHGARS_CHILL_SET_ID: u16 = 618;
+pub const MALIGALIGS_MAELSTROM_SET_ID: u16 = 619;
+pub const GRYPHONS_REPRISAL_SET_ID: u16 = 620;
+pub const GLACIAL_GUARDIAN_SET_ID: u16 = 621;
+pub const TURNING_TIDE_SET_ID: u16 = 622;
+pub const STORM_CURSEDS_REVENGE_SET_ID: u16 = 623;
+pub const SPRIGGANS_VIGOR_SET_ID: u16 = 624;
+pub const MARKYN_RING_OF_MAJESTY_SET_ID: u16 = 625;
+pub const BELHARZAS_BAND_SET_ID: u16 = 626;
+pub const SPAULDER_OF_RUIN_SET_ID: u16 = 627;
+pub const RALLYING_CRY_SET_ID: u16 = 629;
+pub const HEW_AND_SUNDER_SET_ID: u16 = 630;
+pub const ENERVATING_AURA_SET_ID: u16 = 631;
+pub const KARGAEDA_SET_ID: u16 = 632;
+pub const NAZARAY_SET_ID: u16 = 633;
+pub const NUNATAK_SET_ID: u16 = 634;
+pub const LADY_MALYGDA_SET_ID: u16 = 635;
+pub const BARON_THIRSK_SET_ID: u16 = 636;
+pub const ORDERS_WRATH_SET_ID: u16 = 640;
+pub const SERPENTS_DISDAIN_SET_ID: u16 = 641;
+pub const DRUIDS_BRAID_SET_ID: u16 = 642;
+pub const BLESSING_OF_HIGH_ISLE_SET_ID: u16 = 643;
+pub const STEADFASTS_METTLE_SET_ID: u16 = 644;
+pub const SYSTRES_SCOWL_SET_ID: u16 = 645;
+pub const WHORL_OF_THE_DEPTHS_SET_ID: u16 = 646;
+pub const CORAL_RIPTIDE_SET_ID: u16 = 647;
+pub const PEARLESCENT_WARD_SET_ID: u16 = 648;
+pub const PILLAGERS_PROFIT_SET_ID: u16 = 649;
+pub const PERFECTED_PILLAGERS_PROFIT_SET_ID: u16 = 650;
+pub const PERFECTED_PEARLESCENT_WARD_SET_ID: u16 = 651;
+pub const PERFECTED_CORAL_RIPTIDE_SET_ID: u16 = 652;
+pub const PERFECTED_WHORL_OF_THE_DEPTHS_SET_ID: u16 = 653;
+pub const MORAS_WHISPERS_SET_ID: u16 = 654;
+pub const DOV_RHA_SABATONS_SET_ID: u16 = 655;
+pub const LEFTHANDERS_AEGIS_BELT_SET_ID: u16 = 656;
+pub const SEA_SERPENTS_COIL_SET_ID: u16 = 657;
+pub const OAKENSOUL_RING_SET_ID: u16 = 658;
+pub const DEEPROOT_ZEAL_SET_ID: u16 = 660;
+pub const STONES_ACCORD_SET_ID: u16 = 661;
+pub const RAGE_OF_THE_URSAUK_SET_ID: u16 = 662;
+pub const PANGRIT_DENMOTHER_SET_ID: u16 = 663;
+pub const GRAVE_INEVITABILITY_SET_ID: u16 = 664;
+pub const PHYLACTERYS_GRASP_SET_ID: u16 = 665;
+pub const ARCHDRUID_DEVYRIC_SET_ID: u16 = 666;
+pub const EUPHOTIC_GATEKEEPER_SET_ID: u16 = 667;
+pub const LANGUOR_OF_PERYITE_SET_ID: u16 = 668;
+pub const NOCTURNALS_PLOY_SET_ID: u16 = 669;
+pub const MARAS_BALM_SET_ID: u16 = 670;
+pub const BACK_ALLEY_GOURMAND_SET_ID: u16 = 671;
+pub const PHOENIX_MOTH_THEURGE_SET_ID: u16 = 672;
+pub const BASTION_OF_THE_DRAOIFE_SET_ID: u16 = 673;
+pub const FAUNS_LARK_CLADDING_SET_ID: u16 = 674;
+pub const STORMWEAVERS_CAVORT_SET_ID: u16 = 675;
+pub const SYRABANES_WARD_SET_ID: u16 = 676;
+pub const CHIMERAS_REBUKE_SET_ID: u16 = 677;
+pub const OLD_GROWTH_BREWER_SET_ID: u16 = 678;
+pub const CLAW_OF_THE_FOREST_WRAITH_SET_ID: u16 = 679;
+pub const RITEMASTERS_BOND_SET_ID: u16 = 680;
+pub const NIX_HOUNDS_HOWL_SET_ID: u16 = 681;
+pub const TELVANNI_ENFORCER_SET_ID: u16 = 682;
+pub const ROKSA_THE_WARPED_SET_ID: u16 = 683;
+pub const RUNECARVERS_BLAZE_SET_ID: u16 = 684;
+pub const APOCRYPHAL_INSPIRATION_SET_ID: u16 = 685;
+pub const ABYSSAL_BRACE_SET_ID: u16 = 686;
+pub const OZEZAN_THE_INFERNO_SET_ID: u16 = 687;
+pub const SNAKE_IN_THE_STARS_SET_ID: u16 = 688;
+pub const SHELL_SPLITTER_SET_ID: u16 = 689;
+pub const JUDGMENT_OF_AKATOSH_SET_ID: u16 = 690;
+pub const CRYPTCANON_VESTMENTS_SET_ID: u16 = 691;
+pub const ESOTERIC_ENVIRONMENT_GREAVES_SET_ID: u16 = 692;
+pub const TORC_OF_THE_LAST_AYLEID_KING_SET_ID: u16 = 693;
+pub const VELOTHI_UR_MAGES_AMULET_SET_ID: u16 = 694;
+pub const SHATTERED_FATE_SET_ID: u16 = 695;
+pub const TELVANNI_EFFICIENCY_SET_ID: u16 = 696;
+pub const SEEKER_SYNTHESIS_SET_ID: u16 = 697;
+pub const VIVECS_DUALITY_SET_ID: u16 = 698;
+pub const CAMONNA_TONG_SET_ID: u16 = 699;
+pub const ADAMANT_LURKER_SET_ID: u16 = 700;
+pub const PEACE_AND_SERENITY_SET_ID: u16 = 701;
+pub const ANSUULS_TORMENT_SET_ID: u16 = 702;
+pub const TEST_OF_RESOLVE_SET_ID: u16 = 703;
+pub const TRANSFORMATIVE_HOPE_SET_ID: u16 = 704;
+pub const PERFECTED_TRANSFORMATIVE_HOPE_SET_ID: u16 = 705;
+pub const PERFECTED_TEST_OF_RESOLVE_SET_ID: u16 = 706;
+pub const PERFECTED_ANSUULS_TORMENT_SET_ID: u16 = 707;
+pub const PERFECTED_PEACE_AND_SERENITY_SET_ID: u16 = 708;
+pub const COLOVIAN_HIGHLANDS_GENERAL_SET_ID: u16 = 711;
+pub const JERALL_MOUNTAINS_WARCHIEF_SET_ID: u16 = 712;
+pub const NIBENAY_BAY_BATTLEREEVE_SET_ID: u16 = 713;
+pub const REAWAKENED_HIEROPHANT_SET_ID: u16 = 722;
+pub const BASALT_BLOODED_WARRIOR_SET_ID: u16 = 723;
+pub const NOBILITY_IN_DECAY_SET_ID: u16 = 724;
+pub const SOULCLEAVER_SET_ID: u16 = 726;
+pub const MONOLITH_OF_STORMS_SET_ID: u16 = 727;
+pub const WRATHSUN_SET_ID: u16 = 728;
+pub const GARDENER_OF_SEASONS_SET_ID: u16 = 729;
+pub const CINDERS_OF_ANTHELMIR_SET_ID: u16 = 730;
+pub const SLUTHRUGS_HUNGER_SET_ID: u16 = 731;
+pub const BLACK_GLOVE_GROUNDING_SET_ID: u16 = 732;
+pub const ANTHELMIRS_CONSTRUCT_SET_ID: u16 = 734;
+pub const BLIND_PATH_INDUCTION_SET_ID: u16 = 735;
+pub const TARNISHED_NIGHTMARE_SET_ID: u16 = 736;
+pub const REFLECTED_FURY_SET_ID: u16 = 737;
+pub const THE_BLIND_SET_ID: u16 = 738;
+pub const OAKFATHERS_RETRIBUTION_SET_ID: u16 = 754;
+pub const BLUNTED_BLADES_SET_ID: u16 = 755;
+pub const BAAN_DARS_BLESSING_SET_ID: u16 = 756;
+pub const SYMMETRY_OF_THE_WEALD_SET_ID: u16 = 757;
+pub const MACABRE_VINTAGE_SET_ID: u16 = 758;
+pub const AYLEID_REFUGE_SET_ID: u16 = 759;
+pub const ROURKEN_STEAMGUARDS_SET_ID: u16 = 760;
+pub const THE_SHADOW_QUEENS_COWL_SET_ID: u16 = 761;
+pub const THE_SAINT_AND_THE_SEDUCER_SET_ID: u16 = 762;
+pub const THARRIKERS_STRIKE_SET_ID: u16 = 763;
+pub const HIGHLAND_SENTINEL_SET_ID: u16 = 764;
+pub const THREADS_OF_WAR_SET_ID: u16 = 765;
+pub const MORA_SCRIBES_THESIS_SET_ID: u16 = 766;
+pub const SLIVERS_OF_THE_NULL_ARCA_SET_ID: u16 = 767;
+pub const LUCENT_ECHOES_SET_ID: u16 = 768;
+pub const XORYNS_MASTERPIECE_SET_ID: u16 = 769;
+pub const PERFECTED_XORYNS_MASTERPIECE_SET_ID: u16 = 770;
+pub const PERFECTED_LUCENT_ECHOES_SET_ID: u16 = 771;
+pub const PERFECTED_SLIVERS_OF_THE_NULL_ARCA_SET_ID: u16 = 772;
+pub const PERFECTED_MORA_SCRIBES_THESIS_SET_ID: u16 = 773;
+pub const SPATTERING_DISJUNCTION_SET_ID: u16 = 775;
+pub const PYREBRAND_SET_ID: u16 = 776;
+pub const CORPSEBURSTER_SET_ID: u16 = 777;
+pub const UMBRAL_EDGE_SET_ID: u16 = 778;
+pub const BEACON_OF_OBLIVION_SET_ID: u16 = 779;
+pub const AETHERIC_LANCER_SET_ID: u16 = 780;
+pub const AERIES_CRY_SET_ID: u16 = 781;
+pub const TRACKERS_LASH_SET_ID: u16 = 782;
+pub const SHARED_PAIN_SET_ID: u16 = 783;
+pub const SIEGEMASTERS_FOCUS_SET_ID: u16 = 784;
+pub const BULWARK_RUINATION_SET_ID: u16 = 791;
+pub const FARSTRIDER_SET_ID: u16 = 792;
+pub const NETCH_OIL_SET_ID: u16 = 793;
+pub const VANDORALLENS_RESONANCE_SET_ID: u16 = 794;
+pub const JERENSIS_BLADESTORM_SET_ID: u16 = 795;
+pub const LUCILLAS_WINDSHIELD_SET_ID: u16 = 796;
+pub const SQUALL_OF_RETRIBUTION_SET_ID: u16 = 797;
+pub const HEROIC_UNITY_SET_ID: u16 = 798;
+pub const FLEDGLINGS_NEST_SET_ID: u16 = 799;
+pub const NOXIOUS_BOULDER_SET_ID: u16 = 800;
+pub const ORPHEON_THE_TACTICIAN_SET_ID: u16 = 801;
+pub const ARKAYS_CHARITY_SET_ID: u16 = 802;
+pub const LAMP_KNIGHTS_ART_SET_ID: u16 = 803;
+pub const BLACKFEATHER_FLIGHT_SET_ID: u16 = 804;
+pub const THREE_QUEENS_WELLSPRING_SET_ID: u16 = 805;
+pub const DEATH_DANCER_SET_ID: u16 = 806;
+pub const FULL_BELLY_BARRICADE_SET_ID: u16 = 807;
+pub const SHARED_BURDEN_SET_ID: u16 = 808;
+pub const TIDE_BORN_WILDSTALKER_SET_ID: u16 = 809;
+pub const FELLOWSHIPS_FORTITUDE_SET_ID: u16 = 810;
+pub const MAD_GODS_DANCING_SHOES_SET_ID: u16 = 811;
+pub const RAKKHATS_VOIDMANTLE_SET_ID: u16 = 812;
+pub const MONOMYTH_REFORGED_SET_ID: u16 = 813;
+pub const HARMONY_IN_CHAOS_SET_ID: u16 = 814;
+pub const KAZPIANS_CRUEL_SIGNET_SET_ID: u16 = 815;
+pub const DOLOROUS_ARENA_SET_ID: u16 = 816;
+pub const RECOVERY_CONVERGENCE_SET_ID: u16 = 817;
+pub const PERFECTED_RECOVERY_CONVERGENCE_SET_ID: u16 = 818;
+pub const PERFECTED_DOLOROUS_ARENA_SET_ID: u16 = 819;
+pub const PERFECTED_KAZPIANS_CRUEL_SIGNET_SET_ID: u16 = 820;
+pub const PERFECTED_HARMONY_IN_CHAOS_SET_ID: u16 = 821;
+pub const LUSTROUS_SOULWELL_SET_ID: u16 = 822;
+pub const VYKANDS_SOULFURY_SET_ID: u16 = 823;
+pub const BLACK_FOUNDRY_STEEL_SET_ID: u16 = 824;
+pub const XANMEER_SPELLWEAVER_SET_ID: u16 = 825;
+pub const TOOLS_OF_THE_TRAPMASTER_SET_ID: u16 = 826;
+pub const STONEHULK_DOMINATION_SET_ID: u16 = 827;
+pub const BLACK_GEM_MONSTROSITY_SET_ID: u16 = 828;
+pub const BAR_SAKKA_SET_ID: u16 = 829;
+pub const SPELLSHREDDER_SET_ID: u16 = 830;
+pub const COUP_DE_GRACE_SET_ID: u16 = 831;
+pub const UNFLINCHING_ULTIMATE_SET_ID: u16 = 832;
+pub const HUNTSMANS_WARMASK_SET_ID: u16 = 845;
+pub const XANMEER_GENESIS_SET_ID: u16 = 846;
+pub const SHATTERED_PATHS_SIGNET_SET_ID: u16 = 848;
+pub const GLITTERING_GOAD_SET_ID: u16 = 849;
+pub const THOUSAND_EYES_SET_ID: u16 = 850;
+pub const THE_RUCKUS_SET_ID: u16 = 851;
+pub const GORETHIEF_SET_ID: u16 = 855;
+
+// phf macro needs compile time consts, which aren't able to pull from const definitions (why?? lol) so we hardcode the value for each set twice, and then use tests to ensure these will always match during runtime.
 pub static SET_BONUSES: Map<u16, &'static Set> = phf_map!{
     19u16 => &VESTMENTS_OF_THE_WARLOCK,
     20u16 => &WITCHMAN_ARMOR,
@@ -772,6 +1507,136 @@ pub static SET_BONUSES: Map<u16, &'static Set> = phf_map!{
     855u16 => &GORETHIEF,
 };
 
+pub static PERFECTED_TO_SET: Map<u16, u16> = phf_map!{
+    528u16 => 313, // Titanic Cleave
+    529u16 => 314, // Puncturing Remedy
+    530u16 => 315, // Stinging Slashes
+    531u16 => 316, // Caustic Arrow
+    532u16 => 317, // Destructive Impact
+    533u16 => 318, // Grand Rejuvenation
+    357u16 => 363, // Disciplined Slash
+    358u16 => 364, // Defensive Position
+    359u16 => 365, // Chaotic Whirlwind
+    360u16 => 366, // Piercing Spray
+    361u16 => 367, // Concentrated Force
+    362u16 => 368, // Timeless Blessing
+    522u16 => 369, // Merciless Charge
+    523u16 => 370, // Rampaging Slash
+    524u16 => 371, // Cruel Flurry
+    525u16 => 372, // Thunderous Volley
+    526u16 => 373, // Crushing Wall
+    527u16 => 374, // Precise Regeneration
+    392u16 => 388, // Aegis of Galenwe
+    393u16 => 389, // Arms of Relequen
+    394u16 => 390, // Mantle of Siroria
+    395u16 => 391, // Vestment of Olorime
+    423u16 => 411, // Gallant Charge
+    424u16 => 412, // Radial Uppercut
+    425u16 => 413, // Spectral Cloak
+    426u16 => 414, // Virulent Shot
+    427u16 => 415, // Wild Impulse
+    428u16 => 416, // Mender's Ward
+    448u16 => 443, // Eye of Nahviintaas
+    449u16 => 444, // False God's Devotion
+    450u16 => 445, // Tooth of Lokkestiiz
+    451u16 => 446, // Claw of Yolnakhriin
+    493u16 => 492, // Kyne's Wind
+    495u16 => 494, // Vrol's Command
+    497u16 => 496, // Roaring Opportunist
+    499u16 => 498, // Yandir's Might
+    563u16 => 557, // Executioner's Blade
+    564u16 => 558, // Void Bash
+    565u16 => 559, // Frenzied Momentum
+    566u16 => 560, // Point-Blank Snipe
+    567u16 => 561, // Wrath of Elements
+    568u16 => 562, // Force Overflow
+    589u16 => 585, // Saxhleel Champion
+    590u16 => 586, // Sul-Xan's Torment
+    591u16 => 587, // Bahsei's Mania
+    592u16 => 588, // Stone-Talker's Oath
+    653u16 => 646, // Whorl of the Depths
+    652u16 => 647, // Coral Riptide
+    651u16 => 648, // Pearlescent Ward
+    650u16 => 649, // Pillager's Profit
+    708u16 => 701, // Peace and Serenity
+    707u16 => 702, // Ansuul's Torment
+    706u16 => 703, // Test of Resolve
+    705u16 => 704, // Transformative Hope
+    773u16 => 766, // Mora Scribe's Thesis
+    772u16 => 767, // Slivers of the Null Arca
+    771u16 => 768, // Lucent Echoes
+    770u16 => 769, // Xoryn's Masterpiece
+    821u16 => 814, // Harmony in Chaos
+    820u16 => 815, // Kazpian's Cruel Signet
+    819u16 => 816, // Dolorous Arena
+    818u16 => 817, // Recovery Convergence
+};
+
+pub static SET_TO_PERFECTED: Map<u16, u16> = phf_map!{
+    313u16 => 528, // Titanic Cleave
+    314u16 => 529, // Puncturing Remedy
+    315u16 => 530, // Stinging Slashes
+    316u16 => 531, // Caustic Arrow
+    317u16 => 532, // Destructive Impact
+    318u16 => 533, // Grand Rejuvenation
+    363u16 => 357, // Disciplined Slash
+    364u16 => 358, // Defensive Position
+    365u16 => 359, // Chaotic Whirlwind
+    366u16 => 360, // Piercing Spray
+    367u16 => 361, // Concentrated Force
+    368u16 => 362, // Timeless Blessing
+    369u16 => 522, // Merciless Charge
+    370u16 => 523, // Rampaging Slash
+    371u16 => 524, // Cruel Flurry
+    372u16 => 525, // Thunderous Volley
+    373u16 => 526, // Crushing Wall
+    374u16 => 527, // Precise Regeneration
+    388u16 => 392, // Aegis of Galenwe
+    389u16 => 393, // Arms of Relequen
+    390u16 => 394, // Mantle of Siroria
+    391u16 => 395, // Vestment of Olorime
+    411u16 => 423, // Gallant Charge
+    412u16 => 424, // Radial Uppercut
+    413u16 => 425, // Spectral Cloak
+    414u16 => 426, // Virulent Shot
+    415u16 => 427, // Wild Impulse
+    416u16 => 428, // Mender's Ward
+    443u16 => 448, // Eye of Nahviintaas
+    444u16 => 449, // False God's Devotion
+    445u16 => 450, // Tooth of Lokkestiiz
+    446u16 => 451, // Claw of Yolnakhriin
+    492u16 => 493, // Kyne's Wind
+    494u16 => 495, // Vrol's Command
+    496u16 => 497, // Roaring Opportunist
+    498u16 => 499, // Yandir's Might
+    557u16 => 563, // Executioner's Blade
+    558u16 => 564, // Void Bash
+    559u16 => 565, // Frenzied Momentum
+    560u16 => 566, // Point-Blank Snipe
+    561u16 => 567, // Wrath of Elements
+    562u16 => 568, // Force Overflow
+    585u16 => 589, // Saxhleel Champion
+    586u16 => 590, // Sul-Xan's Torment
+    587u16 => 591, // Bahsei's Mania
+    588u16 => 592, // Stone-Talker's Oath
+    646u16 => 653, // Whorl of the Depths
+    647u16 => 652, // Coral Riptide
+    648u16 => 651, // Pearlescent Ward
+    649u16 => 650, // Pillager's Profit
+    701u16 => 708, // Peace and Serenity
+    702u16 => 707, // Ansuul's Torment
+    703u16 => 706, // Test of Resolve
+    704u16 => 705, // Transformative Hope
+    766u16 => 773, // Mora Scribe's Thesis
+    767u16 => 772, // Slivers of the Null Arca
+    768u16 => 771, // Lucent Echoes
+    769u16 => 770, // Xoryn's Masterpiece
+    814u16 => 821, // Harmony in Chaos
+    815u16 => 820, // Kazpian's Cruel Signet
+    816u16 => 819, // Dolorous Arena
+    817u16 => 818, // Recovery Convergence
+};
+
 static ABYSSAL_BRACE: Set = Set {
     bonuses: &[
         &[],
@@ -813,7 +1678,7 @@ static AEGIS_OF_GALENWE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
     ],
 };
@@ -922,7 +1787,7 @@ static ANSUULS_TORMENT: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Penetration(ResistableDamageType::All), value: SET_PENETRATION_DEFAULT as f64 }],
     ],
 };
@@ -1039,7 +1904,7 @@ static ARMS_OF_RELEQUEN: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Penetration(ResistableDamageType::All), value: SET_PENETRATION_DEFAULT as f64 }],
     ],
 };
@@ -1092,7 +1957,7 @@ static AUTOMATED_DEFENSE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
     ],
 };
@@ -1146,7 +2011,7 @@ static BAHSEIS_MANIA: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -1561,7 +2426,7 @@ static CLAW_OF_YOLNAHKRIIN: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
     ],
 };
@@ -1609,7 +2474,7 @@ static CORAL_RIPTIDE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -1924,7 +2789,7 @@ static DOLOROUS_ARENA: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Armour(ResistableDamageType::All), value: SET_ARMOUR_DEFAULT as f64 }],
     ],
 };
@@ -2200,7 +3065,7 @@ static ETERNAL_WARRIOR: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
     ],
@@ -2231,7 +3096,7 @@ static EYE_OF_NAHVIINTAAS: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -2258,7 +3123,7 @@ static FALSE_GODS_DEVOTION: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -2620,7 +3485,7 @@ static HARMONY_IN_CHAOS: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -2906,7 +3771,7 @@ static INFALLIBLE_MAGE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
@@ -2931,7 +3796,7 @@ static INVENTORS_GUARD: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
     ],
 };
@@ -3036,7 +3901,7 @@ static KAZPIANS_CRUEL_SIGNET: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Penetration(ResistableDamageType::All), value: SET_PENETRATION_DEFAULT as f64 }],
     ],
 };
@@ -3121,7 +3986,7 @@ static KYNES_WIND: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
     ],
 };
@@ -3264,7 +4129,7 @@ static LUCENT_ECHOES: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -3282,7 +4147,7 @@ static LUNAR_BASTION: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -3368,7 +4233,7 @@ static MANTLE_OF_SIRORIA: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3418,7 +4283,7 @@ static MASTER_ARCHITECT: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3537,7 +4402,7 @@ static MOONDANCER: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3546,7 +4411,7 @@ static MORA_SCRIBES_THESIS: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3880,7 +4745,7 @@ static PEACE_AND_SERENITY: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3889,7 +4754,7 @@ static PEARLESCENT_WARD: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
     ],
 };
@@ -3911,9 +4776,9 @@ static PELINALS_WRATH: Set = Set {
 static PERFECTED_AEGIS_OF_GALENWE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -3921,9 +4786,9 @@ static PERFECTED_AEGIS_OF_GALENWE: Set = Set {
 static PERFECTED_ANSUULS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Penetration(ResistableDamageType::All), value: SET_PENETRATION_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -3931,9 +4796,9 @@ static PERFECTED_ANSUULS_TORMENT: Set = Set {
 static PERFECTED_ARMS_OF_RELEQUEN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Penetration(ResistableDamageType::All), value: SET_PENETRATION_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3941,9 +4806,9 @@ static PERFECTED_ARMS_OF_RELEQUEN: Set = Set {
 static PERFECTED_BAHSEIS_MANIA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -3965,9 +4830,9 @@ static PERFECTED_CHAOTIC_WHIRLWIND: Set = Set {
 static PERFECTED_CLAW_OF_YOLNAHKRIIN: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -3982,9 +4847,9 @@ static PERFECTED_CONCENTRATED_FORCE: Set = Set {
 static PERFECTED_CORAL_RIPTIDE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -4027,9 +4892,9 @@ static PERFECTED_DISCIPLINED_SLASH: Set = Set {
 static PERFECTED_DOLOROUS_ARENA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Armour(ResistableDamageType::All), value: SET_ARMOUR_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
     ],
 };
@@ -4044,9 +4909,9 @@ static PERFECTED_EXECUTIONERS_BLADE: Set = Set {
 static PERFECTED_EYE_OF_NAHVIINTAAS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4054,9 +4919,9 @@ static PERFECTED_EYE_OF_NAHVIINTAAS: Set = Set {
 static PERFECTED_FALSE_GODS_DEVOTION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4092,9 +4957,9 @@ static PERFECTED_GRAND_REJUVENATION: Set = Set {
 static PERFECTED_HARMONY_IN_CHAOS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4102,9 +4967,9 @@ static PERFECTED_HARMONY_IN_CHAOS: Set = Set {
 static PERFECTED_KAZPIANS_CRUEL_SIGNET: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Penetration(ResistableDamageType::All), value: SET_PENETRATION_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4112,9 +4977,9 @@ static PERFECTED_KAZPIANS_CRUEL_SIGNET: Set = Set {
 static PERFECTED_KYNES_WIND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
     ],
 };
@@ -4122,9 +4987,9 @@ static PERFECTED_KYNES_WIND: Set = Set {
 static PERFECTED_LUCENT_ECHOES: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -4132,9 +4997,9 @@ static PERFECTED_LUCENT_ECHOES: Set = Set {
 static PERFECTED_MANTLE_OF_SIRORIA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4156,9 +5021,9 @@ static PERFECTED_MERCILESS_CHARGE: Set = Set {
 static PERFECTED_MORA_SCRIBES_THESIS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -4166,9 +5031,9 @@ static PERFECTED_MORA_SCRIBES_THESIS: Set = Set {
 static PERFECTED_PEACE_AND_SERENITY: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4176,9 +5041,9 @@ static PERFECTED_PEACE_AND_SERENITY: Set = Set {
 static PERFECTED_PEARLESCENT_WARD: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -4193,9 +5058,9 @@ static PERFECTED_PIERCING_SPRAY: Set = Set {
 static PERFECTED_PILLAGERS_PROFIT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
     ],
 };
@@ -4238,9 +5103,9 @@ static PERFECTED_RAMPAGING_SLASH: Set = Set {
 static PERFECTED_RECOVERY_CONVERGENCE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
     ],
 };
@@ -4248,9 +5113,9 @@ static PERFECTED_RECOVERY_CONVERGENCE: Set = Set {
 static PERFECTED_ROARING_OPPORTUNIST: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4258,9 +5123,9 @@ static PERFECTED_ROARING_OPPORTUNIST: Set = Set {
 static PERFECTED_SAXHLEEL_CHAMPION: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
     ],
 };
@@ -4268,9 +5133,9 @@ static PERFECTED_SAXHLEEL_CHAMPION: Set = Set {
 static PERFECTED_SLIVERS_OF_THE_NULL_ARCA: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4292,9 +5157,9 @@ static PERFECTED_STINGING_SLASHES: Set = Set {
 static PERFECTED_STONE_TALKERS_OATH: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4302,9 +5167,9 @@ static PERFECTED_STONE_TALKERS_OATH: Set = Set {
 static PERFECTED_SUL_XANS_TORMENT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -4312,9 +5177,9 @@ static PERFECTED_SUL_XANS_TORMENT: Set = Set {
 static PERFECTED_TEST_OF_RESOLVE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Armour(ResistableDamageType::All), value: SET_ARMOUR_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Armour(ResistableDamageType::All), value: SET_ARMOUR_DEFAULT as f64 }],
     ],
 };
@@ -4343,9 +5208,9 @@ static PERFECTED_TITANIC_CLEAVE: Set = Set {
 static PERFECTED_TOOTH_OF_LOKKESTIIZ: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -4353,9 +5218,9 @@ static PERFECTED_TOOTH_OF_LOKKESTIIZ: Set = Set {
 static PERFECTED_TRANSFORMATIVE_HOPE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
     ],
 };
@@ -4363,9 +5228,9 @@ static PERFECTED_TRANSFORMATIVE_HOPE: Set = Set {
 static PERFECTED_VESTMENT_OF_OLORIME: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4387,9 +5252,9 @@ static PERFECTED_VOID_BASH: Set = Set {
 static PERFECTED_VROLS_COMMAND: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::HealingTaken, value: SET_HEALING_TAKEN_DEFAULT as f64 }],
     ],
 };
@@ -4397,9 +5262,9 @@ static PERFECTED_VROLS_COMMAND: Set = Set {
 static PERFECTED_WHORL_OF_THE_DEPTHS: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -4421,9 +5286,9 @@ static PERFECTED_WRATH_OF_ELEMENTS: Set = Set {
 static PERFECTED_XORYNS_MASTERPIECE: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
-        &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4431,9 +5296,9 @@ static PERFECTED_XORYNS_MASTERPIECE: Set = Set {
 static PERFECTED_YANDIRS_MIGHT: Set = Set {
     bonuses: &[
         &[],
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
-        &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
+        &[],
+        &[],
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4494,7 +5359,7 @@ static PILLAGERS_PROFIT: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4730,7 +5595,7 @@ static RECOVERY_CONVERGENCE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
     ],
 };
@@ -4808,7 +5673,7 @@ static ROAR_OF_ALKOSH: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4817,7 +5682,7 @@ static ROARING_OPPORTUNIST: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -4927,7 +5792,7 @@ static SAXHLEEL_CHAMPION: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
     ],
 };
@@ -5268,7 +6133,7 @@ static SLIVERS_OF_THE_NULL_ARCA: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -5518,7 +6383,7 @@ static STONE_TALKERS_OATH: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
     ],
 };
@@ -5607,7 +6472,7 @@ static SUL_XANS_TORMENT: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
     ],
 };
@@ -5750,7 +6615,7 @@ static TEST_OF_RESOLVE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Armour(ResistableDamageType::All), value: SET_ARMOUR_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -5956,7 +6821,7 @@ static TOOTH_OF_LOKKESTIIZ: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -6013,7 +6878,7 @@ static TRANSFORMATIVE_HOPE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::HealingDone, value: SET_HEALING_DONE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
     ],
 };
@@ -6109,7 +6974,7 @@ static TWILIGHT_REMEDY: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -6335,7 +7200,7 @@ static VESTMENT_OF_OLORIME: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
     ],
 };
@@ -6380,7 +7245,7 @@ static VICIOUS_SERPENT: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::CriticalChance, value: SET_CRITICAL_CHANCE_DEFAULT as f64 }],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
@@ -6429,7 +7294,7 @@ static VROLS_COMMAND: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Health, AggKind::Additive), value: SET_HEALTH_DEFAULT as f64 }],
     ],
 };
@@ -6453,7 +7318,7 @@ static WAR_MACHINE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Stamina, AggKind::Additive), value: SET_STAMINA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -6544,7 +7409,7 @@ static WHORL_OF_THE_DEPTHS: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
@@ -6718,7 +7583,7 @@ static XORYNS_MASTERPIECE: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Resource(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorAegis], */
+        &[],
         &[SetBonus { channel: Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), value: SET_MAGICKA_RECOVERY_DEFAULT as f64 }],
     ],
 };
@@ -6727,7 +7592,7 @@ static YANDIRS_MIGHT: Set = Set {
     bonuses: &[
         &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
-        /* TODO(grant_rule): &[SetBonusType::MinorSlayer], */
+        &[],
         &[SetBonus { channel: Channel::Power, value: SET_POWER_DEFAULT as f64 }],
     ],
 };
