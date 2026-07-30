@@ -2,21 +2,21 @@ use crate::data::enums::gear::ItemQuality;
 
 pub fn get_weapon_powered_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.025,
-        ItemQuality::Fine => 1.03,
-        ItemQuality::Superior => 1.035,
-        ItemQuality::Epic => 1.04,
-        ItemQuality::Legendary => 1.045,
+        ItemQuality::Normal => 0.025,
+        ItemQuality::Fine => 0.03,
+        ItemQuality::Superior => 0.035,
+        ItemQuality::Epic => 0.04,
+        ItemQuality::Legendary => 0.045,
     }
 }
 
 pub fn get_weapon_charged_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.975,
-        ItemQuality::Fine => 2.025,
-        ItemQuality::Superior => 2.075,
-        ItemQuality::Epic => 2.125,
-        ItemQuality::Legendary => 2.175,
+        ItemQuality::Normal => 0.975,
+        ItemQuality::Fine => 1.025,
+        ItemQuality::Superior => 1.075,
+        ItemQuality::Epic => 1.125,
+        ItemQuality::Legendary => 1.175,
     }
 }
 
@@ -52,11 +52,11 @@ pub fn get_weapon_defending_value(q: &ItemQuality) -> f32 {
 
 pub fn get_weapon_training_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.025,
-        ItemQuality::Fine => 1.03,
-        ItemQuality::Superior => 1.035,
-        ItemQuality::Epic => 1.04,
-        ItemQuality::Legendary => 1.045,
+        ItemQuality::Normal => 0.025,
+        ItemQuality::Fine => 0.03,
+        ItemQuality::Superior => 0.035,
+        ItemQuality::Epic => 0.04,
+        ItemQuality::Legendary => 0.045,
     }
 }
 
@@ -72,31 +72,31 @@ pub fn get_weapon_sharpened_value(q: &ItemQuality) -> f32 {
 
 pub fn get_weapon_decisive_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.191,
-        ItemQuality::Fine => 1.212,
-        ItemQuality::Superior => 1.232,
-        ItemQuality::Epic => 1.254,
-        ItemQuality::Legendary => 1.275,
+        ItemQuality::Normal => 0.191,
+        ItemQuality::Fine => 0.212,
+        ItemQuality::Superior => 0.232,
+        ItemQuality::Epic => 0.254,
+        ItemQuality::Legendary => 0.275,
     }
 }
 
 pub fn get_weapon_nirnhoned_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.11,
-        ItemQuality::Fine => 1.12,
-        ItemQuality::Superior => 1.13,
-        ItemQuality::Epic => 1.14,
-        ItemQuality::Legendary => 1.15,
+        ItemQuality::Normal => 0.11,
+        ItemQuality::Fine => 0.12,
+        ItemQuality::Superior => 0.13,
+        ItemQuality::Epic => 0.14,
+        ItemQuality::Legendary => 0.15,
     }
 }
 
 pub fn get_armor_sturdy_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.02,
-        ItemQuality::Fine => 1.025,
-        ItemQuality::Superior => 1.03,
-        ItemQuality::Epic => 1.035,
-        ItemQuality::Legendary => 1.04,
+        ItemQuality::Normal => 0.02,
+        ItemQuality::Fine => 0.025,
+        ItemQuality::Superior => 0.03,
+        ItemQuality::Epic => 0.035,
+        ItemQuality::Legendary => 0.04,
     }
 }
 
@@ -112,31 +112,31 @@ pub fn get_armor_impenetrable_value(q: &ItemQuality) -> f32 {
 
 pub fn get_armor_reinforced_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.12,
-        ItemQuality::Fine => 1.13,
-        ItemQuality::Superior => 1.14,
-        ItemQuality::Epic => 1.15,
-        ItemQuality::Legendary => 1.16,
+        ItemQuality::Normal => 0.12,
+        ItemQuality::Fine => 0.13,
+        ItemQuality::Superior => 0.14,
+        ItemQuality::Epic => 0.15,
+        ItemQuality::Legendary => 0.16,
     }
 }
 
 pub fn get_armor_well_fitted_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.012,
-        ItemQuality::Fine => 1.024,
-        ItemQuality::Superior => 1.036,
-        ItemQuality::Epic => 1.048,
-        ItemQuality::Legendary => 1.06,
+        ItemQuality::Normal => 0.012,
+        ItemQuality::Fine => 0.024,
+        ItemQuality::Superior => 0.036,
+        ItemQuality::Epic => 0.048,
+        ItemQuality::Legendary => 0.06,
     }
 }
 
 pub fn get_armor_training_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.07,
-        ItemQuality::Fine => 1.08,
-        ItemQuality::Superior => 1.09,
-        ItemQuality::Epic => 1.10,
-        ItemQuality::Legendary => 1.11,
+        ItemQuality::Normal => 0.07,
+        ItemQuality::Fine => 0.08,
+        ItemQuality::Superior => 0.09,
+        ItemQuality::Epic => 0.10,
+        ItemQuality::Legendary => 0.11,
     }
 }
 
@@ -152,21 +152,21 @@ pub fn get_armor_infused_value(q: &ItemQuality) -> f32 {
 
 pub fn get_armor_invigorating_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.08,
-        ItemQuality::Fine => 1.10,
-        ItemQuality::Superior => 1.12,
-        ItemQuality::Epic => 1.14,
-        ItemQuality::Legendary => 1.16,
+        ItemQuality::Normal => 8.0,
+        ItemQuality::Fine => 10.0,
+        ItemQuality::Superior => 12.0,
+        ItemQuality::Epic => 14.0,
+        ItemQuality::Legendary => 16.0,
     }
 }
 
 pub fn get_armor_divines_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.051,
-        ItemQuality::Fine => 1.061,
-        ItemQuality::Superior => 1.071,
-        ItemQuality::Epic => 1.081,
-        ItemQuality::Legendary => 1.091,
+        ItemQuality::Normal => 0.051,
+        ItemQuality::Fine => 0.061,
+        ItemQuality::Superior => 0.071,
+        ItemQuality::Epic => 0.081,
+        ItemQuality::Legendary => 0.091,
     }
 }
 
@@ -263,10 +263,10 @@ pub fn get_jewelry_protective_value(q: &ItemQuality) -> f32 {
 
 pub fn get_jewelry_swift_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 1.03,
-        ItemQuality::Fine => 1.04,
-        ItemQuality::Superior => 1.05,
-        ItemQuality::Epic => 1.06,
-        ItemQuality::Legendary => 1.07,
+        ItemQuality::Normal => 0.03,
+        ItemQuality::Fine => 0.04,
+        ItemQuality::Superior => 0.05,
+        ItemQuality::Epic => 0.06,
+        ItemQuality::Legendary => 0.07,
     }
 }

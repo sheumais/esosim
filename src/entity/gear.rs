@@ -1,4 +1,4 @@
-use crate::{data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::armour_from_armour_piece, enchant::*, item_type::*, power::power_from_weapon_type, traits::*}}, entity::gear::EnchantValueWrapper::{F32, Prismatic}};
+use crate::{data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::armour_from_armour_piece, enchant::*, item_type::*, power::power_from_weapon_type, traits::*}}, entity::gear::PrismaticValueWrapper::{F32, Prismatic}};
 
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -19,7 +19,7 @@ pub struct GearPiece {
     pub enchant: Option<GearEnchant>,
 }
 
-pub enum EnchantValueWrapper {
+pub enum PrismaticValueWrapper {
     F32(f32),
     /// Health, Magicka, Stamina
     Prismatic((f32, f32, f32)),
@@ -66,7 +66,7 @@ impl GearPiece {
         }
     }
 
-    pub fn get_trait_value(&self) -> Option<f32> {
+    pub fn get_trait_value(&self) -> PrismaticValueWrapper {
         let trait_opt = &self.gear_trait;
         let item_type = self.get_item_type(); // todo fix jewellery
         let quality = &self.quality;
@@ -74,7 +74,7 @@ impl GearPiece {
         let trait_ = if let Some(trait_) = trait_opt {
             trait_
         } else {
-            return None;
+            return PrismaticValueWrapper::F32(0.);
         };
 
         let mut value = match trait_ {
@@ -107,9 +107,9 @@ impl GearPiece {
             GearTrait::JewelryProtective => get_jewelry_protective_value(quality),
             GearTrait::JewelrySwift => get_jewelry_swift_value(quality),
 
-            GearTrait::JewelryTriune => return None,
+            GearTrait::JewelryTriune => return PrismaticValueWrapper::Prismatic(get_jewelry_triune_value(quality)),
 
-            _ => return None,
+            _ => return PrismaticValueWrapper::F32(0.),
         };
 
         if is_weapon(&item_type)
@@ -122,13 +122,16 @@ impl GearPiece {
             value += 1.0;
         }
 
-        Some(value)
+        PrismaticValueWrapper::F32(value)
     }
 
     pub fn get_infused_value(&self) -> f32 {
         if let Some(i) = self.get_item_trait() {
             if i.is_infused() {
-                return self.get_trait_value().unwrap_or(1.0);
+                match self.get_trait_value() {
+                    F32(x) => return x,
+                    Prismatic(_) => return 1.0
+                }
             } else {
                 return 1f32
             }
@@ -154,7 +157,7 @@ impl GearPiece {
         let armour_value = armour_from_armour_piece(&self.get_item_type(), gear_slot, &self.quality).unwrap_or(0).into();
         let new_armour_value = if let Some(trait_) = &self.gear_trait {
             match trait_ {
-                GearTrait::ArmorReinforced => (armour_value as f32 * get_armor_reinforced_value(&self.quality)) as u32,
+                GearTrait::ArmorReinforced => (armour_value as f32 * ( 1.0 + get_armor_reinforced_value(&self.quality))) as u32,
                 GearTrait::ArmorNirnhoned => (armour_value as f32 + get_armor_nirnhoned_value(&self.quality)) as u32,
                 GearTrait::JewelryProtective => (get_jewelry_protective_value(&self.quality)) as u32,
                 GearTrait::WeaponDefending => {match is_two_handed_weapon(&self.get_item_type()) {
@@ -174,7 +177,7 @@ impl GearPiece {
     }
 
     /// Gets the nominal value of the enchant.
-    pub fn get_enchant_value(&self) -> Option<EnchantValueWrapper> {
+    pub fn get_enchant_value(&self) -> Option<PrismaticValueWrapper> {
         if let Some(e) = self.get_enchant() {
             let v = match e.glyph {
                 EnchantType::DiseaseResistance => {get_enchant_jewellery_increase_disease_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},

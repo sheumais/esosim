@@ -13,5 +13,7 @@ pub enum ResistableDamageType {
     Martial,
     Spell,
     All,
+
+    /// Not included in All
     Fall,
 }

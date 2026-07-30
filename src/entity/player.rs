@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use eso_skill_data::enums::skill_line::SkillLine;
 
-use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::{PERFECTED_TO_SET, SET_BONUSES}}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{EnchantValueWrapper, GearPiece, Loadout}, player::ActiveBar::*}};
+use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::{PERFECTED_TO_SET, SET_BONUSES}}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{PrismaticValueWrapper, GearPiece, Loadout}, player::ActiveBar::*}};
 
 pub enum ActiveBar {
     Front,
@@ -121,50 +121,68 @@ impl Player {
                 channels.add_additive(Channel::Power, p);
             } 
             channels.add_additive(Channel::Armour(ResistableDamageType::All), gear.get_armour_value(&slot) as i64);
-            if let Some(v) = gear.get_item_trait() {
-                let value = gear.get_trait_value().expect("An item with a trait should always have a trait value");
-                match v {
-                    GearTrait::JewelryBloodthirsty => {},
-                    GearTrait::JewelryHarmony => {},
-                    GearTrait::JewelryProtective => {},
-                    GearTrait::JewelrySwift => {},
-                    GearTrait::JewelryTriune => {},
-                    GearTrait::JewelryInfused => {},
-                    GearTrait::JewelryArcane => {},
-                    GearTrait::JewelryRobust => {},
-                    GearTrait::JewelryHealthy => {},
+            if let Some(gear_trait) = gear.get_item_trait() {
+                let wrapper = gear.get_trait_value();
+                match wrapper {
+                    PrismaticValueWrapper::F32(v) => {
+                        match gear_trait {
+                            GearTrait::JewelryBloodthirsty => {},
+                            GearTrait::JewelryHarmony => {
+                                channels.add_additive(Channel::SynergyRestore(ResourceKind::Health, AggKind::Additive), v as i64);
+                                channels.add_additive(Channel::SynergyRestore(ResourceKind::Magicka, AggKind::Additive), v as i64);
+                                channels.add_additive(Channel::SynergyRestore(ResourceKind::Stamina, AggKind::Additive), v as i64);
+                            },
+                            GearTrait::JewelryProtective => {channels.add_additive(Channel::Armour(ResistableDamageType::All), v as i64)},
+                            GearTrait::JewelrySwift => {channels.add_additive(Channel::MovementSpeed, v as i64);},
+                            GearTrait::JewelryTriune => {}, // handle below
+                            GearTrait::JewelryInfused => {}, // handle in enchantment code
+                            GearTrait::JewelryArcane => {channels.add_additive(Channel::Resource(ResourceKind::Magicka, AggKind::Additive), v as i64)},
+                            GearTrait::JewelryRobust => {channels.add_additive(Channel::Resource(ResourceKind::Stamina, AggKind::Additive), v as i64)},
+                            GearTrait::JewelryHealthy => {channels.add_additive(Channel::Resource(ResourceKind::Health, AggKind::Additive), v as i64)},
 
-                    GearTrait::ArmorSturdy => {},
-                    GearTrait::ArmorImpenetrable => {},
-                    GearTrait::ArmorReinforced => {},
-                    GearTrait::ArmorWellFitted => {},
-                    GearTrait::ArmorDivines => {},
-                    GearTrait::ArmorNirnhoned => {},
-                    GearTrait::ArmorInfused => {},
-                    GearTrait::ArmorTraining => {},
-                    GearTrait::ArmorInvigorating => {},
-                    GearTrait::ArmorIntricate => {},
-                    GearTrait::ArmorOrnate => {},
+                            GearTrait::ArmorSturdy => {channels.add_multiplicative_bps(Channel::BlockCost, (v * 10_000.0).round() as i64);},
+                            GearTrait::ArmorImpenetrable => {channels.add_additive(Channel::CriticalResistance, v as i64);},
+                            GearTrait::ArmorReinforced => {}, // handle in armour code
+                            GearTrait::ArmorWellFitted => {
+                                let bps = (v * 10_000.0).round() as i64;
+                                channels.add_multiplicative_bps(Channel::DodgeRollCost, bps);
+                                channels.add_multiplicative_bps(Channel::SprintCost, bps);
+                            },
+                            GearTrait::ArmorDivines => {channels.add_multiplicative_bps(Channel::MundusBoost, (v * 10_000.0).round() as i64);},
+                            GearTrait::ArmorNirnhoned => {channels.add_additive(Channel::Armour(ResistableDamageType::All), v as i64)},
+                            GearTrait::ArmorInfused => {}, // handle in enchantment code
+                            GearTrait::ArmorTraining => {},
+                            GearTrait::ArmorInvigorating => {},
 
-                    GearTrait::WeaponInfused => {},
-                    GearTrait::WeaponNirnhoned => {},
-                    GearTrait::WeaponCharged => {},
-                    GearTrait::WeaponDecisive => {},
-                    GearTrait::WeaponDefending => {},
-                    GearTrait::WeaponPowered => {},
-                    GearTrait::WeaponPrecise => {},
-                    GearTrait::WeaponSharpened => {},
-                    GearTrait::WeaponTraining => {},
-                    GearTrait::WeaponIntricate => {},
-                    GearTrait::WeaponOrnate => {},
-                    _ => {},
+                            GearTrait::WeaponInfused => {},
+                            GearTrait::WeaponNirnhoned => {},
+                            GearTrait::WeaponCharged => {},
+                            GearTrait::WeaponDecisive => {},
+                            GearTrait::WeaponDefending => {},
+                            GearTrait::WeaponPowered => {},
+                            GearTrait::WeaponPrecise => {},
+                            GearTrait::WeaponSharpened => {},
+                            GearTrait::WeaponTraining => {},
+                            _ => {},
+                        }
+                    }
+                    PrismaticValueWrapper::Prismatic(v) => {
+                        match gear_trait {
+                            GearTrait::JewelryTriune => {
+                                channels.add_additive(Channel::Resource(ResourceKind::Health, AggKind::Additive), v.0 as i64);
+                                channels.add_additive(Channel::Resource(ResourceKind::Magicka, AggKind::Additive), v.1 as i64);
+                                channels.add_additive(Channel::Resource(ResourceKind::Stamina, AggKind::Additive), v.2 as i64);
+                            },
+                            _ => {},
+                        }
+                    }
                 }
             }
             if let Some(e) = gear.get_enchant() {
                 let wrapper = gear.get_enchant_value().expect("An enchant should always have a value");
                 let infused_multiplier = gear.get_infused_value();
                 match wrapper {
-                    EnchantValueWrapper::F32(v_) => {
+                    PrismaticValueWrapper::F32(v_) => {
                         let v = v_ * infused_multiplier;
                         match e.glyph {
                             EnchantType::DiseaseResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Disease), v as i64)},
@@ -193,7 +211,7 @@ impl Player {
                             _ => {},
                         }
                     },
-                    EnchantValueWrapper::Prismatic(v_) => {
+                    PrismaticValueWrapper::Prismatic(v_) => {
                         let v = (v_.0 * infused_multiplier, v_.1 * infused_multiplier, v_.2 * infused_multiplier);
                         match e.glyph {
                             EnchantType::PrismaticDefense => {

@@ -4,18 +4,16 @@ use crate::entity::enemy::Enemy;
 
 #[derive(Debug, Clone, Copy)]
 pub enum TargetCondition {
-    HasStatus(u32), // Off Balance, Stagger, etc. — by ability id
+    HasDebuff(u32),
     HealthBelowPercent(u8),
-    DebuffCount(u8), // Reave-style: scales with # of debuffs on target
     Always,
 }
 
 impl TargetCondition {
     pub fn evaluate(&self, target: &Enemy, registry: &EffectRegistry) -> bool {
         match *self {
-            TargetCondition::HasStatus(id) => target.active_effects.has(id),
+            TargetCondition::HasDebuff(id) => target.active_effects.has(id),
             TargetCondition::HealthBelowPercent(pct) => target.health_percent() < pct as f32,
-            TargetCondition::DebuffCount(min) => target.debuff_count(registry) >= min as u32,
             TargetCondition::Always => true,
         }
     }
@@ -30,7 +28,7 @@ pub struct ConditionalEffect {
 pub static CONCUSSION: ConditionalEffect = ConditionalEffect {
     channel: Channel::Power,
     value: 0.10,
-    condition: TargetCondition::HasStatus(0 /* OFF_BALANCE_ID, see data/effects */),
+    condition: TargetCondition::HasDebuff(0 /* OFF_BALANCE_ID, see data/effects */),
 };
 
 pub fn resolve_offensive_channel(

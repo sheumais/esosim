@@ -18,14 +18,22 @@ pub enum Channel {
     Armour(ResistableDamageType),
     CriticalChance,
     CriticalDamage,
+    /// Measured in 1% = 66 (see [CRIT_DAMAGE_SCALE][crate::stats::critical::CRIT_DAMAGE_SCALE])
     CriticalResistance,
     Power,
     Penetration(ResistableDamageType),
     Resource(ResourceKind, AggKind),
     Recovery(ResourceKind, AggKind),
+    SynergyRestore(ResourceKind, AggKind),
     HealingDone,
     HealingTaken,
     DamageTakenFromPlayers,
+    MovementSpeed,
+    BlockCost,
+    DodgeRollCost,
+    SprintCost,
+    SneakCost,
+    MundusBoost,
 }
 
 impl Channel {
