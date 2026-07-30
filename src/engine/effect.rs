@@ -1,4 +1,5 @@
-use crate::data::enums::damage::ResistableDamageType;
+use crate::data::enums::{cca::CoreCombatAbility, damage::ResistableDamageType};
+use eso_skill_data::enums::{mechanic::Mechanic, skill_line::SkillLine};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ResourceKind {
@@ -29,11 +30,14 @@ pub enum Channel {
     HealingTaken,
     DamageTakenFromPlayers,
     MovementSpeed,
-    BlockCost,
-    DodgeRollCost,
-    SprintCost,
-    SneakCost,
+    CostReductionCCA(CoreCombatAbility),
+    CostReduction(Mechanic),
+    CostReductionSkillLine(SkillLine),
     MundusBoost,
+    StatusEffectChance,
+    DecisiveUltimateChance,
+    KillExperience,
+    OffhandWeaponPowerBonus,
 }
 
 impl Channel {

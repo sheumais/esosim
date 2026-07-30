@@ -119,7 +119,7 @@ impl GearSlot {
 
 // Note that enchants are only bound to specific gear pieces by the rules of what can be applied in the game. This is why they are listed here as one enum.
 // In fact, bugged items exist on live servers from trials that have armour enchantments on weapons, such as a +Max Stamina Lightning Staff
-// If such an item exists but with traits instead of enchants then please let me know.
+// If such an item exists but with traits instead of enchants then please let me know (however I doubt such an item exists).
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum EnchantType {
     AbsorbHealth,

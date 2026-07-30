@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use eso_skill_data::enums::skill_line::SkillLine;
 
-use crate::{data::{enums::{damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::{PERFECTED_TO_SET, SET_BONUSES}}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{PrismaticValueWrapper, GearPiece, Loadout}, player::ActiveBar::*}};
+use crate::{data::{enums::{cca::CoreCombatAbility, damage::ResistableDamageType, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{power::OFFHAND_MULTIPLIER, sets::{PERFECTED_TO_SET, SET_BONUSES}}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind, Channel, ResourceKind}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}};
 
 pub enum ActiveBar {
     Front,
@@ -140,29 +140,33 @@ impl Player {
                             GearTrait::JewelryRobust => {channels.add_additive(Channel::Resource(ResourceKind::Stamina, AggKind::Additive), v as i64)},
                             GearTrait::JewelryHealthy => {channels.add_additive(Channel::Resource(ResourceKind::Health, AggKind::Additive), v as i64)},
 
-                            GearTrait::ArmorSturdy => {channels.add_multiplicative_bps(Channel::BlockCost, (v * 10_000.0).round() as i64);},
+                            GearTrait::ArmorSturdy => {channels.add_multiplicative_bps(Channel::CostReductionCCA(CoreCombatAbility::Block), (v * 10_000.0).round() as i64);},
                             GearTrait::ArmorImpenetrable => {channels.add_additive(Channel::CriticalResistance, v as i64);},
                             GearTrait::ArmorReinforced => {}, // handle in armour code
                             GearTrait::ArmorWellFitted => {
                                 let bps = (v * 10_000.0).round() as i64;
-                                channels.add_multiplicative_bps(Channel::DodgeRollCost, bps);
-                                channels.add_multiplicative_bps(Channel::SprintCost, bps);
+                                channels.add_multiplicative_bps(Channel::CostReductionCCA(CoreCombatAbility::DodgeRoll), bps);
+                                channels.add_multiplicative_bps(Channel::CostReductionCCA(CoreCombatAbility::Sprint), bps);
                             },
                             GearTrait::ArmorDivines => {channels.add_multiplicative_bps(Channel::MundusBoost, (v * 10_000.0).round() as i64);},
                             GearTrait::ArmorNirnhoned => {channels.add_additive(Channel::Armour(ResistableDamageType::All), v as i64)},
                             GearTrait::ArmorInfused => {}, // handle in enchantment code
-                            GearTrait::ArmorTraining => {},
-                            GearTrait::ArmorInvigorating => {},
+                            GearTrait::ArmorTraining => {channels.add_multiplicative_bps(Channel::KillExperience, (v * 10_000.0).round() as i64);},
+                            GearTrait::ArmorInvigorating => {
+                                {channels.add_additive(Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), v as i64)};
+                                {channels.add_additive(Channel::Recovery(ResourceKind::Stamina, AggKind::Additive), v as i64)};
+                                {channels.add_additive(Channel::Recovery(ResourceKind::Health, AggKind::Additive), v as i64)};
+                            },
 
-                            GearTrait::WeaponInfused => {},
-                            GearTrait::WeaponNirnhoned => {},
-                            GearTrait::WeaponCharged => {},
-                            GearTrait::WeaponDecisive => {},
-                            GearTrait::WeaponDefending => {},
-                            GearTrait::WeaponPowered => {},
-                            GearTrait::WeaponPrecise => {},
-                            GearTrait::WeaponSharpened => {},
-                            GearTrait::WeaponTraining => {},
+                            GearTrait::WeaponInfused => {}, // handled in enchantment code
+                            GearTrait::WeaponNirnhoned => {}, // handled in weapon code
+                            GearTrait::WeaponCharged => {channels.add_multiplicative_bps(Channel::StatusEffectChance, (v * 10_000.0).round() as i64);},
+                            GearTrait::WeaponDecisive => {channels.add_multiplicative_bps(Channel::DecisiveUltimateChance, (v * 10_000.0).round() as i64);},
+                            GearTrait::WeaponDefending => {channels.add_additive(Channel::Armour(ResistableDamageType::All), v as i64)},
+                            GearTrait::WeaponPowered => {channels.add_multiplicative_bps(Channel::HealingDone, (v * 10_000.0).round() as i64);},
+                            GearTrait::WeaponPrecise => {channels.add_additive(Channel::CriticalChance, v as i64)},
+                            GearTrait::WeaponSharpened => {channels.add_additive(Channel::Penetration(ResistableDamageType::All), v as i64)},
+                            GearTrait::WeaponTraining => {channels.add_multiplicative_bps(Channel::KillExperience, (v * 10_000.0).round() as i64);},
                             _ => {},
                         }
                     }
@@ -198,10 +202,12 @@ impl Player {
                             EnchantType::MagickaRegen => {channels.add_additive(Channel::Recovery(ResourceKind::Magicka, AggKind::Additive), v as i64)},
                             EnchantType::PhysicalResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Martial), v as i64)},
                             EnchantType::PoisonResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Poison), v as i64)},
-                            EnchantType::PrismaticDefense => {todo!()},
-                            EnchantType::PrismaticRecovery => {todo!()},
+                            EnchantType::PrismaticDefense => {},
+                            EnchantType::PrismaticRecovery => {},
                             EnchantType::ReduceBlockAndBash => {todo!()},
-                            EnchantType::ReduceFeatCost => {todo!()},
+                            EnchantType::ReduceFeatCost => {
+                                todo!()
+                            },
                             EnchantType::ReducePotionCooldown => {todo!()},
                             EnchantType::ReduceSpellCost => {todo!()},
                             EnchantType::ShockResistance => {channels.add_additive(Channel::Armour(ResistableDamageType::Shock), v as i64)},

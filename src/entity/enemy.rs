@@ -1,5 +1,4 @@
 use crate::engine::active_effects::ActiveEffects;
-use crate::engine::registry::EffectRegistry;
 use crate::stats::armour::Armour;
 
 pub struct Enemy {

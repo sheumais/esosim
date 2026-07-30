@@ -2,6 +2,7 @@ pub mod data {
     pub mod enums {
         pub mod gear;
         pub mod damage;
+        pub mod cca;
     }
     pub mod effects {
     }

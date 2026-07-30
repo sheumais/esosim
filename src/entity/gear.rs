@@ -66,6 +66,9 @@ impl GearPiece {
         }
     }
 
+    /// Returns the appropriate value for the item trait in its particular format
+    /// 
+    /// Infused bonus and trait values for 2H weapons are included (pre-calculated) in the returned value
     pub fn get_trait_value(&self) -> PrismaticValueWrapper {
         let trait_opt = &self.gear_trait;
         let item_type = self.get_item_type(); // todo fix jewellery
