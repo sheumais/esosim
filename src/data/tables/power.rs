@@ -1,6 +1,6 @@
 use crate::data::enums::gear::{ItemQuality, ItemType};
 
-pub const OFFHAND_MULTIPLIER: f32 = 0.1765;
+pub const OFFHAND_MULTIPLIER: f32 = 0.1771;
 
 /// Assumes CP160
 pub fn power_from_weapon_type(item_type: &ItemType, quality: &ItemQuality) -> Option<u16> {

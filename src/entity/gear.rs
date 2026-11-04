@@ -406,4 +406,15 @@ impl Loadout {
             .filter(|i| i == set_id)
             .count() as u8
     }
+
+    pub fn is_enchant_suppressed(&self, backbar: bool) -> bool {
+        match backbar {
+            false => {
+                self.poison.is_some()
+            }
+            true => {
+                self.poison_backup.is_some()
+            }
+        }
+    }
 }

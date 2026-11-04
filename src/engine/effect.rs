@@ -1,20 +1,53 @@
 use crate::data::enums::{cca::CoreCombatAbility, damage::ResistableDamageType};
 use eso_skill_data::enums::{mechanic::Mechanic, skill_line::SkillLine};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceKind {
     Health,
     Magicka,
     Stamina,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AggKind {
     Additive,
     Multiplicative,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// Which kinds of outgoing damage a bonus applies to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum DamageDoneContext {
+    All,
+    Direct,
+    DamageOverTime,
+    StatusEffects,
+    AreaOfEffect,
+    SingleTarget,
+    LightAttack,
+    HeavyAttack,
+    ClassAbilities,
+    Monsters,
+    NonCritical,
+    Bash,
+    Type(ResistableDamageType),
+}
+
+/// Which kinds of incoming damage a bonus applies to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum DamageTakenContext {
+    All,
+    AreaOfEffect,
+    DamageOverTime,
+    Projectile,
+    Monsters,
+    Players,
+    Siege,
+    Fall,
+    Type(ResistableDamageType),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Channel {
     Armour(ResistableDamageType),
     CriticalChance,
@@ -28,22 +61,51 @@ pub enum Channel {
     SynergyRestore(ResourceKind, AggKind),
     HealingDone,
     HealingTaken,
-    DamageTakenFromPlayers,
     MovementSpeed,
     CostReductionCCA(CoreCombatAbility),
-    CostReduction(Mechanic),
-    CostReductionSkillLine(SkillLine),
+    CostReduction(#[serde(with = "super::skill_serde::mechanic")] Mechanic),
+    CostReductionSkillLine(#[serde(with = "super::skill_serde::skill_line")] SkillLine),
     MundusBoost,
     StatusEffectChance,
     DecisiveUltimateChance,
     KillExperience,
     OffhandWeaponPowerBonus,
+
+    DamageDone(DamageDoneContext),
+    DamageTaken(DamageTakenContext),
+    DamageShieldStrength,
+    BlockMitigation,
+    CriticalDamageTaken,
+    SpellCriticalChance,
+    WeaponCriticalChance,
+    WeaponPower,
+    SpellPower,
+
+    HealingDoneSingleTarget,
+    HealingDoneOverTime,
+    HealingDoneSkillLine(#[serde(with = "super::skill_serde::skill_line")] SkillLine),
+
+    HeavyAttackRestore(ResourceKind),
+    UltimateGain,
+    AttackSpeed,
+    AbilityCooldown,
+    PotionCooldown,
+    PotionEffectiveness,
+
+    DodgeChance,
+    MissChance,
+    StealthDetection,
+    DetectionRadius,
+    MountSpeed,
+    ResurrectionSpeed,
 }
 
 impl Channel {
     pub fn agg_kind(&self) -> AggKind {
         match self {
             Channel::Resource(_, kind) => *kind,
+            Channel::Recovery(_, kind) => *kind,
+            Channel::SynergyRestore(_, kind) => *kind,
             _ => AggKind::Additive,
         }
     }

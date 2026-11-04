@@ -54,14 +54,14 @@ mod tests {
     #[test]
     fn test_dual_wield() {
         let mut power = Power::new();
-        power.additive = ((OFFHAND_MULTIPLIER + 0.06) as f32 * 1335.0).round() as u32 + 1535; // offhand and passive plus mainhand
+        power.additive = ((OFFHAND_MULTIPLIER + 0.06) as f32 * 1335.0) as u32 + 1535; // offhand and passive plus mainhand
         assert_eq!(power.calculate(), 2851);
     }
 
     #[test]
     fn test_dual_wield_fleshed_out_example() {
         let mut power = Power::new();
-        power.additive = ((OFFHAND_MULTIPLIER + 0.06) as f32 * 1335.0).round() as u32 + 1535;
+        power.additive = ((OFFHAND_MULTIPLIER + 0.06) as f32 * 1335.0) as u32 + 1535;
         power.multiplicative = 0.03; // one fighters guild skill
         assert_eq!(power.calculate(), 2937);
         power.multiplicative += 0.12; // 6 medium pieces

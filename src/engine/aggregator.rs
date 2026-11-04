@@ -27,6 +27,14 @@ impl Aggregator {
     }
 }
 
+pub trait IntoAdditive { fn into_additive(self) -> i64; }
+impl IntoAdditive for i64 { fn into_additive(self) -> i64 { self } }
+impl IntoAdditive for i32 { fn into_additive(self) -> i64 { self as i64 } }
+impl IntoAdditive for u32 { fn into_additive(self) -> i64 { self as i64 } }
+impl IntoAdditive for f32 { fn into_additive(self) -> i64 { self.round() as i64 } }
+impl IntoAdditive for f64 { fn into_additive(self) -> i64 { self.round() as i64 } }
+
+
 #[derive(Default, Clone, Debug)]
 pub struct ChannelSet(HashMap<Channel, Aggregator>);
 
@@ -35,15 +43,15 @@ impl ChannelSet {
         Self(HashMap::new())
     }
 
-    pub fn add_additive(&mut self, channel: Channel, value: i64) {
-        self.0.entry(channel).or_default().add_additive(value);
+    pub fn add_additive(&mut self, channel: Channel, value: impl IntoAdditive) {
+        self.0.entry(channel).or_default().add_additive(value.into_additive());
     }
 
-    pub fn add_multiplicative_bps(&mut self, channel: Channel, value_bps: i64) {
+    pub fn add_multiplicative_bps(&mut self, channel: Channel, value_bps: impl IntoAdditive) {
         self.0
             .entry(channel)
             .or_default()
-            .add_multiplicative_bps(value_bps);
+            .add_multiplicative_bps(value_bps.into_additive());
     }
 
     pub fn get(&self, channel: Channel) -> i64 {

@@ -12,31 +12,31 @@ pub fn get_weapon_powered_value(q: &ItemQuality) -> f32 {
 
 pub fn get_weapon_charged_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 0.975,
-        ItemQuality::Fine => 1.025,
-        ItemQuality::Superior => 1.075,
-        ItemQuality::Epic => 1.125,
-        ItemQuality::Legendary => 1.175,
+        ItemQuality::Normal => 0.925,
+        ItemQuality::Fine => 0.975,
+        ItemQuality::Superior => 1.025,
+        ItemQuality::Epic => 1.075,
+        ItemQuality::Legendary => 1.125,
     }
 }
 
 pub fn get_weapon_precise_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 701.0,
-        ItemQuality::Fine => 920.0,
-        ItemQuality::Superior => 1139.0,
-        ItemQuality::Epic => 1359.0,
-        ItemQuality::Legendary => 1578.0,
+        ItemQuality::Normal => 372.0,
+        ItemQuality::Fine => 482.0,
+        ItemQuality::Superior => 591.0,
+        ItemQuality::Epic => 701.0,
+        ItemQuality::Legendary => 810.0,
     }
 }
 
 pub fn get_weapon_infused_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 0.10,
-        ItemQuality::Fine => 0.15,
-        ItemQuality::Superior => 0.20,
-        ItemQuality::Epic => 0.25,
-        ItemQuality::Legendary => 0.30,
+        ItemQuality::Normal => 0.32,
+        ItemQuality::Fine => 0.34,
+        ItemQuality::Superior => 0.36,
+        ItemQuality::Epic => 0.38,
+        ItemQuality::Legendary => 0.40,
     }
 }
 
@@ -72,21 +72,21 @@ pub fn get_weapon_sharpened_value(q: &ItemQuality) -> f32 {
 
 pub fn get_weapon_decisive_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 0.191,
-        ItemQuality::Fine => 0.212,
-        ItemQuality::Superior => 0.232,
-        ItemQuality::Epic => 0.254,
-        ItemQuality::Legendary => 0.275,
+        ItemQuality::Normal => 0.204,
+        ItemQuality::Fine => 0.238,
+        ItemQuality::Superior => 0.272,
+        ItemQuality::Epic => 0.306,
+        ItemQuality::Legendary => 0.34,
     }
 }
 
 pub fn get_weapon_nirnhoned_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 0.11,
-        ItemQuality::Fine => 0.12,
-        ItemQuality::Superior => 0.13,
-        ItemQuality::Epic => 0.14,
-        ItemQuality::Legendary => 0.15,
+        ItemQuality::Normal => 0.144,
+        ItemQuality::Fine => 0.158,
+        ItemQuality::Superior => 0.172,
+        ItemQuality::Epic => 0.186,
+        ItemQuality::Legendary => 0.2,
     }
 }
 
@@ -102,11 +102,11 @@ pub fn get_armor_sturdy_value(q: &ItemQuality) -> f32 {
 
 pub fn get_armor_impenetrable_value(q: &ItemQuality) -> f32 {
     match q {
-        ItemQuality::Normal => 116.0,
-        ItemQuality::Fine => 118.0,
-        ItemQuality::Superior => 121.0,
-        ItemQuality::Epic => 124.0,
-        ItemQuality::Legendary => 127.0,
+        ItemQuality::Normal => 154.0,
+        ItemQuality::Fine => 157.0,
+        ItemQuality::Superior => 160.0,
+        ItemQuality::Epic => 162.0,
+        ItemQuality::Legendary => 165.0,
     }
 }
 

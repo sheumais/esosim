@@ -486,9 +486,8 @@ pub fn get_enchant_jewellery_prismatic_recovery_values(effective_level: u8, qual
 
 pub fn get_armour_enchant_multiplier(slot: &GearSlot) -> f32 {
     match slot {
-        GearSlot::Head | GearSlot::OffHand | GearSlot::OffHandBackup | GearSlot::Chest | GearSlot::Legs => 1.0,
         GearSlot::Waist | GearSlot::Shoulders | GearSlot::Hands | GearSlot::Feet => 0.40437788,
-        _ => 0.0
+        _ => 1.0
     }
 }
 

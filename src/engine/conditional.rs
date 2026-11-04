@@ -25,11 +25,11 @@ pub struct ConditionalEffect {
     pub condition: TargetCondition,
 }
 
-pub static CONCUSSION: ConditionalEffect = ConditionalEffect {
-    channel: Channel::Power,
-    value: 0.10,
-    condition: TargetCondition::HasDebuff(0 /* OFF_BALANCE_ID, see data/effects */),
-};
+// pub static EXPLOITER: ConditionalEffect = ConditionalEffect {
+//     // channel: Channel::,
+//     value: 0.10,
+//     condition: TargetCondition::HasDebuff(0 /* OFF_BALANCE_ID, see data/effects */),
+// };
 
 pub fn resolve_offensive_channel(
     base: &super::aggregator::ChannelSet,

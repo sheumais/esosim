@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Clone, Copy, Hash, Eq)]
+#[derive(Debug, PartialEq, Clone, Copy, Hash, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ResistableDamageType {
     /* The four "magical" damage types */
     Flame,
@@ -16,7 +16,4 @@ pub enum ResistableDamageType {
     Martial, // Affects martial
     Spell, // Affects magical
     All, // Affects Magical and Martial and their sub-categories
-
-    /// Not included in All
-    Fall,
 }

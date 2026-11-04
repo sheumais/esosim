@@ -1,0 +1,125 @@
+# perfected set id, regular set id (hand-maintained: not in the set table)
+528 313  # Titanic Cleave
+529 314  # Puncturing Remedy
+530 315  # Stinging Slashes
+531 316  # Caustic Arrow
+532 317  # Destructive Impact
+533 318  # Grand Rejuvenation
+357 363  # Disciplined Slash
+358 364  # Defensive Position
+359 365  # Chaotic Whirlwind
+360 366  # Piercing Spray
+361 367  # Concentrated Force
+362 368  # Timeless Blessing
+522 369  # Merciless Charge
+523 370  # Rampaging Slash
+524 371  # Cruel Flurry
+525 372  # Thunderous Volley
+526 373  # Crushing Wall
+527 374  # Precise Regeneration
+392 388  # Aegis of Galenwe
+393 389  # Arms of Relequen
+394 390  # Mantle of Siroria
+395 391  # Vestment of Olorime
+423 411  # Gallant Charge
+424 412  # Radial Uppercut
+425 413  # Spectral Cloak
+426 414  # Virulent Shot
+427 415  # Wild Impulse
+428 416  # Mender's Ward
+448 443  # Eye of Nahviintaas
+449 444  # False God's Devotion
+450 445  # Tooth of Lokkestiiz
+451 446  # Claw of Yolnakhriin
+493 492  # Kyne's Wind
+495 494  # Vrol's Command
+497 496  # Roaring Opportunist
+499 498  # Yandir's Might
+563 557  # Executioner's Blade
+564 558  # Void Bash
+565 559  # Frenzied Momentum
+566 560  # Point-Blank Snipe
+567 561  # Wrath of Elements
+568 562  # Force Overflow
+589 585  # Saxhleel Champion
+590 586  # Sul-Xan's Torment
+591 587  # Bahsei's Mania
+592 588  # Stone-Talker's Oath
+653 646  # Whorl of the Depths
+652 647  # Coral Riptide
+651 648  # Pearlescent Ward
+650 649  # Pillager's Profit
+708 701  # Peace and Serenity
+707 702  # Ansuul's Torment
+706 703  # Test of Resolve
+705 704  # Transformative Hope
+773 766  # Mora Scribe's Thesis
+772 767  # Slivers of the Null Arca
+771 768  # Lucent Echoes
+770 769  # Xoryn's Masterpiece
+821 814  # Harmony in Chaos
+820 815  # Kazpian's Cruel Signet
+819 816  # Dolorous Arena
+818 817  # Recovery Convergence
+313 528  # Titanic Cleave
+314 529  # Puncturing Remedy
+315 530  # Stinging Slashes
+316 531  # Caustic Arrow
+317 532  # Destructive Impact
+318 533  # Grand Rejuvenation
+363 357  # Disciplined Slash
+364 358  # Defensive Position
+365 359  # Chaotic Whirlwind
+366 360  # Piercing Spray
+367 361  # Concentrated Force
+368 362  # Timeless Blessing
+369 522  # Merciless Charge
+370 523  # Rampaging Slash
+371 524  # Cruel Flurry
+372 525  # Thunderous Volley
+373 526  # Crushing Wall
+374 527  # Precise Regeneration
+388 392  # Aegis of Galenwe
+389 393  # Arms of Relequen
+390 394  # Mantle of Siroria
+391 395  # Vestment of Olorime
+411 423  # Gallant Charge
+412 424  # Radial Uppercut
+413 425  # Spectral Cloak
+414 426  # Virulent Shot
+415 427  # Wild Impulse
+416 428  # Mender's Ward
+443 448  # Eye of Nahviintaas
+444 449  # False God's Devotion
+445 450  # Tooth of Lokkestiiz
+446 451  # Claw of Yolnakhriin
+492 493  # Kyne's Wind
+494 495  # Vrol's Command
+496 497  # Roaring Opportunist
+498 499  # Yandir's Might
+557 563  # Executioner's Blade
+558 564  # Void Bash
+559 565  # Frenzied Momentum
+560 566  # Point-Blank Snipe
+561 567  # Wrath of Elements
+562 568  # Force Overflow
+585 589  # Saxhleel Champion
+586 590  # Sul-Xan's Torment
+587 591  # Bahsei's Mania
+588 592  # Stone-Talker's Oath
+646 653  # Whorl of the Depths
+647 652  # Coral Riptide
+648 651  # Pearlescent Ward
+649 650  # Pillager's Profit
+701 708  # Peace and Serenity
+702 707  # Ansuul's Torment
+703 706  # Test of Resolve
+704 705  # Transformative Hope
+766 773  # Mora Scribe's Thesis
+767 772  # Slivers of the Null Arca
+768 771  # Lucent Echoes
+769 770  # Xoryn's Masterpiece
+814 821  # Harmony in Chaos
+815 820  # Kazpian's Cruel Signet
+816 819  # Dolorous Arena
+817 818  # Recovery Convergence
