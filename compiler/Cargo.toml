@@ -11,8 +11,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 csv = "1.4.0"
 regex = "1"
-esosim = { path = "../.." }
+esosim = { path = "../esosim" }
 
 
-[patch."https://github.com/sheumais/esoskilldataformat"]
-eso-skill-data = { path = "../../../eso_data_workspace/eso_skill_data" }

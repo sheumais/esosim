@@ -340,8 +340,7 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("taken_monsters", r"damage (?:you )?(?:take|taken) from (?:dungeon,? ?trial,? and arena )?monsters|damage from (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageTaken(TakenCtx::Monsters)]),
         noun("taken_players", r"damage (?:you )?(?:take|taken) from players?|damage from players?", |_| vec![C::DamageTaken(TakenCtx::Players)]),
         noun("taken_siege", r"damage (?:you )?(?:take|taken) from siege(?: weapons)?|siege damage taken|damage from siege(?: weapons)?", |_| vec![C::DamageTaken(TakenCtx::Siege)]),
-        noun("taken_daedra", r"damage (?:you )?(?:take|taken) from daedra|damage from daedra", |_| vec![C::DamageTaken(TakenCtx::Daedra)]),
-        noun("taken_fall", r"fall damage(?: taken| you take)?", |_| vec![C::DamageTaken(TakenCtx::Type(Dmg::Fall))]),
+        noun("taken_fall", r"fall damage(?: taken| you take)?", |_| vec![C::DamageTaken(TakenCtx::Fall)]),
         noun("taken_element", r"(?P<el>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|physical|magic|spell) damage(?: taken| you take)|damage (?:you )?(?:take|taken) from (?P<el2>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|physical|magic|spell) (?:attacks|abilities|effects|damage)", |c| {
             let e = cap(c, "el").or(cap(c, "el2")).unwrap_or("");
             vec![C::DamageTaken(TakenCtx::Type(el_of(e)))]
@@ -864,6 +863,7 @@ pub fn mapping_report(corpus: &Corpus, graph: &Graph, limit: usize) {
 mod tests {
     use super::*;
     use eso_skill_data::{SkillCoef, TooltipData};
+use esosim::engine::effect::{AggKind::{Additive, Multiplicative}, Channel::Resource, ResourceKind::Health};
 
     fn chans(clause: &str) -> Vec<String> {
         classify_clause(clause).map(|c| c.channels.iter().map(|ch| format!("{ch:?}")).collect()).unwrap_or_default()
@@ -949,7 +949,7 @@ mod tests {
         assert_eq!(chans("increases your physical and spell resistance by @"), ["Armour(All)"]);
         assert_eq!(chans("increases your physical resistance by @"), ["Armour(Martial)"]);
         assert_eq!(chans("increases your fire resistance by @"), ["Armour(Flame)"]);
-        assert_eq!(chans("reduces fall damage taken by @"), ["DamageTaken(Type(Fall))"]);
+        assert_eq!(chans("reduces fall damage taken by @"), ["DamageTaken(Fall)"]);
         assert_eq!(chans("reduces your damage taken from players by @"), ["DamageTaken(Players)"]);
         assert_eq!(chans("reduces damage taken by @"), ["DamageTaken(All)"]);
     }
@@ -1078,7 +1078,7 @@ mod tests {
         let (c, g) = world("Increases your Max Health by <<1>>", vec![], with_coef(skill(200)));
         let r = classify_one(&c.skills[&200], &c, &g).unwrap();
         assert_eq!(r.status, ClassStatus::Classified);
-        assert_eq!(r.channels, ["Resource(Health, Additive)"]);
+        assert_eq!(r.channels, [Resource(Health, Additive)]);
         assert_eq!(r.direction, Some(Direction::Raises));
         assert_eq!(r.evidence.len(), 1);
         assert_eq!(r.evidence[0].parent, 100);
@@ -1092,7 +1092,7 @@ mod tests {
         let pct = id_of(TooltipType::Percentage);
         let (c, g) = world("Increases your Max Health by <<1>>", vec![pct], child);
         let r = classify_one(&c.skills[&200], &c, &g).unwrap();
-        assert_eq!(r.channels, ["Resource(Health, Multiplicative)"]);
+        assert_eq!(r.channels, [Resource(Health, Multiplicative)]);
     }
 
     #[test]

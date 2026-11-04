@@ -214,7 +214,7 @@ mod tests {
         let c = Corpus::from_skills(vec![s.clone()]);
         let g = Graph::build(&c);
         let r = resolve(&s, &c, &g);
-        assert_eq!(r.major_minor_name.as_deref(), Some("Major Brutality"));
+        assert_eq!(r.major_minor_id, 2);
     }
 
     #[test]
