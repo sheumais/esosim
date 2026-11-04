@@ -1,4 +1,4 @@
-//! Regex classifier: which engine [`Channel`](esosim::engine::effect::Channel) does an
+//! Regex classifier: which engine [`Channel`](esosim_types::Channel) does an
 //! ability's value feed? (PLAN.md §3.8.)
 //!
 //! The ability itself says nothing about *what stat* its number is; the abilities that
@@ -27,9 +27,9 @@
 //! they can be read (and linted) as a table. Patterns match lower-case text, use the
 //! `regex` crate's syntax (no look-around, no back-references) and must not contain `"`.
 
-use esosim::data::enums::cca::CoreCombatAbility as Cca;
-use esosim::data::enums::damage::ResistableDamageType as Dmg;
-use esosim::engine::effect::{
+use esosim_types::cca::CoreCombatAbility as Cca;
+use esosim_types::damage::ResistableDamageType as Dmg;
+use esosim_types::{
     AggKind as Agg, Channel, DamageDoneContext as DoneCtx, DamageTakenContext as TakenCtx,
     ResourceKind as Res,
 };
@@ -863,7 +863,7 @@ pub fn mapping_report(corpus: &Corpus, graph: &Graph, limit: usize) {
 mod tests {
     use super::*;
     use eso_skill_data::{SkillCoef, TooltipData};
-use esosim::engine::effect::{AggKind::{Additive, Multiplicative}, Channel::Resource, ResourceKind::Health};
+use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, ResourceKind::Health};
 
     fn chans(clause: &str) -> Vec<String> {
         classify_clause(clause).map(|c| c.channels.iter().map(|ch| format!("{ch:?}")).collect()).unwrap_or_default()
@@ -1034,8 +1034,8 @@ use esosim::engine::effect::{AggKind::{Additive, Multiplicative}, Channel::Resou
     fn partial_phrases_are_rejected_at_ability_level() {
         // a rule matches ("stamina cost") but "dual wield" is left over: a skill-line cost, not a mechanic cost
         assert!(classify_clause("reduces the stamina cost of dual wield abilities by @").is_some_and(|c| c.partial));
-        let (c, g) = world("Reduces the Stamina cost of Dual Wield abilities by <<1>>", vec![], with_coef(skill(200)));
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let (c, g) = world("Reduces the Stamina cost of Dual Wield abilities by <<1>>", vec![], with_coef(skill(2000)));
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.status, ClassStatus::Unclassified);
         assert_eq!(r.reason.as_deref(), Some("partial_match"));
     }
@@ -1063,95 +1063,96 @@ use esosim::engine::effect::{AggKind::{Additive, Multiplicative}, Channel::Resou
         s
     }
 
-    /// Parent 100 whose single tooltip entry points at child 200.
+    /// Parent 1000 whose single tooltip entry points at child 2000. Ids must be at or above
+    /// `MIN_TOOLTIP_ABILITY_ID`, or the graph treats a tooltip id as a constant, not an ability.
     fn world(text: &str, types: Vec<u32>, child: SkillData34) -> (Corpus, Graph) {
-        let mut parent = skill(100);
+        let mut parent = skill(1000);
         parent.tooltip_data = vec![TooltipData { tooltip_ids: vec![child.ability_id1], tooltip_types: types, ..Default::default() }];
         let mut c = Corpus::from_skills(vec![parent, child]);
-        c.tooltips.insert(100, text.to_string());
+        c.tooltips.insert(1000, text.to_string());
         let g = Graph::build(&c);
         (c, g)
     }
 
     #[test]
     fn an_ability_is_classified_from_the_tooltip_that_references_it() {
-        let (c, g) = world("Increases your Max Health by <<1>>", vec![], with_coef(skill(200)));
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let (c, g) = world("Increases your Max Health by <<1>>", vec![], with_coef(skill(2000)));
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.status, ClassStatus::Classified);
         assert_eq!(r.channels, [Resource(Health, Additive)]);
         assert_eq!(r.direction, Some(Direction::Raises));
         assert_eq!(r.evidence.len(), 1);
-        assert_eq!(r.evidence[0].parent, 100);
+        assert_eq!(r.evidence[0].parent, 1000);
         assert_eq!(r.evidence[0].placeholder, 1);
     }
 
     #[test]
     fn percent_value_without_equation_is_multiplicative() {
-        let mut child = skill(200);
+        let mut child = skill(2000);
         child.base_data.value1 = 5;
         let pct = id_of(TooltipType::Percentage);
         let (c, g) = world("Increases your Max Health by <<1>>", vec![pct], child);
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.channels, [Resource(Health, Multiplicative)]);
     }
 
     #[test]
     fn duration_entries_are_not_stat_bonuses() {
         let dur = id_of(TooltipType::Duration);
-        let (c, g) = world("Increases your Max Health by <<1>>", vec![dur], with_coef(skill(200)));
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let (c, g) = world("Increases your Max Health by <<1>>", vec![dur], with_coef(skill(2000)));
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.status, ClassStatus::Unclassified);
         assert_eq!(r.reason.as_deref(), Some("not_a_stat_entry"));
     }
 
     #[test]
     fn abilities_without_a_value_are_skipped_and_unreferenced_ones_say_why() {
-        let (c, g) = world("Increases your Max Health by <<1>>", vec![], skill(200));
-        assert!(classify_one(&c.skills[&200], &c, &g).is_none());
+        let (c, g) = world("Increases your Max Health by <<1>>", vec![], skill(2000));
+        assert!(classify_one(&c.skills[&2000], &c, &g).is_none());
 
-        let lonely = with_coef(skill(300));
+        let lonely = with_coef(skill(3000));
         let c = Corpus::from_skills(vec![lonely]);
         let g = Graph::build(&c);
-        let r = classify_one(&c.skills[&300], &c, &g).unwrap();
+        let r = classify_one(&c.skills[&3000], &c, &g).unwrap();
         assert_eq!(r.reason.as_deref(), Some("no_references"));
     }
 
     #[test]
     fn unmatched_clauses_are_kept_for_the_report() {
-        let (c, g) = world("Increases your wibble by <<1>>", vec![], with_coef(skill(200)));
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let (c, g) = world("Increases your wibble by <<1>>", vec![], with_coef(skill(2000)));
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.reason.as_deref(), Some("no_rule_matched"));
         assert_eq!(r.unmatched_clauses, ["increases your wibble by @"]);
     }
 
     #[test]
     fn disagreeing_parents_are_a_conflict() {
-        let child = with_coef(skill(200));
-        let mut a = skill(100);
-        a.tooltip_data = vec![TooltipData { tooltip_ids: vec![200], ..Default::default() }];
-        let mut b = skill(101);
-        b.tooltip_data = vec![TooltipData { tooltip_ids: vec![200], ..Default::default() }];
+        let child = with_coef(skill(2000));
+        let mut a = skill(1000);
+        a.tooltip_data = vec![TooltipData { tooltip_ids: vec![2000], ..Default::default() }];
+        let mut b = skill(1001);
+        b.tooltip_data = vec![TooltipData { tooltip_ids: vec![2000], ..Default::default() }];
         let mut c = Corpus::from_skills(vec![a, b, child]);
-        c.tooltips.insert(100, "Increases your Max Health by <<1>>".into());
-        c.tooltips.insert(101, "Increases your Max Magicka by <<1>>".into());
+        c.tooltips.insert(1000, "Increases your Max Health by <<1>>".into());
+        c.tooltips.insert(1001, "Increases your Max Magicka by <<1>>".into());
         let g = Graph::build(&c);
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.status, ClassStatus::Conflict);
         assert_eq!(r.evidence.len(), 2);
     }
 
     #[test]
     fn agreeing_parents_are_one_classification_with_both_as_evidence() {
-        let child = with_coef(skill(200));
-        let mut a = skill(100);
-        a.tooltip_data = vec![TooltipData { tooltip_ids: vec![200], ..Default::default() }];
-        let mut b = skill(101);
-        b.tooltip_data = vec![TooltipData { tooltip_ids: vec![200], ..Default::default() }];
+        let child = with_coef(skill(2000));
+        let mut a = skill(1000);
+        a.tooltip_data = vec![TooltipData { tooltip_ids: vec![2000], ..Default::default() }];
+        let mut b = skill(1001);
+        b.tooltip_data = vec![TooltipData { tooltip_ids: vec![2000], ..Default::default() }];
         let mut c = Corpus::from_skills(vec![a, b, child]);
-        c.tooltips.insert(100, "Increases your Max Health by <<1>>".into());
-        c.tooltips.insert(101, "Increase your Max Health by <<1>> while slotted".into());
+        c.tooltips.insert(1000, "Increases your Max Health by <<1>>".into());
+        c.tooltips.insert(1001, "Increase your Max Health by <<1>> while slotted".into());
         let g = Graph::build(&c);
-        let r = classify_one(&c.skills[&200], &c, &g).unwrap();
+        let r = classify_one(&c.skills[&2000], &c, &g).unwrap();
         assert_eq!(r.status, ClassStatus::Classified);
         assert_eq!(r.evidence.len(), 2);
     }

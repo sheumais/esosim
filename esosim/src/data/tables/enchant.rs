@@ -19,7 +19,33 @@ fn match_effective_level_to_enchant_level(effective_level: u8) -> Option<Enchant
         60..=64 => Some(E::CPOneHundred),
         65 => Some(E::CPOneFifty),
         66 => Some(E::CPOneSixty),
-        _ => None
+        _ => None,
+    }
+}
+
+fn quality_index(quality: ItemQuality) -> usize {
+    use ItemQuality::*;
+    match quality {
+        Normal => 0,
+        Fine => 1,
+        Superior => 2,
+        Epic => 3,
+        Legendary => 4,
+    }
+}
+
+fn pick(values: [f32; 5], quality: ItemQuality) -> f32 {
+    values[quality_index(quality)]
+}
+
+fn lookup(
+    effective_level: u8,
+    quality: ItemQuality,
+    table: fn(EnchantLevel) -> [f32; 5],
+) -> f32 {
+    match match_effective_level_to_enchant_level(effective_level) {
+        Some(level) => pick(table(level), quality),
+        None => 0.0,
     }
 }
 
@@ -46,78 +72,15 @@ fn shared_armour_values(enchant_level: EnchantLevel) -> [f32; 5] {
 }
 
 pub fn get_enchant_armour_stamina_value(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values: [f32; 5] = shared_armour_values(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, shared_armour_values)
 }
 
 pub fn get_enchant_armour_magicka_value(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values: [f32; 5] = shared_armour_values(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, shared_armour_values)
 }
 
 pub fn get_enchant_armour_health_value(effective_level: u8, quality: ItemQuality) -> f32 {
-    use EnchantLevel::*;
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = match enchant_level {
-        One => [77.0, 82.0, 88.0, 92.0, 100.0],
-        Five => [90.0, 94.0, 102.0, 107.0, 117.0],
-        Ten => [104.0, 110.0, 119.0, 125.0, 136.0],
-        Fifteen => [122.0, 127.0, 138.0, 146.0, 158.0],
-        Twenty => [140.0, 148.0, 160.0, 160.0, 182.0],
-        TwentyFive => [162.0, 171.0, 184.0, 195.0, 211.0],
-        Thirty => [187.0, 198.0, 213.0, 224.0, 243.0],
-        ThirtyFive => [215.0, 226.0, 245.0, 258.0, 280.0],
-        Fourty => [247.0, 260.0, 282.0, 297.0, 322.0],
-        CPTen => [284.0, 299.0, 324.0, 342.0, 370.0],
-        CPThirty => [326.0, 344.0, 372.0, 391.0, 424.0],
-        CPFifty => [375.0, 393.0, 426.0, 449.0, 487.0],
-        CPSeventy => [429.0, 452.0, 489.0, 514.0, 557.0],
-        CPOneHundred => [491.0, 517.0, 559.0, 589.0, 639.0],
-        CPOneFifty => [643.0, 676.0, 732.0, 772.0, 837.0],
-        CPOneSixty => [734.0, 774.0, 839.0, 882.0, 954.0],
-    };
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    (get_enchant_armour_stamina_value(effective_level, quality) * 11.0 / 10.0).floor()
 }
 
 /// Health, Magicka, Stamina
@@ -126,7 +89,7 @@ pub fn get_enchant_armour_prismatic_values(effective_level: u8, quality: ItemQua
     let magicka = get_enchant_armour_magicka_value(effective_level, quality);
     let stamina = get_enchant_armour_stamina_value(effective_level, quality);
 
-    return ((health / 2.0).floor(), (magicka / 2.0).floor(), (stamina / 2.0).floor())
+    ((health / 2.0).floor(), (magicka / 2.0).floor(), (stamina / 2.0).floor())
 }
 
 fn shared_jewellery_reduce_values(enchant_level: EnchantLevel) -> [f32; 5] {
@@ -152,53 +115,20 @@ fn shared_jewellery_reduce_values(enchant_level: EnchantLevel) -> [f32; 5] {
 }
 
 pub fn get_enchant_jewellery_reduce_feat_cost(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = shared_jewellery_reduce_values(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, shared_jewellery_reduce_values)
 }
 
 pub fn get_enchant_jewellery_reduce_spell_cost(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = shared_jewellery_reduce_values(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, shared_jewellery_reduce_values)
 }
 
 pub fn get_enchant_jewellery_reduce_block_cost(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
+    lookup(effective_level, quality, shared_jewellery_reduce_values)
+}
+
+fn jewellery_reduce_all_values(enchant_level: EnchantLevel) -> [f32; 5] {
     use EnchantLevel::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = match enchant_level {
+    match enchant_level {
         One => [11.0, 11.0, 12.0, 13.0, 14.0],
         Five => [19.0, 20.0, 21.0, 23.0, 25.0],
         Ten => [27.0, 29.0, 31.0, 33.0, 35.0],
@@ -215,56 +145,15 @@ pub fn get_enchant_jewellery_reduce_block_cost(effective_level: u8, quality: Ite
         CPOneHundred => [99.0, 106.0, 114.0, 122.0, 130.0],
         CPOneFifty => [100.0, 108.0, 116.0, 124.0, 132.0],
         CPOneSixty => [101.0, 110.0, 118.0, 126.0, 133.0],
-    };
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
     }
 }
 
 pub fn get_enchant_jewellery_reduce_all_cost(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-    use EnchantLevel::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = match enchant_level {
-        One => [11.0, 11.0, 12.0, 13.0, 14.0],
-        Five => [19.0, 20.0, 21.0, 23.0, 25.0],
-        Ten => [27.0, 29.0, 31.0, 33.0, 35.0],
-        Fifteen => [34.0, 37.0, 40.0, 42.0, 45.0],
-        Twenty => [42.0, 46.0, 49.0, 52.0, 56.0],
-        TwentyFive => [50.0, 54.0, 58.0, 62.0, 66.0],
-        Thirty => [58.0, 63.0, 67.0, 72.0, 77.0],
-        ThirtyFive => [66.0, 71.0, 77.0, 81.0, 87.0],
-        Fourty => [74.0, 80.0, 85.0, 91.0, 97.0],
-        CPTen => [82.0, 89.0, 95.0, 101.0, 108.0],
-        CPThirty => [89.0, 97.0, 103.0, 110.0, 118.0],
-        CPFifty => [92.0, 99.0, 106.0, 114.0, 121.0],
-        CPSeventy => [94.0, 101.0, 108.0, 116.0, 123.0],
-        CPOneHundred => [99.0, 106.0, 114.0, 122.0, 130.0],
-        CPOneFifty => [100.0, 108.0, 116.0, 124.0, 132.0],
-        CPOneSixty => [101.0, 110.0, 118.0, 126.0, 133.0],
-    };
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, jewellery_reduce_all_values)
 }
 
 fn shared_jewellery_resistance_values(enchant_level: EnchantLevel) -> [f32; 5] {
-    use EnchantLevel::*;    
+    use EnchantLevel::*;
     match enchant_level {
         One => [320.0, 342.0, 366.0, 384.0, 416.0],
         Five => [368.0, 386.0, 418.0, 442.0, 478.0],
@@ -286,51 +175,32 @@ fn shared_jewellery_resistance_values(enchant_level: EnchantLevel) -> [f32; 5] {
 }
 
 pub fn get_enchant_jewellery_increase_frost_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_mono_resistance(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_resistance_values)
 }
 
 pub fn get_enchant_jewellery_increase_disease_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_mono_resistance(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_resistance_values)
 }
 
 pub fn get_enchant_jewellery_increase_poison_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_mono_resistance(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_resistance_values)
 }
 
 pub fn get_enchant_jewellery_increase_shock_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_mono_resistance(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_resistance_values)
 }
 
 pub fn get_enchant_jewellery_increase_flame_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_mono_resistance(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_resistance_values)
 }
 
-fn universal_mono_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = shared_jewellery_resistance_values(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
-}
-
-fn shared_jewellery_resistance_values_2(enchant_level: EnchantLevel) -> [f32; 5] {
-    use EnchantLevel::*;    
+fn shared_jewellery_omni_resistance_values(enchant_level: EnchantLevel) -> [f32; 5] {
+    use EnchantLevel::*;
     match enchant_level {
         One => [75.0, 80.0, 86.0, 90.0, 98.0],
         Five => [88.0, 92.0, 100.0, 106.0, 114.0],
         Ten => [102.0, 108.0, 116.0, 122.0, 133.0],
-        Fifteen => [118.0, 124.0, 125.0, 142.0, 153.0],
+        Fifteen => [118.0, 124.0, 125.0, 142.0, 153.0], // 125 is correct...
         Twenty => [137.0, 144.0, 155.0, 164.0, 178.0],
         TwentyFive => [157.0, 166.0, 180.0, 188.0, 204.0],
         Thirty => [182.0, 190.0, 206.0, 218.0, 237.0],
@@ -338,7 +208,7 @@ fn shared_jewellery_resistance_values_2(enchant_level: EnchantLevel) -> [f32; 5]
         Fourty => [241.0, 252.0, 272.0, 289.0, 313.0],
         CPTen => [274.0, 291.0, 315.0, 329.0, 356.0],
         CPThirty => [317.0, 331.0, 358.0, 380.0, 412.0],
-        CPFifty => [360.0, 382.0, 414.0, 532.0, 468.0],
+        CPFifty => [360.0, 382.0, 414.0, 432.0, 468.0],
         CPSeventy => [416.0, 434.0, 470.0, 499.0, 541.0],
         CPOneHundred => [472.0, 501.0, 543.0, 566.0, 614.0],
         CPOneFifty => [618.0, 656.0, 711.0, 742.0, 803.0],
@@ -347,30 +217,11 @@ fn shared_jewellery_resistance_values_2(enchant_level: EnchantLevel) -> [f32; 5]
 }
 
 pub fn get_enchant_jewellery_increase_physical_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_omni_resistance(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_omni_resistance_values)
 }
 
 pub fn get_enchant_jewellery_increase_spell_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_omni_resistance(effective_level, quality)
-}
-
-fn universal_omni_resistance(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = shared_jewellery_resistance_values_2(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, shared_jewellery_omni_resistance_values)
 }
 
 fn shared_jewellery_power_values(enchant_level: EnchantLevel) -> [f32; 5] {
@@ -396,30 +247,43 @@ fn shared_jewellery_power_values(enchant_level: EnchantLevel) -> [f32; 5] {
 }
 
 pub fn get_enchant_jewellery_increase_weapon_damage(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_jewellery_power(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_power_values)
 }
 
 pub fn get_enchant_jewellery_increase_spell_damage(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_jewellery_power(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_power_values)
 }
 
-fn universal_jewellery_power(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
+pub fn get_enchant_jewellery_increase_bash_damage(effective_level: u8, quality: ItemQuality) -> f32 {
+    use EnchantLevel::*;
+
+    const QUALITY_STEP: f32 = 19.5;
 
     let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
         Some(l) => l,
         None => return 0.0,
     };
 
-    let values = shared_jewellery_power_values(enchant_level);
+    let base = match enchant_level {
+        One => 32.5,
+        Five => 65.0,
+        Ten => 97.5,
+        Fifteen => 130.0,
+        Twenty => 162.5,
+        TwentyFive => 195.0,
+        Thirty => 227.5,
+        ThirtyFive => 260.0,
+        Fourty => 292.5,
+        CPTen => 325.0,
+        CPThirty => 338.0,
+        CPFifty => 351.0,
+        CPSeventy => 364.0,
+        CPOneHundred => 403.0,
+        CPOneFifty => 416.0,
+        CPOneSixty => 422.5,
+    };
 
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    (base + QUALITY_STEP * quality_index(quality) as f32).floor()
 }
 
 fn shared_jewellery_recovery_values(enchant_level: EnchantLevel) -> [f32; 5] {
@@ -445,34 +309,15 @@ fn shared_jewellery_recovery_values(enchant_level: EnchantLevel) -> [f32; 5] {
 }
 
 pub fn get_enchant_jewellery_increase_stamina_recovery(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_recovery(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_recovery_values)
 }
 
 pub fn get_enchant_jewellery_increase_magicka_recovery(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_recovery(effective_level, quality)
+    lookup(effective_level, quality, shared_jewellery_recovery_values)
 }
 
 pub fn get_enchant_jewellery_increase_health_recovery(effective_level: u8, quality: ItemQuality) -> f32 {
-    universal_recovery(effective_level, quality)
-}
-
-fn universal_recovery(effective_level: u8, quality: ItemQuality) -> f32 {
-    use ItemQuality::*;
-
-    let enchant_level = match match_effective_level_to_enchant_level(effective_level) {
-        Some(l) => l,
-        None => return 0.0,
-    };
-
-    let values = shared_jewellery_recovery_values(enchant_level);
-
-    match quality {
-        Normal => values[0],
-        Fine => values[1],
-        Superior => values[2],
-        Epic => values[3],
-        Legendary => values[4],
-    }
+    lookup(effective_level, quality, shared_jewellery_recovery_values)
 }
 
 /// Health, Magicka, Stamina
@@ -481,13 +326,47 @@ pub fn get_enchant_jewellery_prismatic_recovery_values(effective_level: u8, qual
     let magicka = get_enchant_jewellery_increase_magicka_recovery(effective_level, quality);
     let stamina = get_enchant_jewellery_increase_stamina_recovery(effective_level, quality);
 
-    return ((health / 2.0).floor(), (magicka / 2.0).floor(), (stamina / 2.0).floor())
+    ((health / 2.0).floor(), (magicka / 2.0).floor(), (stamina / 2.0).floor())
+}
+
+fn shared_jewellery_potion_speed_values(_enchant_level: EnchantLevel) -> [f32; 5] {
+    [1.0, 2.0, 3.0, 4.0, 5.0]
+}
+
+pub fn get_enchant_jewellery_reduce_potion_cooldown(effective_level: u8, quality: ItemQuality) -> f32 {
+    lookup(effective_level, quality, shared_jewellery_potion_speed_values)
+}
+
+fn shared_jewellery_potion_boost_values(enchant_level: EnchantLevel) -> [f32; 5] {
+    use EnchantLevel::*;
+    match enchant_level {
+        One => [0.6, 0.7, 0.8, 0.9, 1.1],
+        Five => [0.8, 0.9, 1.0, 1.1, 1.3],
+        Ten => [1.0, 1.1, 1.3, 1.4, 1.5],
+        Fifteen => [1.2, 1.3, 1.4, 1.5, 1.7],
+        Twenty => [1.4, 1.5, 1.7, 1.8, 1.9],
+        TwentyFive => [1.6, 1.7, 1.9, 2.0, 2.1],
+        Thirty => [1.8, 1.9, 2.0, 2.1, 2.3],
+        ThirtyFive => [1.9, 2.1, 2.2, 2.3, 2.4],
+        Fourty => [2.2, 2.3, 2.4, 2.5, 2.7],
+        CPTen => [2.5, 2.6, 2.7, 2.9, 3.0],
+        CPThirty => [2.6, 2.7, 2.9, 3.0, 3.1],
+        CPFifty => [2.7, 2.8, 2.9, 3.0, 3.1],
+        CPSeventy => [2.8, 2.9, 3.1, 3.2, 3.3],
+        CPOneHundred => [2.9, 3.1, 3.2, 3.3, 3.4],
+        CPOneFifty => [3.1, 3.2, 3.3, 3.4, 3.5],
+        CPOneSixty => [3.1, 3.2, 3.3, 3.5, 3.6],
+    }
+}
+
+pub fn get_enchant_jewellery_increase_potion_effectiveness(effective_level: u8, quality: ItemQuality) -> f32 {
+    lookup(effective_level, quality, shared_jewellery_potion_boost_values)
 }
 
 pub fn get_armour_enchant_multiplier(slot: &GearSlot) -> f32 {
     match slot {
         GearSlot::Waist | GearSlot::Shoulders | GearSlot::Hands | GearSlot::Feet => 0.40437788,
-        _ => 1.0
+        _ => 1.0,
     }
 }
 
@@ -506,30 +385,12 @@ mod tests {
     fn test_match_effective_level_to_enchant_level_basic_ranges() {
         use EnchantLevel::*;
 
-        assert!(matches!(
-            match_effective_level_to_enchant_level(1),
-            Some(One)
-        ));
-        assert!(matches!(
-            match_effective_level_to_enchant_level(7),
-            Some(Five)
-        ));
-        assert!(matches!(
-            match_effective_level_to_enchant_level(15),
-            Some(Fifteen)
-        ));
-        assert!(matches!(
-            match_effective_level_to_enchant_level(40),
-            Some(Fourty)
-        ));
-        assert!(matches!(
-            match_effective_level_to_enchant_level(54),
-            Some(CPThirty)
-        ));
-        assert!(matches!(
-            match_effective_level_to_enchant_level(66),
-            Some(CPOneSixty)
-        ));
+        assert!(matches!(match_effective_level_to_enchant_level(1), Some(One)));
+        assert!(matches!(match_effective_level_to_enchant_level(7), Some(Five)));
+        assert!(matches!(match_effective_level_to_enchant_level(15), Some(Fifteen)));
+        assert!(matches!(match_effective_level_to_enchant_level(40), Some(Fourty)));
+        assert!(matches!(match_effective_level_to_enchant_level(54), Some(CPThirty)));
+        assert!(matches!(match_effective_level_to_enchant_level(66), Some(CPOneSixty)));
     }
 
     #[test]
@@ -553,14 +414,14 @@ mod tests {
     fn test_invalid_level_returns_zero_for_magicka_and_stamina() {
         let level = 0;
 
-        assert_eq!(
-            get_enchant_armour_magicka_value(level, Normal),
-            0.0
-        );
-        assert_eq!(
-            get_enchant_armour_stamina_value(level, Normal),
-            0.0
-        );
+        assert_eq!(get_enchant_armour_magicka_value(level, Normal), 0.0);
+        assert_eq!(get_enchant_armour_stamina_value(level, Normal), 0.0);
+    }
+
+    #[test]
+    fn test_invalid_level_returns_zero_for_derived_and_formula_values() {
+        assert_eq!(get_enchant_armour_health_value(0, Normal), 0.0);
+        assert_eq!(get_enchant_jewellery_increase_bash_damage(0, Normal), 0.0);
     }
 
     #[test]
@@ -570,11 +431,26 @@ mod tests {
 
         // Health: 136.0 -> 68.0
         // Magicka/Stamina: 124.0 -> 62.0
-        let (health, magicka, stamina) =
-            get_enchant_armour_prismatic_values(level, quality);
+        let (health, magicka, stamina) = get_enchant_armour_prismatic_values(level, quality);
 
         assert_eq!(health, 68.0);
         assert_eq!(magicka, 62.0);
         assert_eq!(stamina, 62.0);
+    }
+
+    #[test]
+    fn test_health_is_stamina_times_one_point_one_floored() {
+        assert_eq!(get_enchant_armour_health_value(1, Normal), 77.0);
+        assert_eq!(get_enchant_armour_health_value(20, Superior), 160.0);
+        assert_eq!(get_enchant_armour_health_value(66, Legendary), 954.0);
+        assert_eq!(get_enchant_armour_health_value(20, Epic), 169.0);
+    }
+
+    #[test]
+    fn test_bash_damage_known_values() {
+        assert_eq!(get_enchant_jewellery_increase_bash_damage(1, Legendary), 110.0);
+        assert_eq!(get_enchant_jewellery_increase_bash_damage(5, Superior), 104.0);
+        assert_eq!(get_enchant_jewellery_increase_bash_damage(66, Legendary), 500.0);
+        assert_eq!(get_enchant_jewellery_increase_bash_damage(57, Epic), 422.0);
     }
 }

@@ -23,10 +23,10 @@
 //! Output (see `generate`): one JSON object per set, with the channels typed by the engine's own
 //! `Channel`, so the engine loads it without any generated Rust that mentions engine types.
 
-use esosim::data::enums::damage::ResistableDamageType as Dmg;
-use esosim::engine::effect::{AggKind as Agg, Channel, ResourceKind as Res};
+use esosim_types::damage::ResistableDamageType as Dmg;
+use esosim_types::{AggKind as Agg, Channel, ResourceKind as Res};
 use serde::Serialize;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
@@ -48,6 +48,8 @@ const ID_LIMIT: u32 = 0x20_0000;
 
 /// Hand-maintained `perfected set id  regular set id` pairs (not in the set table).
 const PERFECTED_PAIRS: &str = include_str!("sets_perfected.txt");
+/// Hand-maintained `set id  CONST_NAME` pairs (roadmap 1.4). A name here beats the derived one.
+const SET_ALIASES: &str = include_str!("set_aliases.txt");
 
 // ---------------------------------------------------------------------------
 // Parsing
@@ -235,13 +237,22 @@ struct Naming {
     unnamed: Vec<u32>,
 }
 
-fn name_sets(records: &[SetRecord], lang: &BTreeMap<u32, String>) -> Naming {
+fn name_sets(records: &[SetRecord], lang: &BTreeMap<u32, String>, aliases: &BTreeMap<u32, String>) -> Naming {
     let mut by_id = BTreeMap::new();
     let mut unnamed = Vec::new();
-    let mut used: HashSet<String> = HashSet::new();
+    // Alias names are reserved up front so a derived name can never take one.
+    let mut used: HashSet<String> = aliases.values().cloned().collect();
     for rec in records {
         let display = lang.get(&rec.id).map(|s| s.split('^').next().unwrap_or("").trim().to_string());
-        let mut name = display.as_deref().map(const_name).unwrap_or_default();
+        let derived = display.as_deref().map(const_name).unwrap_or_default();
+        if let Some(alias) = aliases.get(&rec.id) {
+            if derived.is_empty() {
+                unnamed.push(rec.id);
+            }
+            by_id.insert(rec.id, (alias.clone(), display.unwrap_or_default()));
+            continue;
+        }
+        let mut name = derived;
         if name.is_empty() {
             unnamed.push(rec.id);
             name = format!("UNKNOWN_SET_{}", rec.id);
@@ -252,6 +263,36 @@ fn name_sets(records: &[SetRecord], lang: &BTreeMap<u32, String>) -> Naming {
         by_id.insert(rec.id, (name, display.unwrap_or_default()));
     }
     Naming { by_id, unnamed }
+}
+
+/// `set id  CONST_NAME  # comment` per line. Rejects bad identifiers and duplicate ids/names.
+pub fn parse_aliases(text: &str) -> Result<BTreeMap<u32, String>, String> {
+    let mut out = BTreeMap::new();
+    let mut names: HashSet<String> = HashSet::new();
+    for (n, line) in text.lines().enumerate() {
+        let line = line.split('#').next().unwrap_or("").trim();
+        if line.is_empty() {
+            continue;
+        }
+        let mut it = line.split_whitespace();
+        let (Some(id), Some(name), None) = (it.next(), it.next(), it.next()) else {
+            return Err(format!("set_aliases.txt line {}: expected `<set id> <CONST_NAME>`", n + 1));
+        };
+        let id: u32 = id.parse().map_err(|e| format!("set_aliases.txt line {}: bad set id: {e}", n + 1))?;
+        let valid = !name.is_empty()
+            && name.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+            && !name.starts_with(|c: char| c.is_ascii_digit());
+        if !valid {
+            return Err(format!("set_aliases.txt line {}: '{name}' is not an UPPER_SNAKE identifier", n + 1));
+        }
+        if out.insert(id, name.to_string()).is_some() {
+            return Err(format!("set_aliases.txt line {}: duplicate set id {id}", n + 1));
+        }
+        if !names.insert(name.to_string()) {
+            return Err(format!("set_aliases.txt line {}: duplicate name {name}", n + 1));
+        }
+    }
+    Ok(out)
 }
 
 // ---------------------------------------------------------------------------
@@ -297,11 +338,15 @@ pub struct SetOut {
     pub abilities: Vec<AbilityBlock>,
     /// The last ability block: the set's 5-piece ability, for looking up its tooltip.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub five_piece_ability: Option<u32>,
+    pub keystone: Option<u32>,
 }
 
 #[derive(Default)]
 pub struct Report {
+    /// Aliases whose set id is not in the table any more (the hand code naming it is stale).
+    pub dangling_aliases: Vec<(u32, String)>,
+    /// (set id, alias, name the lang file would give now) where the two differ: the alias saved you.
+    pub alias_overrides: Vec<(u32, String, String)>,
     pub sets: usize,
     pub bonuses: usize,
     pub abilities: usize,
@@ -364,8 +409,28 @@ pub fn generate(
     lang: &BTreeMap<u32, String>,
     perfected: &BTreeMap<u32, u32>,
 ) -> (String, String, Report) {
-    let naming = name_sets(records, lang);
+    generate_with(records, lang, perfected, &BTreeMap::new())
+}
+
+/// [`generate`] plus frozen constant names (`set_aliases.txt`, roadmap 1.4).
+pub fn generate_with(
+    records: &[SetRecord],
+    lang: &BTreeMap<u32, String>,
+    perfected: &BTreeMap<u32, u32>,
+    aliases: &BTreeMap<u32, String>,
+) -> (String, String, Report) {
+    let naming = name_sets(records, lang, aliases);
     let mut report = Report { sets: records.len(), unnamed: naming.unnamed.clone(), ..Report::default() };
+    for (id, alias) in aliases {
+        if !naming.by_id.contains_key(id) {
+            report.dangling_aliases.push((*id, alias.clone()));
+        } else if let Some(display) = lang.get(id) {
+            let derived = const_name(display.split('^').next().unwrap_or("").trim());
+            if !derived.is_empty() && derived != *alias {
+                report.alias_overrides.push((*id, alias.clone(), derived));
+            }
+        }
+    }
     for (p, r) in perfected {
         if !naming.by_id.contains_key(p) || !naming.by_id.contains_key(r) {
             report.dangling_perfected.push((*p, *r));
@@ -388,7 +453,7 @@ pub fn generate(
             perfected_of: perfected.get(&rec.id).copied(),
             bonuses: rows_for(rec, &mut report),
             abilities: rec.abilities.clone(),
-            five_piece_ability: rec.abilities.last().map(|a| a.ability_id),
+            keystone: rec.abilities.last().map(|a| a.ability_id),
         };
         report.abilities += rec.abilities.len();
         jsonl.push_str(&serde_json::to_string(&out).expect("SetOut serialises"));
@@ -410,12 +475,40 @@ pub fn print_report(r: &Report, out_dir: &Path) {
             r.unnamed
         );
     }
+    for (id, alias) in &r.dangling_aliases {
+        eprintln!("  set_aliases.txt: {id} {alias} is not in the set table (remove it, and fix any hand code that names it)");
+    }
+    for (id, alias, derived) in &r.alias_overrides {
+        eprintln!("  set {id}: constant kept as {alias}_SET_ID (the lang file would now give {derived}_SET_ID)");
+    }
     for (p, base) in &r.dangling_perfected {
         eprintln!("  sets_perfected.txt: {p} -> {base} names a set that is not in the table");
     }
     for (id, slot, stat, v) in &r.unmapped {
         eprintln!("  set {id} slot {slot}: stat type {stat} (value {v}) has no channel yet (written with channel null)");
     }
+}
+
+/// Every ability id the set table attaches to a set: all ability blocks, plus the keystone
+/// (the last block, already part of `abilities` but added explicitly so the intent is visible).
+/// `ability_id2` is deliberately left out: its meaning is not decoded (often equal to the
+/// first id), and a root that is not understood would pull in an unexplained closure.
+pub fn ability_roots(records: &[SetRecord]) -> BTreeSet<u32> {
+    let mut ids = BTreeSet::new();
+    for rec in records {
+        ids.extend(rec.abilities.iter().map(|a| a.ability_id));
+        if let Some(keystone) = rec.abilities.last() {
+            ids.insert(keystone.ability_id);
+        }
+    }
+    ids.remove(&0);
+    ids
+}
+
+/// Read the set table and return its ability ids (see [`ability_roots`]).
+pub fn load_ability_roots(sets_file: &str) -> Result<BTreeSet<u32>, String> {
+    let data = fs::read(sets_file).map_err(|e| format!("reading set table '{sets_file}': {e}"))?;
+    Ok(ability_roots(&parse(&data)?))
 }
 
 pub fn run(sets_file: &str, lang: &BTreeMap<u32, String>, out_dir: &Path) -> Result<(), String> {
@@ -425,7 +518,8 @@ pub fn run(sets_file: &str, lang: &BTreeMap<u32, String>, out_dir: &Path) -> Res
         eprintln!("warning: no set names in the lang file; every set will be called UNKNOWN_SET_<id>");
     }
     let perfected = parse_perfected(PERFECTED_PAIRS)?;
-    let (jsonl, ids, report) = generate(&records, lang, &perfected);
+    let aliases = parse_aliases(SET_ALIASES)?;
+    let (jsonl, ids, report) = generate_with(&records, lang, &perfected, &aliases);
     fs::create_dir_all(out_dir).map_err(|e| format!("creating {out_dir:?}: {e}"))?;
     for (file, text) in [("sets.jsonl", jsonl), ("set_ids.rs", ids)] {
         let path = out_dir.join(file);
@@ -505,6 +599,20 @@ mod tests {
     }
 
     #[test]
+    fn ability_roots_include_every_block_and_skip_zero() {
+        let rec = |id, ids: &[u32]| SetRecord {
+            id,
+            bonuses: vec![],
+            abilities: ids
+                .iter()
+                .map(|&a| AbilityBlock { tag: 1, flag: 0, ability_id: a, ability_id2: 7 })
+                .collect(),
+        };
+        let roots = ability_roots(&[rec(1, &[57162]), rec(2, &[100, 200]), rec(3, &[]), rec(4, &[57162])]);
+        assert_eq!(roots.into_iter().collect::<Vec<_>>(), vec![100, 200, 57162]); // 7 (id2) is not a root
+    }
+
+    #[test]
     fn values_are_floor_of_86_times_the_coefficient() {
         let v = |coef: f32| bonus_value(&RawBonus { slot: 1, stat: 0, raw: 0, coef });
         assert_eq!(v(17.3), 1487); // floor, not round (1487.8)
@@ -578,7 +686,7 @@ mod tests {
         assert_eq!(rows[4][0]["value"], 2974.0);
         assert_eq!(report.unmapped, vec![(21, 5, 13, 2974)]);
         assert_eq!(report.bonuses, 3);
-        assert_eq!(s["five_piece_ability"], 19000);
+        assert_eq!(s["keystone"], 19000);
         assert_eq!(s["abilities"][0]["ability_id"], 19000);
         assert!(v[0].get("abilities").is_none());
     }
@@ -653,6 +761,39 @@ mod tests {
         let m = parse_perfected(PERFECTED_PAIRS).unwrap();
         assert!(m.len() > 30);
         assert!(m.iter().all(|(p, r)| p != r));
+    }
+
+    #[test]
+    fn aliases_parse_and_reject_bad_input() {
+        let m = parse_aliases("# c\n518 ARKASIS_GENIUS  # old spelling\n\n7 FOO\n").unwrap();
+        assert_eq!(m, BTreeMap::from([(518, "ARKASIS_GENIUS".to_string()), (7, "FOO".to_string())]));
+        assert!(parse_aliases("1 A\n1 B\n").unwrap_err().contains("duplicate set id"));
+        assert!(parse_aliases("1 A\n2 A\n").unwrap_err().contains("duplicate name"));
+        assert!(parse_aliases("1 lower\n").unwrap_err().contains("UPPER_SNAKE"));
+        assert!(parse_aliases("1\n").unwrap_err().contains("line 1"));
+    }
+
+    #[test]
+    fn an_alias_beats_the_derived_name_and_reserves_it() {
+        let d = container(&[(1, vec![], vec![]), (2, vec![], vec![]), (3, vec![], vec![])]);
+        let recs = parse(&d).unwrap();
+        // the lang file now spells set 1 "Arkasiss Genius"; hand code still says ARKASIS_GENIUS.
+        // set 2 is named "Arkasis Genius" in the lang file: it must not steal the alias name.
+        let lang = lang(&[(1, "Arkasiss Genius"), (2, "Arkasis Genius")]);
+        let aliases = BTreeMap::from([(1, "ARKASIS_GENIUS".to_string()), (9, "GONE".to_string())]);
+        let (jsonl, ids, report) = generate_with(&recs, &lang, &BTreeMap::new(), &aliases);
+        assert!(ids.contains("pub const ARKASIS_GENIUS_SET_ID: u16 = 1;"));
+        assert!(ids.contains("pub const ARKASIS_GENIUS_2_SET_ID: u16 = 2;"));
+        assert!(!ids.contains("ARKASISS_GENIUS_SET_ID"));
+        assert_eq!(lines(&jsonl)[0]["const_name"], "ARKASIS_GENIUS");
+        assert_eq!(report.dangling_aliases, vec![(9, "GONE".to_string())]);
+        assert_eq!(report.alias_overrides, vec![(1, "ARKASIS_GENIUS".to_string(), "ARKASISS_GENIUS".to_string())]);
+    }
+
+    #[test]
+    fn the_shipped_alias_file_parses() {
+        let m = parse_aliases(SET_ALIASES).unwrap();
+        assert!(m.len() > 40);
     }
 
     #[test]

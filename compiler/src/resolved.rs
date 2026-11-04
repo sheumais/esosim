@@ -7,7 +7,7 @@
 //!  * Both `Serialize` and `Deserialize`, so this file can move unchanged into a
 //!    shared `esosim-bundle` crate that the engine also depends on.
 
-use esosim::engine::effect::Channel;
+use esosim_types::Channel;
 use serde::{Deserialize, Serialize};
 
 fn is_zero<T: Default + PartialEq>(v: &T) -> bool {

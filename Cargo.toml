@@ -1,8 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["esosim", "compiler"]
+members = ["crates/esosim-types", "esosim", "compiler", "xtask"]
 
-# Local checkout of the skill data crate (was previously in compiler/Cargo.toml;
-# [patch] only takes effect in the workspace root). Path is relative to this file.
 [patch."https://github.com/sheumais/esoskilldataformat"]
 eso-skill-data = { path = "../eso_data_workspace/eso_skill_data" }

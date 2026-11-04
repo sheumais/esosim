@@ -11,6 +11,11 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 csv = "1.4.0"
 regex = "1"
+esosim-types = { path = "../crates/esosim-types" }
+
+[dev-dependencies]
+# Only for one round-trip test (compiler output -> engine loader). `cargo build` never
+# compiles dev-dependencies, so a broken engine cannot stop the compiler from building.
 esosim = { path = "../esosim" }
 
 

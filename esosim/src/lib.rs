@@ -27,7 +27,6 @@ pub mod engine {
     pub mod effect;
     pub mod grant_rule;
     pub mod registry;
-    pub mod skill_serde;
     pub mod set_descriptor;
 }
 
@@ -43,8 +42,4 @@ pub mod stats {
     pub mod critical;
     pub mod power;
     pub mod resource;
-}
-
-pub mod sim {
-    pub mod event;
 }

@@ -179,31 +179,35 @@ impl GearPiece {
         is_two_handed_weapon(&self.get_item_type())
     }
 
+    fn handle_enchant<T: Fn(u8, ItemQuality) -> f32>(self, f: T) -> f32 {
+        f(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())
+    }
+
     /// Gets the nominal value of the enchant.
     pub fn get_enchant_value(&self) -> Option<PrismaticValueWrapper> {
         if let Some(e) = self.get_enchant() {
             let v = match e.glyph {
-                EnchantType::DiseaseResistance => {get_enchant_jewellery_increase_disease_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::FlameResistance => {get_enchant_jewellery_increase_flame_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::FrostResistance => {get_enchant_jewellery_increase_frost_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::Health => {get_enchant_armour_health_value(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::HealthRegen => {get_enchant_jewellery_increase_health_recovery(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                // EnchantType::IncreaseBashDamage => {},
-                EnchantType::IncreasePhysicalDamage => {get_enchant_jewellery_increase_weapon_damage(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                // EnchantType::IncreasePotionEffectiveness => {},
-                EnchantType::IncreaseSpellDamage => {get_enchant_jewellery_increase_spell_damage(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::Magicka => {get_enchant_armour_magicka_value(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::MagickaRegen => {get_enchant_jewellery_increase_magicka_recovery(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::PhysicalResistance => {get_enchant_jewellery_increase_physical_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::PoisonResistance => {get_enchant_jewellery_increase_poison_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                // EnchantType::ReduceBlockAndBash => {},
-                // EnchantType::ReduceFeatCost => {},
-                // EnchantType::ReducePotionCooldown => {},
-                // EnchantType::ReduceSpellCost => {},
-                EnchantType::ShockResistance => {get_enchant_jewellery_increase_shock_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::SpellResistance => {get_enchant_jewellery_increase_spell_resistance(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::Stamina => {get_enchant_armour_stamina_value(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
-                EnchantType::StaminaRegen => {get_enchant_jewellery_increase_stamina_recovery(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},
+                EnchantType::DiseaseResistance => {self.handle_enchant(get_enchant_jewellery_increase_disease_resistance)},
+                EnchantType::FlameResistance => {self.handle_enchant(get_enchant_jewellery_increase_flame_resistance)},
+                EnchantType::FrostResistance => {self.handle_enchant(get_enchant_jewellery_increase_frost_resistance)},
+                EnchantType::Health => {self.handle_enchant(get_enchant_armour_health_value)},
+                EnchantType::HealthRegen => {self.handle_enchant(get_enchant_jewellery_increase_health_recovery)},
+                EnchantType::IncreaseBashDamage => {self.handle_enchant(get_enchant_jewellery_increase_bash_damage)},
+                EnchantType::IncreasePhysicalDamage => {self.handle_enchant(get_enchant_jewellery_increase_weapon_damage)},
+                EnchantType::IncreasePotionEffectiveness => {self.handle_enchant(get_enchant_jewellery_increase_potion_effectiveness)},
+                EnchantType::IncreaseSpellDamage => {self.handle_enchant(get_enchant_jewellery_increase_spell_damage)},
+                EnchantType::Magicka => {self.handle_enchant(get_enchant_armour_magicka_value)},
+                EnchantType::MagickaRegen => {self.handle_enchant(get_enchant_jewellery_increase_magicka_recovery)},
+                EnchantType::PhysicalResistance => {self.handle_enchant(get_enchant_jewellery_increase_physical_resistance)},
+                EnchantType::PoisonResistance => {self.handle_enchant(get_enchant_jewellery_increase_poison_resistance)},
+                EnchantType::ReduceBlockCost => {self.handle_enchant(get_enchant_jewellery_reduce_block_cost)},
+                EnchantType::ReduceFeatCost => {self.handle_enchant(get_enchant_jewellery_reduce_feat_cost)},
+                EnchantType::ReducePotionCooldown => {self.handle_enchant(get_enchant_jewellery_reduce_potion_cooldown)},
+                EnchantType::ReduceSpellCost => {self.handle_enchant(get_enchant_jewellery_reduce_spell_cost)},
+                EnchantType::ShockResistance => {self.handle_enchant(get_enchant_jewellery_increase_shock_resistance)},
+                EnchantType::SpellResistance => {self.handle_enchant(get_enchant_jewellery_increase_spell_resistance)},
+                EnchantType::Stamina => {self.handle_enchant(get_enchant_armour_stamina_value)},
+                EnchantType::StaminaRegen => {self.handle_enchant(get_enchant_jewellery_increase_stamina_recovery)},
                 _ => {
                     let p = match e.glyph {
                         EnchantType::PrismaticDefense => {get_enchant_armour_prismatic_values(self.get_effective_level(), self.get_effective_enchant_quality().unwrap())},

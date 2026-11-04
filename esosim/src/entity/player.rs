@@ -209,10 +209,7 @@ impl Player {
                             EnchantType::PoisonResistance => {channels.add_additive(Armour(Poison), v)},
                             EnchantType::PrismaticDefense => {}, // handle below
                             EnchantType::PrismaticRecovery => {}, // handle below
-                            EnchantType::ReduceBlockAndBash => {
-                                channels.add_additive(CostReductionCCA(Block), v);
-                                channels.add_additive(CostReductionCCA(Bash), v);
-                            },
+                            EnchantType::ReduceBlockCost => {channels.add_additive(CostReductionCCA(Block), v);},
                             EnchantType::ReduceFeatCost => {channels.add_additive(CostReduction(Stamina), v);},
                             EnchantType::ReducePotionCooldown => {channels.add_additive(PotionCooldown, v);},
                             EnchantType::ReduceSpellCost => {channels.add_additive(CostReduction(Magicka), v);},

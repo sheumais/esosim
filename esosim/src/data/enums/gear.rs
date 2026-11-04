@@ -150,7 +150,7 @@ pub enum EnchantType {
     PrismaticOnslaught,
     PrismaticRecovery,
     ReduceArmor,
-    ReduceBlockAndBash,
+    ReduceBlockCost,
     ReduceFeatCost,
     ReducePotionCooldown,
     ReducePower,

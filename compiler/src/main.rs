@@ -21,6 +21,7 @@ usage: esosim-data-compiler <command> [options]
 
 commands:
   compile            resolve abilities and write bundle.jsonl + bundle.meta.json
+                     (roots: player skills + every set ability/keystone id from --sets-file)
   verify             check hand-typed ids/constants against the extracted data (non-zero exit on FAIL)
   major-minor        list every major_minor_id code with the names that use it (finds enum gaps)
   probe-edges        measure which u32 fields behave like ability ids (finds undiscovered edges)
@@ -39,6 +40,7 @@ options:
   --out <dir>        output directory for `compile` and `sets` (default: bundle)
   --sets-file <file> set table for `sets`                           [env ESO_SETS_PATH]
   --all              compile: emit every record instead of the root closure
+  --no-set-roots     compile: do not read the set table; skip the set ability ids as roots
   --limit <n>        classify: rows per section of the report (default 25)
 ";
 
@@ -50,6 +52,7 @@ struct Cli {
     sets_file: String,
     out: PathBuf,
     all: bool,
+    no_set_roots: bool,
     limit: usize,
 }
 
@@ -63,6 +66,7 @@ fn parse_args() -> Result<Cli, String> {
         sets_file: std::env::var("ESO_SETS_PATH").unwrap_or_else(|_| DEFAULT_SETS_FILE.to_string()),
         out: PathBuf::from("bundle"),
         all: false,
+        no_set_roots: false,
         limit: 25,
     };
     while let Some(a) = it.next() {
@@ -72,6 +76,7 @@ fn parse_args() -> Result<Cli, String> {
             "--sets-file" => cli.sets_file = it.next().ok_or("--sets-file needs a value")?,
             "--out" => cli.out = PathBuf::from(it.next().ok_or("--out needs a value")?),
             "--all" => cli.all = true,
+            "--no-set-roots" => cli.no_set_roots = true,
             "--limit" => {
                 cli.limit = it
                     .next()
@@ -118,7 +123,13 @@ fn run() -> Result<ExitCode, String> {
 
     match cli.command.as_str() {
         "compile" => {
-            let (abilities, stats) = compile::compile(&corpus, &graph, cli.all);
+            let mut extra = compile::ExtraRoots::new();
+            if !cli.no_set_roots {
+                let ids = setdata::load_ability_roots(&cli.sets_file)
+                    .map_err(|e| format!("{e} (pass --no-set-roots to compile without set abilities)"))?;
+                extra.insert("sets".to_string(), ids);
+            }
+            let (abilities, stats) = compile::compile(&corpus, &graph, cli.all, &extra);
             compile::write_bundle(&cli.out, &abilities, &stats)
                 .map_err(|e| format!("writing bundle to {:?}: {e}", cli.out))?;
             eprintln!(
@@ -129,6 +140,16 @@ fn run() -> Result<ExitCode, String> {
                 if cli.all { ", --all" } else { "" },
                 cli.out
             );
+            for (category, n) in &stats.roots_by_category {
+                eprintln!("  roots from {category}: {n}");
+            }
+            for (category, ids) in &stats.missing_roots {
+                eprintln!(
+                    "  {} {category} root id(s) have no record in the skill data: {:?}",
+                    ids.len(),
+                    &ids[..ids.len().min(10)]
+                );
+            }
             report_unknowns(&stats);
         }
         "verify" => {

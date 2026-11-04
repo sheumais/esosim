@@ -1,0 +1,9 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Deliberately dependency-free: it only shells out to cargo and moves files, so it
+# builds instantly and can never be broken by a change in the engine or the compiler.
+[dependencies]

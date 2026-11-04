@@ -5,10 +5,7 @@ use crate::corpus::Corpus;
 use crate::graph::Graph;
 use crate::resolved::*;
 use eso_skill_data::SkillData34;
-use eso_skill_data::enums::{
-    ability_tag::AbilityTag, ability_type::AbilityType, damage_type::DamageType,
-    major_minor::MajorMinorBuff, mechanic::Mechanic, skill_line::SkillLine,
-};
+use eso_skill_data::enums::{ability_tag::AbilityTag, major_minor::MajorMinorBuff};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
@@ -18,6 +15,10 @@ use std::path::Path;
 pub fn is_root(s: &SkillData34) -> bool {
     s.base_data.player_skill_index != 0
 }
+
+/// Roots that do not come from the player-skill index, by category (`"sets"`, later `"cp"`,
+/// `"mundus"`, ...; roadmap 2.0). Ids that are not in the skill corpus are reported, not fatal.
+pub type ExtraRoots = BTreeMap<String, BTreeSet<u32>>;
 
 pub fn resolve(s: &SkillData34, corpus: &Corpus, graph: &Graph) -> ResolvedAbility {
     let id = s.ability_id1;
@@ -118,13 +119,17 @@ impl ClassifyStats {
 pub struct CompileStats {
     pub source_file: String,
     pub total_records: usize,
+    /// Distinct root ids in the corpus (player skills ∪ every extra category).
     pub roots: usize,
+    /// Roots found in the corpus, per category (`skills`, `sets`, ...). Categories overlap.
+    pub roots_by_category: BTreeMap<String, usize>,
+    /// Extra-root ids that have no record in the skill corpus, per category.
+    pub missing_roots: BTreeMap<String, Vec<u32>>,
     pub emitted: usize,
     pub all_records_mode: bool,
     pub duplicate_records: usize,
     pub dangling_refs: BTreeMap<EdgeKind, usize>,
     pub small_tooltip_ids_dropped: usize,
-    /// Things the enums don't know yet — each is a to-do for eso_skill_data.
     pub unknown_ability_types: BTreeMap<u8, usize>,
     pub unknown_mechanics: BTreeMap<u8, usize>,
     pub unknown_tags: BTreeMap<u16, usize>,
@@ -133,13 +138,32 @@ pub struct CompileStats {
     pub classification: ClassifyStats,
 }
 
-pub fn compile(corpus: &Corpus, graph: &Graph, all: bool) -> (Vec<ResolvedAbility>, CompileStats) {
-    let roots: Vec<u32> = corpus
+pub fn compile(
+    corpus: &Corpus,
+    graph: &Graph,
+    all: bool,
+    extra: &ExtraRoots,
+) -> (Vec<ResolvedAbility>, CompileStats) {
+    let skill_roots: BTreeSet<u32> = corpus
         .skills
         .iter()
         .filter(|(_, s)| is_root(s))
         .map(|(id, _)| *id)
         .collect();
+
+    let mut roots_by_category = BTreeMap::new();
+    let mut missing_roots = BTreeMap::new();
+    roots_by_category.insert("skills".to_string(), skill_roots.len());
+    let mut roots = skill_roots;
+    for (category, ids) in extra {
+        let (found, missing): (Vec<u32>, Vec<u32>) =
+            ids.iter().copied().partition(|id| corpus.skills.contains_key(id));
+        roots_by_category.insert(category.clone(), found.len());
+        if !missing.is_empty() {
+            missing_roots.insert(category.clone(), missing);
+        }
+        roots.extend(found);
+    }
 
     let wanted: BTreeSet<u32> = if all {
         corpus.skills.keys().copied().collect()
@@ -151,6 +175,8 @@ pub fn compile(corpus: &Corpus, graph: &Graph, all: bool) -> (Vec<ResolvedAbilit
         source_file: corpus.source_file.clone(),
         total_records: corpus.skills.len(),
         roots: roots.len(),
+        roots_by_category,
+        missing_roots,
         emitted: wanted.len(),
         all_records_mode: all,
         duplicate_records: corpus.duplicate_records,
@@ -168,6 +194,10 @@ pub fn compile(corpus: &Corpus, graph: &Graph, all: bool) -> (Vec<ResolvedAbilit
             if AbilityTag::from_id(t).is_none() {
                 *stats.unknown_tags.entry(*t).or_insert(0) += 1;
             }
+        }
+        // The raw code is kept in the output; the ones the enum doesn't know are counted.
+        if r.major_minor_id != 0 && MajorMinorBuff::from_id(&u32::from(r.major_minor_id)).is_none() {
+            *stats.unknown_major_minor_codes.entry(r.major_minor_id).or_insert(0) += 1;
         }
         if let Some(c) = &r.classification {
             stats.classification.record(c);
@@ -220,11 +250,11 @@ mod tests {
     #[test]
     fn unknown_ids_are_kept_and_counted_not_dropped() {
         let mut s = skill(1);
-        s.ability_tags = vec![60000]; // surely not a real tag
-        s.major_minor_id = 250; // not a real code
+        s.ability_tags = vec![60000];
+        s.major_minor_id = 250;
         let c = Corpus::from_skills(vec![s]);
         let g = Graph::build(&c);
-        let (out, stats) = compile(&c, &g, true);
+        let (out, stats) = compile(&c, &g, true, &ExtraRoots::new());
         assert_eq!(out[0].tags, vec![60000]);
         assert_eq!(out[0].major_minor_id, 250);
         assert_eq!(stats.unknown_tags.get(&60000), Some(&1));
@@ -240,16 +270,36 @@ mod tests {
         let c = Corpus::from_skills(vec![root, skill(2), skill(3)]);
         let g = Graph::build(&c);
 
-        let (out, stats) = compile(&c, &g, false);
+        let (out, stats) = compile(&c, &g, false, &ExtraRoots::new());
         assert_eq!(out.iter().map(|a| a.id).collect::<Vec<_>>(), vec![1, 2]);
         assert_eq!(stats.roots, 1);
 
-        let (all, _) = compile(&c, &g, true);
+        let (all, _) = compile(&c, &g, true, &ExtraRoots::new());
         assert_eq!(all.len(), 3);
 
-        // denormalised back-reference
         assert_eq!(out[1].referenced_by.len(), 1);
         assert_eq!(out[1].referenced_by[0].from, 1);
+    }
+
+    #[test]
+    fn extra_roots_are_emitted_with_their_closure_and_missing_ids_are_reported() {
+        let mut set_ability = skill(57162);
+        set_ability.causes_ids = vec![57163];
+        set_ability.link_types = vec![1];
+        let c = Corpus::from_skills(vec![set_ability, skill(57163), skill(99999)]);
+        let g = Graph::build(&c);
+
+        // without the extra root nothing is emitted: no player skill reaches these records
+        let (none, _) = compile(&c, &g, false, &ExtraRoots::new());
+        assert!(none.is_empty());
+
+        let mut extra = ExtraRoots::new();
+        extra.insert("sets".to_string(), BTreeSet::from([57162, 1234]));
+        let (out, stats) = compile(&c, &g, false, &extra);
+        assert_eq!(out.iter().map(|a| a.id).collect::<Vec<_>>(), vec![57162, 57163]);
+        assert_eq!(stats.roots, 1);
+        assert_eq!(stats.roots_by_category.get("sets"), Some(&1));
+        assert_eq!(stats.missing_roots.get("sets"), Some(&vec![1234]));
     }
 
     #[test]
