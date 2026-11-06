@@ -1,0 +1,21 @@
+[package]
+name = "esosim-data-compiler"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eso-skill-data = { workspace = true }
+eso-item-data = { git = "https://github.com/sheumais/esoitemdataformat" }
+eso_common = { git = "https://github.com/sheumais/eso_common" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1.4.0"
+regex = "1"
+esosim-types = { workspace = true }
+
+[dev-dependencies]
+# Only for one round-trip test (compiler output -> engine loader). `cargo build` never
+# compiles dev-dependencies, so a broken engine cannot stop the compiler from building.
+esosim = { workspace = true }
+
+

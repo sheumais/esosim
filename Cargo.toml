@@ -1,6 +1,21 @@
 [workspace]
 resolver = "3"
-members = ["crates/esosim-types", "esosim", "compiler", "xtask"]
+members = [
+    "crates/esosim-types",
+    "crates/esosim-data",
+    "crates/esosim",
+    "tools/esosim-data-compiler",
+    "xtask",
+]
 
-[patch."https://github.com/sheumais/esoskilldataformat"]
-eso-skill-data = { path = "../eso_data_workspace/eso_skill_data" }
+[workspace.dependencies]
+# To move to a newer parser: push it, then change `rev` (and run `cargo update -p eso-skill-data`).
+eso-skill-data = { git = "https://github.com/sheumais/eso_skill_data.git", rev = "13996946df031289216a0be80cf35fa3b99b263e" }
+
+esosim-types = { path = "crates/esosim-types" }
+esosim-data = { path = "crates/esosim-data" }
+esosim = { path = "crates/esosim" }
+
+
+# [patch."https://github.com/sheumais/eso_skill_data.git"]
+# eso-skill-data = { path = "../eso_data_workspace/eso_skill_data" }

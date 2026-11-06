@@ -1,0 +1,8 @@
+[package]
+name = "esosim-data"
+version = "0.1.0"
+edition = "2024"
+
+# Generated game data only (roadmap 1.2). No dependencies, so it builds instantly and the
+# compiler can write into it without ever depending on the engine.
+[dependencies]

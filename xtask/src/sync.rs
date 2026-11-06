@@ -1,18 +1,16 @@
 //! `cargo xtask sync-data` — roadmap 1.3.
 //!
-//! compile + sets are written to a staging folder first (so a failed run never leaves the
-//! tree half-updated), then each file is copied to its destination from [`layout`], `verify`
-//! runs, and a per-file id diff is printed. `git status` afterwards shows only real changes
-//! because byte-identical files are not rewritten.
+//! The compiler (`eso.mnf` in) writes into a staging folder first, so a failed run never leaves
+//! the tree half-updated; then each file is copied to its destination from [`layout`] and a
+//! per-file id diff is printed. `git status` afterwards shows only real changes because
+//! byte-identical files are not rewritten.
 //!
-//! Roadmap A.7 also lists `cp` and `effects` in this chain; add them to `STEPS` when those
-//! compiler commands exist.
+//! There is no `verify` step any more: `verify.rs` is not part of the compiler's module tree
+//! (see PHASE1-PROGRESS.md). Roadmap A.7 also lists `cp` and `effects` in this chain; they
+//! become further compiler runs here when those exist.
 
 use crate::{Opts, compiler, diff, layout, root, run_step};
 use std::fs;
-
-/// Compiler commands run into the staging folder, in order.
-const STEPS: &[&str] = &["compile", "sets"];
 
 pub fn run(opts: &Opts) -> Result<bool, String> {
     let root = root();
@@ -23,10 +21,8 @@ pub fn run(opts: &Opts) -> Result<bool, String> {
     fs::create_dir_all(&stage).map_err(|e| format!("creating {}: {e}", stage.display()))?;
     let stage_arg = stage.to_str().ok_or("staging path is not valid UTF-8")?;
 
-    for step in STEPS {
-        if !run_step(&format!("compiler {step}"), &mut compiler(&[step, "--out", stage_arg], &opts.data)) {
-            return Err(format!("`{step}` failed; nothing was written to the repo"));
-        }
+    if !run_step("compiler", &mut compiler(&["--out", stage_arg], &opts.data)) {
+        return Err("the compiler failed; nothing was written to the repo".into());
     }
 
     eprintln!("\n==> {}", if opts.dry_run { "diff (dry run, nothing written)" } else { "writing + diff" });
@@ -68,10 +64,7 @@ pub fn run(opts: &Opts) -> Result<bool, String> {
         }
     }
 
-    if opts.skip_verify {
-        return Ok(true);
-    }
-    Ok(run_step("compiler verify", &mut compiler(&["verify"], &opts.data)))
+    Ok(true)
 }
 
 /// Print up to 20 ids per line group, then a count of the rest.

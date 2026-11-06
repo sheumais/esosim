@@ -1,22 +1,21 @@
 //! `cargo xtask check` — roadmap 0.6: one command, one exit code.
 
-use crate::{Opts, cargo, compiler, run_step};
+use crate::{Opts, cargo, run_step};
 
-pub fn run(opts: &Opts) -> Result<bool, String> {
+/// The crates whose tests `check` runs, in dependency order.
+const PACKAGES: &[&str] = &["esosim-types", "esosim-data", "esosim", "esosim-data-compiler"];
+
+pub fn run(_opts: &Opts) -> Result<bool, String> {
     let mut results: Vec<(&str, Option<bool>)> = Vec::new();
 
-    let ok = run_step("engine tests", cargo().args(["test", "--package", "esosim"]));
-    results.push(("engine tests (esosim)", Some(ok)));
-
-    let ok = run_step("compiler tests", cargo().args(["test", "--package", "esosim-data-compiler"]));
-    results.push(("compiler tests (esosim-data-compiler)", Some(ok)));
-
-    if opts.skip_verify {
-        results.push(("compiler verify", None));
-    } else {
-        let ok = run_step("compiler verify (against the extracted game data)", &mut compiler(&["verify"], &opts.data));
-        results.push(("compiler verify", Some(ok)));
+    for &pkg in PACKAGES {
+        let ok = run_step(&format!("{pkg} tests"), cargo().args(["test", "--package", pkg]));
+        results.push((pkg, Some(ok)));
     }
+
+    // Roadmap 0.6 also asks for `compiler verify`. The compiler has no such command at the
+    // moment (verify.rs is not wired into lib.rs), so it is reported as skipped, not passed.
+    results.push(("compiler verify (not available)", None));
 
     eprintln!("\n==> summary");
     for (name, r) in &results {

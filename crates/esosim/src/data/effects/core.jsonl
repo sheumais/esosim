@@ -1,0 +1,1 @@
+{"id":142035,"name":"Fortified","source":{"Buff":{"ability_id":142035}},"channels":[{"channel":{"Armour":"All"},"value":0.0,"value_per_stack":34.62}],"stacking":{"PerStack":{"max":10}},"note":"Red CP. Migrated from engine::effect::FORTIFIED (roadmap 1.5). Max 10 stacks assumed from the 1.5 acceptance test; verify in game."}
