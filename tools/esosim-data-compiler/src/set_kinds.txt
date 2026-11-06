@@ -1,0 +1,4 @@
+# set id, kind: one line per set whose kind the shape of its table row cannot tell (hand-maintained).
+# kinds: regular | monster | mythic | arena_weapon. A listed kind beats the shape; a listed mythic is
+# a 1-item set, so all its blocks are at 1 piece. Everything not listed is inferred (see `kind_of`).
+675 mythic  # Stormweaver's Cavort: a stat row at 1 and a proc, like a monster set, but one item (UESP: Mythic light legs)

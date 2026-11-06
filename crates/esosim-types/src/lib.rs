@@ -9,6 +9,7 @@ pub mod channel;
 pub mod condition;
 pub mod damage;
 pub mod effect_def;
+pub mod set_behaviour;
 pub mod skill_serde;
 
 pub use cca::CoreCombatAbility;
@@ -16,6 +17,7 @@ pub use channel::{AggKind, Channel, DamageDoneContext, DamageTakenContext, Resou
 pub use condition::{ArmourWeight, Bar, Condition, ConditionContext, NoContext};
 pub use damage::ResistableDamageType;
 pub use effect_def::{ChannelValue, EffectDef, EffectSource, Stacking};
+pub use set_behaviour::{BehaviourClass, BlockBehaviour, SetBehaviour, SetKind};
 
 #[cfg(test)]
 mod tests {

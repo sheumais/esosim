@@ -1,4 +1,5 @@
-# perfected set id, regular set id (hand-maintained: not in the set table)
+# perfected set id, regular set id: one line per pair, perfected first (hand-maintained: not in the set table).
+# Do not list a pair in both directions: only the perfected set counts as the regular one (roadmap 2.1d).
 528 313  # Titanic Cleave
 529 314  # Puncturing Remedy
 530 315  # Stinging Slashes
@@ -61,65 +62,3 @@
 820 815  # Kazpian's Cruel Signet
 819 816  # Dolorous Arena
 818 817  # Recovery Convergence
-313 528  # Titanic Cleave
-314 529  # Puncturing Remedy
-315 530  # Stinging Slashes
-316 531  # Caustic Arrow
-317 532  # Destructive Impact
-318 533  # Grand Rejuvenation
-363 357  # Disciplined Slash
-364 358  # Defensive Position
-365 359  # Chaotic Whirlwind
-366 360  # Piercing Spray
-367 361  # Concentrated Force
-368 362  # Timeless Blessing
-369 522  # Merciless Charge
-370 523  # Rampaging Slash
-371 524  # Cruel Flurry
-372 525  # Thunderous Volley
-373 526  # Crushing Wall
-374 527  # Precise Regeneration
-388 392  # Aegis of Galenwe
-389 393  # Arms of Relequen
-390 394  # Mantle of Siroria
-391 395  # Vestment of Olorime
-411 423  # Gallant Charge
-412 424  # Radial Uppercut
-413 425  # Spectral Cloak
-414 426  # Virulent Shot
-415 427  # Wild Impulse
-416 428  # Mender's Ward
-443 448  # Eye of Nahviintaas
-444 449  # False God's Devotion
-445 450  # Tooth of Lokkestiiz
-446 451  # Claw of Yolnakhriin
-492 493  # Kyne's Wind
-494 495  # Vrol's Command
-496 497  # Roaring Opportunist
-498 499  # Yandir's Might
-557 563  # Executioner's Blade
-558 564  # Void Bash
-559 565  # Frenzied Momentum
-560 566  # Point-Blank Snipe
-561 567  # Wrath of Elements
-562 568  # Force Overflow
-585 589  # Saxhleel Champion
-586 590  # Sul-Xan's Torment
-587 591  # Bahsei's Mania
-588 592  # Stone-Talker's Oath
-646 653  # Whorl of the Depths
-647 652  # Coral Riptide
-648 651  # Pearlescent Ward
-649 650  # Pillager's Profit
-701 708  # Peace and Serenity
-702 707  # Ansuul's Torment
-703 706  # Test of Resolve
-704 705  # Transformative Hope
-766 773  # Mora Scribe's Thesis
-767 772  # Slivers of the Null Arca
-768 771  # Lucent Echoes
-769 770  # Xoryn's Masterpiece
-814 821  # Harmony in Chaos
-815 820  # Kazpian's Cruel Signet
-816 819  # Dolorous Arena
-817 818  # Recovery Convergence

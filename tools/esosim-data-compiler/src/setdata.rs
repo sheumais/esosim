@@ -18,7 +18,9 @@
 //!         f32 coefficient     (little-endian; floor(86 * coef) = the value the game shows)
 //!   ..  0-2 ability blocks of 10 bytes: u8 tag, u8 flag, u32 ability id, u32 second id
 //!       (the last one is the set's 5-piece ability; sets with a single block have only that)
-//!   ..  item-list header (u8, u8, u16 item count), the item ids and a ~38 byte tail (not decoded)
+//!   ..  item-list header (u8, u8, u16 item count; the two u8 are not decoded), `count` x u32 item ids
+//!       (the items that belong to the set; no item is in two sets), then a 38 byte tail (42 in newer
+//!       sets; not decoded)
 //!
 //! Output (see `generate_with`): one JSON object per set, with the channels typed by the engine's own
 //! `Channel`, so the engine loads it without any generated Rust that mentions engine types.
@@ -75,6 +77,8 @@ pub struct SetRecord {
     pub id: u32,
     pub bonuses: Vec<RawBonus>,
     pub abilities: Vec<AbilityBlock>,
+    /// Item ids of every piece of the set (roadmap 2.1e), in table order.
+    pub items: Vec<u32>,
 }
 
 fn be32(data: &[u8], off: usize) -> Result<u32, String> {
@@ -146,7 +150,22 @@ pub fn parse(data: &[u8]) -> Result<Vec<SetRecord>, String> {
             q += BLOCK_LEN;
         }
 
-        records.push(SetRecord { id, bonuses, abilities });
+        // Item-list header: u8, u8, u16 count, then the ids. Only the tail after them is skipped.
+        let count_at = q + 2;
+        let n = payload
+            .get(count_at..count_at + 2)
+            .map(|b| usize::from(u16::from_be_bytes([b[0], b[1]])))
+            .ok_or_else(|| at("no item-list header after the ability blocks"))?;
+        let items_end = count_at + 2 + n * 4;
+        if payload.len() < items_end {
+            return Err(at(&format!("{n} item ids do not fit in the payload")));
+        }
+        let items = payload[count_at + 2..items_end]
+            .chunks_exact(4)
+            .map(|b| u32::from_be_bytes([b[0], b[1], b[2], b[3]]))
+            .collect();
+
+        records.push(SetRecord { id, bonuses, abilities, items });
         pos = start + size;
     }
 
@@ -375,6 +394,11 @@ pub fn parse_perfected(text: &str) -> Result<BTreeMap<u32, u32>, String> {
             _ => return Err(format!("sets_perfected.txt line {}: expected `<perfected id> <regular id>`", i + 1)),
         }
     }
+    // Only the perfected set counts as the regular one, never the other way round: a pair listed
+    // in both directions would make regular pieces count towards the perfected set's bonuses.
+    if let Some((p, r)) = out.iter().find(|(_, r)| out.contains_key(r)) {
+        return Err(format!("sets_perfected.txt: set {r} is both a regular set (of {p}) and listed as perfected"));
+    }
     Ok(out)
 }
 
@@ -485,6 +509,25 @@ pub struct SetOutput {
     pub ids_rs: String,
     /// Ability ids to use as extra roots for the ability bundle (see [`ability_roots`]).
     pub ability_roots: BTreeSet<u32>,
+    /// `set_items.csv`: `set id,item id,item id,...` per set that has items (roadmap 2.1e).
+    pub items_csv: String,
+    /// The parsed table, for the behaviour classification (2.1b).
+    pub records: Vec<SetRecord>,
+    /// `sets_perfected.txt` (each pair listed in both directions).
+    pub perfected: BTreeMap<u32, u32>,
+}
+
+/// `set id,item id,...` one line per set that has items, sets in table order.
+pub fn items_csv(records: &[SetRecord]) -> String {
+    let mut out = String::new();
+    for r in records.iter().filter(|r| !r.items.is_empty()) {
+        let _ = write!(out, "{}", r.id);
+        for i in &r.items {
+            let _ = write!(out, ",{i}");
+        }
+        out.push('\n');
+    }
+    out
 }
 
 /// Parse the set table once and produce the set files and the ability roots.
@@ -497,7 +540,9 @@ pub fn build(table: &[u8], names: &BTreeMap<u32, String>) -> Result<SetOutput, S
     let perfected = parse_perfected(PERFECTED_PAIRS)?;
     let aliases = parse_aliases(SET_ALIASES)?;
     let (jsonl, ids_rs, _report) = generate_with(&records, names, &perfected, &aliases);
-    Ok(SetOutput { jsonl, ids_rs, ability_roots: ability_roots(&records) })
+    let ability_roots = ability_roots(&records);
+    let items_csv = items_csv(&records);
+    Ok(SetOutput { jsonl, ids_rs, ability_roots, items_csv, records, perfected })
 }
 
 #[cfg(test)]
@@ -567,6 +612,8 @@ mod tests {
         assert_eq!(r[1].abilities.len(), 2);
         assert_eq!(r[1].abilities[1].ability_id, 220010);
         assert!(r[2].abilities.is_empty());
+        assert_eq!(r[1].items, vec![0x18c9d, 0x18c9f, 0x18c9a]);
+        assert_eq!(items_csv(&r).lines().next().unwrap(), "20,101533,101535,101530");
     }
 
     #[test]
@@ -574,6 +621,7 @@ mod tests {
         let rec = |id, ids: &[u32]| SetRecord {
             id,
             bonuses: vec![],
+            items: vec![],
             abilities: ids
                 .iter()
                 .map(|&a| AbilityBlock { tag: 1, flag: 0, ability_id: a, ability_id2: 7 })
@@ -720,6 +768,8 @@ mod tests {
         assert_eq!(m, BTreeMap::from([(528, 313), (357, 363)]));
         assert!(parse_perfected("1 2\n1 3\n").unwrap_err().contains("duplicate"));
         assert!(parse_perfected("1\n").unwrap_err().contains("line 1"));
+        // a pair in both directions is rejected (roadmap 2.1d)
+        assert!(parse_perfected("528 313\n313 528\n").unwrap_err().contains("both a regular set"));
 
         let d = container(&[(10, vec![], vec![])]);
         let recs = parse(&d).unwrap();

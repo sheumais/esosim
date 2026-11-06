@@ -16,6 +16,8 @@ pub mod data {
         pub mod item_type;
         pub mod power;
         pub use esosim_data::set_ids; // generated; lives in crates/esosim-data
+        pub mod item_set;
+        pub mod set_kind;
         pub mod sets;
         pub mod traits;
     }
@@ -35,6 +37,7 @@ pub mod entity {
     pub mod enemy;
     pub mod gear;
     pub mod player;
+    pub mod set_issues;
 }
 
 pub mod stats {

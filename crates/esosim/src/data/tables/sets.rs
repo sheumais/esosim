@@ -135,6 +135,91 @@ mod tests {
         }
     }
 
+    fn counts(pieces: &[(GearSlot, ItemType, u16)]) -> HashMap<u16, u8> {
+        let mut player = Player::new();
+        for (slot, item_type, set_id) in pieces {
+            let piece = GearPiece::new(*item_type, 66, None, ItemQuality::Legendary, Some(*set_id), None);
+            player.set_gear_piece(*slot, piece);
+        }
+        player.get_active_sets_counts()
+    }
+
+    /// Roadmap 2.1d golden fixture: perfected pieces count as the regular set as well, regular
+    /// pieces never count as the perfected set (a two-handed weapon is 2 pieces).
+    #[test]
+    fn perfected_pieces_count_as_regular_but_not_the_other_way_round() {
+        use GearSlot::*;
+        let (reg, perf) = (CORAL_RIPTIDE_SET_ID, PERFECTED_CORAL_RIPTIDE_SET_ID);
+
+        let all_regular = counts(&[(Chest, ItemType::Heavy, reg), (Legs, ItemType::Heavy, reg), (Hands, ItemType::Heavy, reg), (MainHand, ItemType::LightningStaff, reg)]);
+        assert_eq!((all_regular.get(&reg), all_regular.get(&perf)), (Some(&5), None));
+
+        let all_perfected = counts(&[(Chest, ItemType::Heavy, perf), (Legs, ItemType::Heavy, perf), (Hands, ItemType::Heavy, perf), (MainHand, ItemType::LightningStaff, perf)]);
+        assert_eq!((all_perfected.get(&reg), all_perfected.get(&perf)), (Some(&5), Some(&5)));
+
+        let mixed = counts(&[(Chest, ItemType::Heavy, perf), (Legs, ItemType::Heavy, perf), (Hands, ItemType::Heavy, reg)]);
+        assert_eq!((mixed.get(&reg), mixed.get(&perf)), (Some(&3), Some(&2)));
+    }
+
+    /// Roadmap 2.1d golden fixture: arena weapons are counted on weapons, and a two-handed weapon
+    /// is two pieces. Perfected Caustic Arrow (316's perfected set) adds 103 Power at 2 pieces.
+    #[test]
+    fn a_two_handed_arena_weapon_alone_reaches_the_two_piece_row() {
+        use GearSlot::*;
+        let (reg, perf) = (CAUSTIC_ARROW_SET_ID, PERFECTED_CAUSTIC_ARROW_SET_ID);
+        let two_perfected = |item| {
+            let mut p = Player::new();
+            for slot in [MainHand, OffHand] {
+                p.set_gear_piece(slot, GearPiece::new(item, 66, None, ItemQuality::Legendary, Some(perf), None));
+            }
+            p
+        };
+
+        // one bow: 2 pieces of the perfected set and of the regular set it also counts as
+        let mut bow = Player::new();
+        bow.set_gear_piece(MainHand, GearPiece::new(ItemType::Bow, 66, None, ItemQuality::Legendary, Some(perf), None));
+        let c = bow.get_active_sets_counts();
+        assert_eq!((c.get(&reg), c.get(&perf)), (Some(&2), Some(&2)));
+        let mut channels = ChannelSet::new();
+        bow.apply_set_bonuses(&mut channels);
+        assert_eq!(channels.get(Channel::Power), 103);
+
+        // two one-handed weapons also make 2 (dual wield, or weapon + shield)
+        let mut channels = ChannelSet::new();
+        two_perfected(ItemType::Dagger).apply_set_bonuses(&mut channels);
+        assert_eq!(channels.get(Channel::Power), 103);
+
+        // one one-handed perfected weapon is 1 piece: the ability, but not the 2-piece row
+        let mut one = Player::new();
+        one.set_gear_piece(MainHand, GearPiece::new(ItemType::Dagger, 66, None, ItemQuality::Legendary, Some(perf), None));
+        let mut channels = ChannelSet::new();
+        one.apply_set_bonuses(&mut channels);
+        assert_eq!((one.get_active_sets_counts().get(&reg), channels.get(Channel::Power)), (Some(&1), 0));
+
+        // perfected + regular: 2 of the regular set, but only 1 perfected, so no 2-piece row
+        let mut mixed = Player::new();
+        mixed.set_gear_piece(MainHand, GearPiece::new(ItemType::Dagger, 66, None, ItemQuality::Legendary, Some(perf), None));
+        mixed.set_gear_piece(OffHand, GearPiece::new(ItemType::Dagger, 66, None, ItemQuality::Legendary, Some(reg), None));
+        let c = mixed.get_active_sets_counts();
+        assert_eq!((c.get(&reg), c.get(&perf)), (Some(&2), Some(&1)));
+        let mut channels = ChannelSet::new();
+        mixed.apply_set_bonuses(&mut channels);
+        assert_eq!(channels.get(Channel::Power), 0);
+    }
+
+    /// Only perfected sets point at a regular set; never the other way round (roadmap 2.1d).
+    #[test]
+    fn perfected_links_run_one_way() {
+        let mut links = 0;
+        for set in SETS.iter() {
+            if let Some(regular) = set.perfected_of {
+                links += 1;
+                assert_eq!(SETS.unperfected_of(regular), None, "set {regular} is both regular and perfected");
+            }
+        }
+        assert_eq!(links, 62);
+    }
+
     #[test]
     fn no_shipped_set_bonus_is_left_unmapped() {
         // roadmap 2.1a: every stat code in the set table now has a channel

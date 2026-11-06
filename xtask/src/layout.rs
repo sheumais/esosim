@@ -3,7 +3,8 @@
 
 use std::path::{Path, PathBuf};
 
-/// Folder (relative to the workspace root) that receives `sets.jsonl` and `bundle.jsonl`.
+/// Folder (relative to the workspace root) that receives `sets.jsonl`, `bundle.jsonl` and
+/// `set_behaviour.jsonl`.
 /// The engine reads `sets.jsonl` through `esosim_data::SETS_JSONL`.
 pub const DATA_DIR: &str = "crates/esosim-data/data";
 /// The generated set-id constants file (`esosim_data::set_ids`).
@@ -21,5 +22,7 @@ pub fn outputs(root: &Path) -> Vec<Output> {
         Output { name: "sets.jsonl", dest: data.join("sets.jsonl") },
         Output { name: "set_ids.rs", dest: root.join(IDS_FILE) },
         Output { name: "bundle.jsonl", dest: data.join("bundle.jsonl") },
+        Output { name: "set_behaviour.jsonl", dest: data.join("set_behaviour.jsonl") },
+        Output { name: "set_items.csv", dest: data.join("set_items.csv") },
     ]
 }
