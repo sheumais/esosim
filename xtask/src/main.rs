@@ -1,7 +1,7 @@
 //! Repo automation (roadmap 0.6 and 1.3). Run with `cargo xtask <command>`.
 //!
-//!   cargo xtask check      tests of every crate (types, data, engine, compiler)   (roadmap 0.6)
-//!   cargo xtask sync-data  run the compiler from eso.mnf -> crates/esosim-data, diff   (roadmap 1.3)
+//!   cargo xtask check      tests of every crate, then `verify` on the synced data     (roadmap 0.6)
+//!   cargo xtask sync-data  run the compiler from eso.mnf -> verify -> crates/esosim-data, diff   (roadmap 1.3)
 //!
 //! Where generated files land is described by [`layout`] (`crates/esosim-data`, roadmap 1.2).
 
@@ -17,9 +17,11 @@ const USAGE: &str = "\
 usage: cargo xtask <command> [options]
 
 commands:
-  check       run the tests of every crate; one exit code
-  sync-data   run the compiler on the game manifest, write the generated files into
-              crates/esosim-data, and print which ids were added / removed / changed
+  check       run the tests of every crate and `verify` on the data in crates/esosim-data;
+              one exit code
+  sync-data   run the compiler on the game manifest, verify its output, write the generated
+              files into crates/esosim-data, and print which ids were added / removed / changed.
+              A failing verify stops before anything is written.
 
 sync-data options:
   --mnf <file>        the game manifest (eso.mnf)                    [env ESO_MNF_PATH]
@@ -78,9 +80,13 @@ pub fn cargo() -> Command {
 }
 
 /// `cargo run -p esosim-data-compiler -- <args> [--mnf <file>]` (release is not needed; data size is modest).
+/// The hand-written effect files are always passed, so every command knows which ids a person owns.
 pub fn compiler(args: &[&str], data: &DataArgs) -> Command {
     let mut c = cargo();
-    c.args(["run", "--quiet", "--package", "esosim-data-compiler", "--"]).args(args).args(data.as_slice());
+    c.args(["run", "--quiet", "--package", "esosim-data-compiler", "--"])
+        .args(args)
+        .args(data.as_slice())
+        .args(layout::hand_written_args(&root()));
     c
 }
 

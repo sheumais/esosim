@@ -5,6 +5,7 @@
 //! * `data/sets.jsonl`      one set per line (embedded below)
 //! * `data/set_behaviour.jsonl` one line per set: its behaviour class and classified ability blocks (roadmap 2.1b)
 //! * `data/set_items.csv`  `set id,item id,...` per set: which items belong to which set (roadmap 2.1e)
+//! * `data/effects.jsonl` overrides + high-confidence auto-classified effects, one `EffectDef` per line plus a `provenance` (roadmap 2.0)
 //! * `data/bundle.jsonl`    one resolved ability per line (not compiled in; no engine code reads it yet)
 //! * `data/bundle.meta.json` statistics from an older compiler run, no longer written by the current compiler
 //! * `src/set_ids.rs`       one `pub const <NAME>_SET_ID: u16` per set
@@ -20,9 +21,26 @@ pub const SET_BEHAVIOUR_JSONL: &str = include_str!("../data/set_behaviour.jsonl"
 /// `data/set_items.csv`: `set id,item id,item id,...` one line per set (roadmap 2.1e).
 pub const SET_ITEMS_CSV: &str = include_str!("../data/set_items.csv");
 
+/// `data/effects.jsonl`: one `esosim_types::EffectDef` per line (plus a `provenance` of `override`
+/// or `auto`), sorted by id. Empty until `overrides.toml` has entries or the classifier is sure of
+/// a listed buff. Not read by the engine yet: its rows are not unit-checked (see `effects.rs`
+/// in the compiler).
+pub const EFFECTS_JSONL: &str = include_str!("../data/effects.jsonl");
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_effect_row_says_where_it_came_from_and_ids_ascend() {
+        let mut last = 0u64;
+        for l in EFFECTS_JSONL.lines().filter(|l| !l.trim().is_empty()) {
+            assert!(l.ends_with("\"provenance\":\"override\"}") || l.ends_with("\"provenance\":\"auto\"}"), "{l}");
+            let id: u64 = l["{\"id\":".len()..].split(|c: char| !c.is_ascii_digit()).next().unwrap().parse().unwrap();
+            assert!(id > last, "ids must ascend and not repeat: {id} after {last}");
+            last = id;
+        }
+    }
 
     #[test]
     fn there_is_one_behaviour_line_per_set_in_the_same_order() {

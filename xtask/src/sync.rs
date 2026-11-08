@@ -5,9 +5,10 @@
 //! per-file id diff is printed. `git status` afterwards shows only real changes because
 //! byte-identical files are not rewritten.
 //!
-//! There is no `verify` step any more: `verify.rs` is not part of the compiler's module tree
-//! (see PHASE1-PROGRESS.md). Roadmap A.7 also lists `cp` and `effects` in this chain; they
-//! become further compiler runs here when those exist.
+//! The compiler runs `verify` on what it just wrote (overrides, `roots.toml`, hand-written effect
+//! files against the fresh bundle) and exits non-zero when it fails, so a patch that made
+//! hand-written data stale stops here, before anything reaches the repo. `effects.jsonl` is
+//! produced by the same run; `cp` joins this chain when the CP table is read (roadmap 2.2a).
 
 use crate::{Opts, compiler, diff, layout, root, run_step};
 use std::fs;
@@ -22,7 +23,7 @@ pub fn run(opts: &Opts) -> Result<bool, String> {
     let stage_arg = stage.to_str().ok_or("staging path is not valid UTF-8")?;
 
     if !run_step("compiler", &mut compiler(&["--out", stage_arg], &opts.data)) {
-        return Err("the compiler failed; nothing was written to the repo".into());
+        return Err("the compiler (or its verify step) failed; nothing was written to the repo".into());
     }
 
     eprintln!("\n==> {}", if opts.dry_run { "diff (dry run, nothing written)" } else { "writing + diff" });

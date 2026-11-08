@@ -155,6 +155,52 @@ pub struct ResolvedClassification {
     pub unmatched_clauses: Vec<String>,
 }
 
+/// Why an ability is in the bundle: the root category whose closure over the ability graph
+/// contains it (roadmap 2.0 item 1). `Skills` and `Sets` come from the game tables, the rest
+/// from `data/roots.toml`. An ability can belong to several.
+///
+/// The declaration order is the sort order of `categories` in `bundle.jsonl`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RootCategory {
+    Skills,
+    Sets,
+    Cp,
+    Mundus,
+    Consumables,
+    Racial,
+    Buffs,
+}
+
+impl RootCategory {
+    pub const ALL: [RootCategory; 7] = [
+        RootCategory::Skills,
+        RootCategory::Sets,
+        RootCategory::Cp,
+        RootCategory::Mundus,
+        RootCategory::Consumables,
+        RootCategory::Racial,
+        RootCategory::Buffs,
+    ];
+
+    /// The name used in `roots.toml` and in `categories`.
+    pub fn name(self) -> &'static str {
+        match self {
+            RootCategory::Skills => "skills",
+            RootCategory::Sets => "sets",
+            RootCategory::Cp => "cp",
+            RootCategory::Mundus => "mundus",
+            RootCategory::Consumables => "consumables",
+            RootCategory::Racial => "racial",
+            RootCategory::Buffs => "buffs",
+        }
+    }
+
+    pub fn parse(name: &str) -> Option<RootCategory> {
+        Self::ALL.into_iter().find(|c| c.name() == name)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResolvedAbility {
     pub id: u32,
@@ -194,6 +240,10 @@ pub struct ResolvedAbility {
 
     /// Which engine channel(s) this ability's value feeds, if it has a value (see `classify.rs`).
     #[serde(default, skip_serializing_if = "Option::is_none")] pub classification: Option<ResolvedClassification>,
+
+    /// The root categories whose closure contains this ability, sorted. Empty in a bundle written
+    /// before root categories existed (`verify` then only warns about `roots.toml`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")] pub categories: Vec<RootCategory>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")] pub morph_of: Option<u32>,
     /// Outgoing references, sorted, only to ids that exist in the corpus.

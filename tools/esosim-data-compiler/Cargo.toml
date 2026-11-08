@@ -9,6 +9,7 @@ eso-item-data = { git = "https://github.com/sheumais/esoitemdataformat" }
 eso_common = { git = "https://github.com/sheumais/eso_common" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+toml = "0.8"
 csv = "1.4.0"
 regex = "1"
 esosim-types = { workspace = true }

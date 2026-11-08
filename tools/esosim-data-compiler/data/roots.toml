@@ -1,0 +1,58 @@
+# Root categories beyond the two structural ones (roadmap 2.0 item 1).
+#
+# `skills` (every ability with a player_skill_index) and `sets` (every ability block / keystone
+# of the set table) come from the game tables and cannot be listed here. Every other category is
+# a table named after it:
+#
+#   ids         ability ids
+#   names       exact ability names (lang file)
+#   name_prefix every ability whose name starts with this
+#   expect      how many roots `names` / `name_prefix` must find; any other count is reported,
+#               and `verify` fails on it
+#   debuff_ids  [buffs] only: ids applied to the enemy; they are roots too
+#
+# The bundle is the closure of all roots over the ability graph, and every ability carries the
+# categories whose closure it belongs to (`categories` in bundle.jsonl).
+# `cargo xtask check` / `verify` fail when a listed id disappears in a patch.
+#
+# TODO (roadmap 2.2a / 2.3 / 2.4 / 2.7): the lists below hold only what the hand-written legacy
+# tables already identify. `cp` waits for the CP table (2.2a), `racial` and `consumables` are
+# the ids found in `legacy.jsonl` so far. Prodigy (45561) is deliberately not listed: nothing in
+# the data says which category it belongs to.
+
+# Every id of `crates/esosim/src/data/skill_data/major_minor.rs`: Major/Minor buffs and debuffs
+# are always present, whether or not a skill or set reaches them (Minor Slayer 76617, Major Force 61747).
+[buffs]
+ids = [
+    # Major buffs
+    93123, 61745, 61665, 109966, 61705, 61716, 61736, 61747, 61698, 61709,
+    61707, 61711, 61689, 61722, 61694, 61667, 93109, 61687, 61713,
+    # Minor buffs
+    76618, 61744, 61662, 147417, 61704, 61715, 61735, 61746, 61697, 63569,
+    61708, 61706, 61710, 61691, 61721, 61693, 61666, 76617, 61685, 88490, 61549,
+]
+# Major / Minor debuffs: applied to the enemy.
+debuff_ids = [
+    # Major debuffs
+    61743, 145977, 147643, 61727, 61725, 106754,
+    # Minor debuffs
+    61742, 145975, 79867, 61726, 79907, 86304, 88401, 61723, 61733, 140699, 79895, 79717,
+]
+
+# The 13 stones are found by name: "Boon: The Thief" ... (Thief 13975, Shadow 13984).
+[mundus]
+name_prefix = "Boon: "
+expect = 13
+
+# Champion points seen in the legacy tables: Fortified 142035, Precision 141898, Bulwark 64079.
+[cp]
+ids = [142035, 141898, 64079]
+
+# Racial passives seen in the legacy tables: Argonian Resistance, Spell Attunement (Breton),
+# Resist Frost (Nord), Rugged (Nord), Resist Affliction (Wood Elf).
+[racial]
+ids = [45255, 45262, 45304, 45306, 45319]
+
+# Potions seen in the legacy tables: Spell Resist, Physical Resist.
+[consumables]
+ids = [64562, 64564]

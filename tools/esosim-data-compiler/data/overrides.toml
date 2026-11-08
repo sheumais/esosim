@@ -1,0 +1,34 @@
+# Hand-written effects that always beat auto-classification (roadmap 2.0 item 2, decision D4).
+#
+# Everything the classifier cannot see (conditions, stacking, procs, durations) is written here
+# by a person. Draft an entry with `esosim-data-compiler suggest-effects <category>`, review it,
+# finish the TODOs and paste it below. Each `[[effect]]` is an `esosim_types::EffectDef` as TOML:
+#
+#   id            ability id, or a synthetic id >= 0x8000_0000 (2147483648) when no ability is behind it
+#   name          our name for the effect
+#   game_name     the ability's name in the game; `verify` compares it with the lang name
+#                 (default: `name`; ignored for synthetic ids)
+#   source        e.g. "Food", { Buff = { ability_id = 1 } }, { Mundus = { ability_id = 1 } },
+#                 { ChampionPoint = { cp_id = 1 } }, { Set = { set_id = 1, pieces_required = 5 } }
+#   channels      non-empty: [{ channel = "CriticalChance", value = 1212.0, value_per_stack = 0.0 }]
+#                 (a channel is "CriticalChance" or externally tagged: { Armour = "All" })
+#   condition     default "Always"; see esosim_types::Condition
+#   stacking      default "Unique"; "Additive" or { PerStack = { max = 10 } }
+#   duration_ms, cooldown_ms, note
+#   source_url    where the numbers come from (compiler only, not written to effects.jsonl)
+#   check         { field = "value1", scale = 1.0, channel = 0 }: `verify` fails when the channel's
+#                 value stops equalling the ability record's `value1` x `scale`
+#
+# An id must not also be written by hand in the engine's `core.jsonl` / `legacy.jsonl`: `verify`
+# rejects it, because the effect would count twice. Move the row here and delete it there.
+#
+# Example (not active):
+#
+# [[effect]]
+# id = 13975
+# name = "Thief (Mundus)"
+# game_name = "Boon: The Thief"
+# source = { Mundus = { ability_id = 13975 } }
+# channels = [{ channel = "CriticalChance", value = 1212 }]
+# check = { field = "value1" }
+# source_url = "https://en.uesp.net/wiki/Online:The_Thief_(Mundus_Stone)"
