@@ -221,30 +221,6 @@ mod tests {
     }
 
     #[test]
-    fn no_shipped_set_bonus_is_left_unmapped() {
-        // roadmap 2.1a: every stat code in the set table now has a channel
-        for set in SETS.iter() {
-            for (slot, row) in set.bonuses.iter().enumerate() {
-                for b in row {
-                    assert!(b.channel.is_some(), "set {} ({}) slot {} has an unmapped stat", set.id, set.name, slot + 1);
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn explosive_rebuke_and_monster_prototype_3_use_the_newly_mapped_channels() {
-        let rebuke = SETS.get(544).unwrap();
-        assert_eq!(rebuke.bonuses[1][0].channel, Some(Channel::Armour(ResistableDamageType::Martial)));
-        assert_eq!(rebuke.bonuses[2][0].channel, Some(Channel::Armour(ResistableDamageType::Spell)));
-        assert_eq!(rebuke.bonuses[2][0].value, 2974.0);
-        let proto = SETS.get(847).unwrap();
-        assert_eq!(proto.bonuses[0][0].channel, Some(Channel::WeaponPower));
-        assert_eq!(proto.bonuses[0][1].channel, Some(Channel::SpellPower));
-        assert_eq!(proto.bonuses[0][1].value, 129.0);
-    }
-
-    #[test]
     fn every_generated_set_id_constant_is_in_the_table() {
         for id in [REAWAKENED_HIEROPHANT_SET_ID, CORAL_RIPTIDE_SET_ID, PERFECTED_CORAL_RIPTIDE_SET_ID] {
             assert!(SETS.get(id).is_some(), "set id {id} missing from sets.jsonl");

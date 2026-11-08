@@ -43,8 +43,11 @@ const COUNT_OFFSET: usize = 33;
 const ENTRIES_OFFSET: usize = 34;
 const ENTRY_LEN: usize = 13;
 const BLOCK_LEN: usize = 10;
+/// Class sets carry 42 tail bytes (others 38); byte 33 of the tail is the class id.
+const CLASS_TAIL_LEN: usize = 42;
+const CLASS_ID_OFFSET: usize = 33;
 /// Ability ids are well below this; the item list header that follows the blocks is not.
-const ID_LIMIT: u32 = 0x20_0000;
+const ID_LIMIT: u32 = 0x30_0000;
 
 /// Hand-maintained `perfected set id  regular set id` pairs (not in the set table).
 const PERFECTED_PAIRS: &str = include_str!("sets_perfected.txt");
@@ -79,6 +82,18 @@ pub struct SetRecord {
     pub abilities: Vec<AbilityBlock>,
     /// Item ids of every piece of the set (roadmap 2.1e), in table order.
     pub items: Vec<u32>,
+    /// Second byte of the item-list header. `1` on exactly the 83 craftable sets (roadmap 2.1d).
+    pub header_sub: u8,
+    /// Class id (1 DK, 2 Sorcerer, 3 Nightblade, 4 Warden, 5 Necromancer, 6 Templar, 117 Arcanist) for
+    /// the class sets, which are the only ones with a 42 byte tail instead of 38.
+    pub class_id: Option<u8>,
+}
+
+impl SetRecord {
+    /// Can be crafted at a crafting station (needs trait counts to be a full set, 2.1d).
+    pub fn craftable(&self) -> bool {
+        self.header_sub == 1
+    }
 }
 
 fn be32(data: &[u8], off: usize) -> Result<u32, String> {
@@ -165,7 +180,10 @@ pub fn parse(data: &[u8]) -> Result<Vec<SetRecord>, String> {
             .map(|b| u32::from_be_bytes([b[0], b[1], b[2], b[3]]))
             .collect();
 
-        records.push(SetRecord { id, bonuses, abilities, items });
+        let tail = &payload[items_end..];
+        let class_id = (tail.len() == CLASS_TAIL_LEN).then(|| tail[CLASS_ID_OFFSET]);
+
+        records.push(SetRecord { id, bonuses, abilities, items, header_sub: payload[q + 1], class_id });
         pos = start + size;
     }
 
@@ -612,6 +630,7 @@ mod tests {
         assert_eq!(r[1].abilities.len(), 2);
         assert_eq!(r[1].abilities[1].ability_id, 220010);
         assert!(r[2].abilities.is_empty());
+        assert!(!r[1].craftable() && r[1].class_id.is_none());
         assert_eq!(r[1].items, vec![0x18c9d, 0x18c9f, 0x18c9a]);
         assert_eq!(items_csv(&r).lines().next().unwrap(), "20,101533,101535,101530");
     }
@@ -622,6 +641,8 @@ mod tests {
             id,
             bonuses: vec![],
             items: vec![],
+            header_sub: 2,
+            class_id: None,
             abilities: ids
                 .iter()
                 .map(|&a| AbilityBlock { tag: 1, flag: 0, ability_id: a, ability_id2: 7 })
