@@ -3,6 +3,9 @@
 //! `level + 20` style formula from the old `Power` struct: `(level * 20 + additive)` then the
 //! multiplicative bucket (basis points).
 
+use esosim_types::AggKind::{Additive, Multiplicative};
+use esosim_types::DamageDoneContext;
+
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::Channel;
 
@@ -15,8 +18,8 @@ pub(crate) fn apply_multiplicative_bps(base: i64, bps: i64) -> u32 {
 }
 
 fn damage(c: &ChannelSet, single: Channel, level: u8) -> u32 {
-    let base = level as i64 * 20 + c.get(Channel::Power) + c.get(single);
-    let bps = c.get_multiplicative_bps(Channel::Power) + c.get_multiplicative_bps(single);
+    let base = level as i64 * 20 + c.get(Channel::Power(DamageDoneContext::All, Additive)) + c.get(single);
+    let bps = c.get_multiplicative_bps(Channel::Power(DamageDoneContext::All, Multiplicative)) + c.get_multiplicative_bps(single);
     apply_multiplicative_bps(base, bps)
 }
 
@@ -34,13 +37,14 @@ pub fn power(c: &ChannelSet, level: u8) -> u32 {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use crate::data::tables::power::OFFHAND_MULTIPLIER;
 
     fn set(additive: i64, bps: i64) -> ChannelSet {
         let mut c = ChannelSet::new();
-        c.add_additive(Channel::Power, additive);
-        c.add_multiplicative_bps(Channel::Power, bps);
+        c.add_additive(Channel::Power(DamageDoneContext::All, Additive), additive);
+        c.add_multiplicative_bps(Channel::Power(DamageDoneContext::All, Multiplicative), bps);
         c
     }
 

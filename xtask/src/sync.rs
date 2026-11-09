@@ -8,7 +8,7 @@
 //! The compiler runs `verify` on what it just wrote (overrides, `roots.toml`, hand-written effect
 //! files against the fresh bundle) and exits non-zero when it fails, so a patch that made
 //! hand-written data stale stops here, before anything reaches the repo. `effects.jsonl` is
-//! produced by the same run; `cp` joins this chain when the CP table is read (roadmap 2.2a).
+//! produced by the same run, and so is `cp.jsonl` (the champion point table, roadmap 2.2a).
 
 use crate::{Opts, compiler, diff, layout, root, run_step};
 use std::fs;

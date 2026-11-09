@@ -1,0 +1,55 @@
+# A tree is one large connected group of stars (the "blob"`) plus a
+# few floating bonus stars that are linked to nothing. So each tree needs only
+#
+#   name      what the tree is called (stored on every star of it in cp.jsonl)
+#   blob      the ABILITY id of any one star in the blob; the rest is found by following the links
+#   floating  the ability ids of the tree's floating stars (all of them)
+#   entry     ability ids of the stars that can be bought with NO connected star: the ways into the
+#             tree. Every other linked star needs a linked star with at least one stage bought.
+#             While this is empty the tree's prerequisites are not checked (there is no way to start).
+#
+# `sync-data` fails when a star ends up in no tree or in two, when a "floating" star is linked to
+# something, or when an id is not a star: a patch that adds a floating star must add it here.
+
+[[tree]]
+name = "Warfare"
+blob = 141895 # Piercing
+floating = [
+    141744, # Arcane Supremacy
+    146960, # Untamed Aggression
+    141773, # Endless Endurance
+]
+entry = [
+    149305, # Eldritch Insight
+    147888, # Tireless Discipline
+    141895, # Piercing
+]
+
+[[tree]]
+name = "Fitness"
+blob = 142086 # Fortification
+floating = [
+    142034, # Boundless Vitality
+    142035, # Fortified
+    142074, # Rejuvenation
+]
+entry = [
+    142077, # Tumbling
+    142079, # Sprinter
+    142080, # Tireless Guardian
+]
+
+[[tree]]
+name = "Craft"
+blob = 142217 # Master Gatherer
+floating = [
+    142121, # Professional Upkeep
+    142123, # Sustaining Shadows
+    142125, # Steed's Blessing
+    242521, # Discipline Artisan
+]
+entry = [
+    142205, # Breakfall
+    142210, # Gilded Fingers
+    142204, # Out of Sight
+]

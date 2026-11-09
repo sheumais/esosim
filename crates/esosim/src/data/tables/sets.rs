@@ -84,13 +84,14 @@ pub static SETS: LazyLock<SetTable> = LazyLock::new(|| {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
+    use esosim_types::DamageDoneContext::All;
+
+use crate::{
         data::enums::gear::{GearSlot, ItemQuality, ItemType},
         engine::{aggregator::ChannelSet, effect::*},
         entity::{gear::GearPiece, player::Player},
     };
     use super::*;
-    use crate::data::enums::damage::ResistableDamageType;
 
     const SET_CRITICAL_CHANCE_DEFAULT: u32 = 657;
     const SET_POWER_DEFAULT: u32 = 129;
@@ -122,7 +123,7 @@ mod tests {
         player.apply_set_bonuses(&mut channels);
         assert!(player.get_active_sets_counts().contains_key(&CORAL_RIPTIDE_SET_ID));
         assert_eq!(channels.get(Channel::CriticalChance), (SET_CRITICAL_CHANCE_DEFAULT * 2) as i64);
-        assert_eq!(channels.get(Channel::Power), SET_POWER_DEFAULT as i64);
+        assert_eq!(channels.get(Channel::Power(All, AggKind::Additive)), SET_POWER_DEFAULT as i64);
     }
 
     #[test]
@@ -182,19 +183,19 @@ mod tests {
         assert_eq!((c.get(&reg), c.get(&perf)), (Some(&2), Some(&2)));
         let mut channels = ChannelSet::new();
         bow.apply_set_bonuses(&mut channels);
-        assert_eq!(channels.get(Channel::Power), 103);
+        assert_eq!(channels.get(Channel::Power(All, AggKind::Additive)), 103);
 
         // two one-handed weapons also make 2 (dual wield, or weapon + shield)
         let mut channels = ChannelSet::new();
         two_perfected(ItemType::Dagger).apply_set_bonuses(&mut channels);
-        assert_eq!(channels.get(Channel::Power), 103);
+        assert_eq!(channels.get(Channel::Power(All, AggKind::Additive)), 103);
 
         // one one-handed perfected weapon is 1 piece: the ability, but not the 2-piece row
         let mut one = Player::new();
         one.set_gear_piece(MainHand, GearPiece::new(ItemType::Dagger, 66, None, ItemQuality::Legendary, Some(perf), None));
         let mut channels = ChannelSet::new();
         one.apply_set_bonuses(&mut channels);
-        assert_eq!((one.get_active_sets_counts().get(&reg), channels.get(Channel::Power)), (Some(&1), 0));
+        assert_eq!((one.get_active_sets_counts().get(&reg), channels.get(Channel::Power(All, AggKind::Additive))), (Some(&1), 0));
 
         // perfected + regular: 2 of the regular set, but only 1 perfected, so no 2-piece row
         let mut mixed = Player::new();
@@ -204,7 +205,7 @@ mod tests {
         assert_eq!((c.get(&reg), c.get(&perf)), (Some(&2), Some(&1)));
         let mut channels = ChannelSet::new();
         mixed.apply_set_bonuses(&mut channels);
-        assert_eq!(channels.get(Channel::Power), 0);
+        assert_eq!(channels.get(Channel::Power(All, AggKind::Additive)), 0);
     }
 
     /// Only perfected sets point at a regular set; never the other way round (roadmap 2.1d).

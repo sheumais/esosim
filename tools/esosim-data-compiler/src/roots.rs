@@ -1,12 +1,13 @@
 //! Root categories (roadmap 2.0 item 1): which abilities the bundle is built from.
 //!
-//! The bundle is the closure of a set of *roots* over the ability graph. Two categories are
+//! The bundle is the closure of a set of *roots* over the ability graph. Three categories are
 //! structural and come straight from the game tables:
 //!
 //! * `skills`: every ability with a `player_skill_index`;
-//! * `sets`: every ability block / keystone of the set table.
+//! * `sets`: every ability block / keystone of the set table;
+//! * `cp`: the ability of every star of the champion point table.
 //!
-//! The others (`cp`, `mundus`, `consumables`, `racial`, `buffs`) are listed in `data/roots.toml`
+//! The others (`mundus`, `consumables`, `racial`, `buffs`) are listed in `data/roots.toml`
 //! by id, by exact name or by name prefix. Each ability in the bundle then carries the categories
 //! whose closure it belongs to, so "why is this ability here?" has an answer.
 
@@ -76,7 +77,7 @@ pub fn parse_config(text: &str) -> Result<RootConfig, String> {
         let Some(category) = RootCategory::parse(&name) else {
             return Err(format!("roots.toml: unknown category `{name}`"));
         };
-        if matches!(category, RootCategory::Skills | RootCategory::Sets) {
+        if matches!(category, RootCategory::Skills | RootCategory::Sets | RootCategory::Cp) {
             return Err(format!("roots.toml: `{name}` comes from the game tables and cannot be listed"));
         }
         if !spec.debuff_ids.is_empty() && category != RootCategory::Buffs {
@@ -127,9 +128,14 @@ impl RootsReport {
 }
 
 impl Roots {
-    /// Roots of every category: the player skills, `set_roots` (ids with no record are dropped),
-    /// and what `config` lists.
-    pub fn build(corpus: &Corpus, set_roots: &BTreeSet<u32>, config: &RootConfig) -> (Roots, RootsReport) {
+    /// Roots of every category: the player skills, `set_roots` and `cp_roots` (ids with no record
+    /// are dropped), and what `config` lists.
+    pub fn build(
+        corpus: &Corpus,
+        set_roots: &BTreeSet<u32>,
+        cp_roots: &BTreeSet<u32>,
+        config: &RootConfig,
+    ) -> (Roots, RootsReport) {
         let mut roots = Roots::default();
         let mut report = RootsReport::default();
 
@@ -141,6 +147,12 @@ impl Roots {
             RootCategory::Sets,
             set_roots.iter().copied().filter(|id| corpus.skills.contains_key(id)).collect(),
         );
+        let (cp_found, cp_missing): (BTreeSet<u32>, BTreeSet<u32>) =
+            cp_roots.iter().copied().partition(|id| corpus.skills.contains_key(id));
+        if !cp_missing.is_empty() {
+            report.missing.insert(RootCategory::Cp, cp_missing.into_iter().collect());
+        }
+        roots.by_category.insert(RootCategory::Cp, cp_found);
 
         for (category, spec) in &config.categories {
             let mut found: BTreeSet<u32> = BTreeSet::new();
@@ -191,11 +203,13 @@ impl Roots {
 
 /// The root ids of `category` as far as they can be told from compiled files alone (no game
 /// data): player skills from the abilities, `sets` from the `abilities` / `keystone` of
-/// `sets.jsonl`, the rest from `config`. Used by `verify` and `suggest-effects`.
+/// `sets.jsonl`, `cp` from `cp.jsonl`, the rest from `config`. Used by `verify` and
+/// `suggest-effects`.
 pub fn root_ids_from_files(
     category: RootCategory,
     abilities: &[ResolvedAbility],
     sets_jsonl: &str,
+    cp_jsonl: &str,
     config: &RootConfig,
 ) -> Result<BTreeSet<u32>, String> {
     match category {
@@ -203,6 +217,7 @@ pub fn root_ids_from_files(
             Ok(abilities.iter().filter(|a| a.player_skill_index != 0).map(|a| a.id).collect())
         }
         RootCategory::Sets => set_ability_ids(sets_jsonl),
+        RootCategory::Cp => crate::cp::ability_ids_of_jsonl(cp_jsonl),
         other => Ok(config.listed_ids(other)),
     }
 }
@@ -259,12 +274,13 @@ mod tests {
         assert!(cfg.debuff_ids().contains(&61743), "Major Breach is a debuff");
         assert!(!cfg.debuff_ids().contains(&76617));
         assert_eq!(cfg.categories[&RootCategory::Mundus].expect, Some(13));
-        assert!(cfg.listed_ids(RootCategory::Cp).contains(&142035), "Fortified");
+        assert!(cfg.categories.get(&RootCategory::Cp).is_none(), "cp comes from the CP table");
     }
 
     #[test]
     fn structural_and_unknown_categories_are_rejected() {
         assert!(parse_config("[skills]\nids = [1]\n").unwrap_err().contains("game tables"));
+        assert!(parse_config("[cp]\nids = [1]\n").unwrap_err().contains("game tables"));
         assert!(parse_config("[mundis]\nids = [1]\n").unwrap_err().contains("unknown category"));
         assert!(parse_config("[mundus]\ndebuff_ids = [1]\n").unwrap_err().contains("only makes sense"));
         assert!(parse_config("[mundus]\nidz = [1]\n").is_err(), "unknown field");
@@ -277,16 +293,16 @@ mod tests {
             &[(11, "Boon: The Thief"), (12, "Boon: The Lady"), (13, "Other"), (14, "Fortified")],
         );
         let cfg = parse_config(
-            "[mundus]\nname_prefix = \"Boon: \"\nexpect = 3\n[cp]\nids = [14, 999]\nnames = [\"Other\"]\n",
+            "[mundus]\nname_prefix = \"Boon: \"\nexpect = 3\n[consumables]\nids = [14, 999]\nnames = [\"Other\"]\n",
         )
         .unwrap();
-        let (roots, report) = Roots::build(&c, &BTreeSet::new(), &cfg);
+        let (roots, report) = Roots::build(&c, &BTreeSet::new(), &BTreeSet::new(), &cfg);
         assert_eq!(roots.by_category[&RootCategory::Mundus], BTreeSet::from([11, 12]));
-        assert_eq!(roots.by_category[&RootCategory::Cp], BTreeSet::from([13, 14]));
-        assert_eq!(report.missing[&RootCategory::Cp], vec![999]);
+        assert_eq!(roots.by_category[&RootCategory::Consumables], BTreeSet::from([13, 14]));
+        assert_eq!(report.missing[&RootCategory::Consumables], vec![999]);
         assert_eq!(report.unexpected, vec![(RootCategory::Mundus, 3, 2)]);
         let text = report.summary();
-        assert!(text.contains("`cp` are not in the game data: 999"), "{text}");
+        assert!(text.contains("`consumables` are not in the game data: 999"), "{text}");
         assert!(text.contains("`mundus` expected 3 roots, found 2"), "{text}");
     }
 
@@ -295,10 +311,12 @@ mod tests {
         let mut s = skill(1);
         s.base_data.player_skill_index = 5;
         let c = Corpus::from_skills(vec![s, skill(2), skill(3)]);
-        let (roots, report) = Roots::build(&c, &BTreeSet::from([2, 77]), &RootConfig::default());
+        let (roots, report) =
+            Roots::build(&c, &BTreeSet::from([2, 77]), &BTreeSet::from([3, 88]), &RootConfig::default());
         assert_eq!(roots.by_category[&RootCategory::Skills], BTreeSet::from([1]));
         assert_eq!(roots.by_category[&RootCategory::Sets], BTreeSet::from([2]));
-        assert_eq!(roots.all(), BTreeSet::from([1, 2]));
+        assert_eq!(roots.by_category[&RootCategory::Cp], BTreeSet::from([3]));
+        assert_eq!(roots.all(), BTreeSet::from([1, 2, 3]));
         assert_eq!(report.counts[&RootCategory::Sets], 1);
     }
 

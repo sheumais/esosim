@@ -8,6 +8,7 @@
 //! |----------------------|--------------|
 //! | ability (skill) data | `0x0`        |
 //! | set table            | `0x16`       |
+//! | champion point table | `0x1AB`      |
 //! | lang                 | `0x01000014` |
 //!
 //! Needs the DAT archives next to the MNF and, for version 3 archives, the Oodle library.
@@ -16,12 +17,14 @@ use std::path::Path;
 
 use eso_common::lang::EsoLangFile;
 use eso_common::mnf::{MnfFile, MnfFileEntry};
+use eso_skill_data::champion_points::{ChampionPointData, load_champion_point_data};
 use eso_skill_data::{SkillData34, load_skill_data};
 
 use crate::corpus::LangTexts;
 
 pub const ABILITY_MANIFEST_ID: u32 = 0x6000_0000;
 pub const SET_MANIFEST_ID: u32 = 0x6000_0016;
+pub const CP_MANIFEST_ID: u32 = 0x6000_01AB;
 pub const LANG_MANIFEST_ID: u32 = 0x0100_0014;
 
 /// Raw game data, decoded but not yet interpreted.
@@ -29,6 +32,8 @@ pub struct GameData {
     pub skills: Vec<SkillData34>,
     /// The set table in its container layout (what the old `*_Uncompressed.EsoFileData` held).
     pub set_table: Vec<u8>,
+    /// Every record of the champion point table, in file order.
+    pub cp: Vec<ChampionPointData>,
     pub lang: LangTexts,
 }
 
@@ -63,6 +68,7 @@ pub fn read(mnf_path: &Path) -> Result<GameData, String> {
 
     let abilities = table(ABILITY_MANIFEST_ID, "abilities")?;
     let set_table = table(SET_MANIFEST_ID, "sets")?;
+    let cp_table = table(CP_MANIFEST_ID, "champion points")?;
 
     let lang_entry = entry_for(&mnf, LANG_MANIFEST_ID, "lang")?;
     let lang_bytes = mnf
@@ -75,16 +81,20 @@ pub fn read(mnf_path: &Path) -> Result<GameData, String> {
     Ok(GameData {
         skills: parse_abilities(&abilities)?,
         set_table,
+        cp: parse_champion_points(&cp_table)?,
         lang: LangTexts::from_lang(&lang),
     })
 }
 
-/// Decode the ability table.
+/// Run `load` on `bytes` written to a temporary file that is removed again before this returns.
 ///
-/// `eso_skill_data` only offers a path-based loader (`load_skill_data`), so the bytes take a
-/// short trip through a temporary file that is removed again before this returns. This is the
-/// one place that needs replacing when the parser can read from memory.
-fn parse_abilities(bytes: &[u8]) -> Result<Vec<SkillData34>, String> {
+/// `eso_skill_data` only offers path-based loaders, so this is the one place that needs replacing
+/// when the parser can read from memory.
+fn with_temp_file<T>(
+    bytes: &[u8],
+    what: &str,
+    load: impl FnOnce(&str) -> Result<T, String>,
+) -> Result<T, String> {
     struct Temp(std::path::PathBuf);
     impl Drop for Temp {
         fn drop(&mut self) {
@@ -97,12 +107,43 @@ fn parse_abilities(bytes: &[u8]) -> Result<Vec<SkillData34>, String> {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     let tmp = Temp(std::env::temp_dir().join(format!(
-        "esosim-abilities-{}-{nonce}_Uncompressed.EsoFileData",
+        "esosim-{what}-{}-{nonce}_Uncompressed.EsoFileData",
         std::process::id()
     )));
     std::fs::write(&tmp.0, bytes).map_err(|e| format!("writing '{}': {e}", tmp.0.display()))?;
     let path = tmp.0.to_str().ok_or("temporary path is not valid UTF-8")?;
-    let state = load_skill_data(path)
-        .map_err(|e| format!("manifest id 0x{ABILITY_MANIFEST_ID:X} is not a valid ability table: {e}"))?;
-    Ok(state.skills)
+    load(path)
+}
+
+/// Decode the ability table.
+fn parse_abilities(bytes: &[u8]) -> Result<Vec<SkillData34>, String> {
+    with_temp_file(bytes, "abilities", |path| {
+        let state = load_skill_data(path)
+            .map_err(|e| format!("manifest id 0x{ABILITY_MANIFEST_ID:X} is not a valid ability table: {e}"))?;
+        Ok(state.skills)
+    })
+}
+
+/// Decode the champion point table. The parser only prints a warning when the number of records
+/// it read differs from the file's header; that is an error here, because it means records were
+/// skipped or misread and the values cannot be trusted.
+fn parse_champion_points(bytes: &[u8]) -> Result<Vec<ChampionPointData>, String> {
+    with_temp_file(bytes, "champion-points", |path| {
+        let state = load_champion_point_data(path)
+            .map_err(|e| format!("manifest id 0x{CP_MANIFEST_ID:X} is not a valid champion point table: {e}"))?;
+        eprintln!(
+            "champion points: {} bytes, header says {} record(s), parser read {}",
+            state.size_of_file,
+            state.num_records_header,
+            state.champion_points.len()
+        );
+        if state.champion_points.len() != state.num_records_header as usize {
+            return Err(format!(
+                "champion point table (manifest id 0x{CP_MANIFEST_ID:X}): header says {} records, the parser read {}",
+                state.num_records_header,
+                state.champion_points.len()
+            ));
+        }
+        Ok(state.champion_points)
+    })
 }

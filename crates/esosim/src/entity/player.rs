@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
+use esosim_types::{AggKind::{self, Multiplicative}, DamageDoneContext, channel::StatusEffectContext};
 
 use crate::{data::{enums::{cca::CoreCombatAbility::{self, Bash, Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{self, All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::{self, *}, DamageDoneContext::{Bash as BashDamage, *}, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}};
 
@@ -122,7 +123,7 @@ impl Player {
                     _ => OFFHAND_MULTIPLIER,
                 };
                 let p = (power * m).round();
-                channels.add_additive(Power, p);
+                channels.add_additive(Power(DamageDoneContext::Type(All), Additive), p);
             } 
             channels.add_additive(Armour(ResistableDamageTypeAll), gear.get_armour_value(&slot));
             if let Some(gear_trait) = gear.get_item_trait() {
@@ -144,13 +145,13 @@ impl Player {
                             GearTrait::JewelryRobust => {channels.add_additive(Resource(Stam, Additive), v)},
                             GearTrait::JewelryHealthy => {channels.add_additive(Resource(Health, Additive), v)},
 
-                            GearTrait::ArmorSturdy => {channels.add_multiplicative_bps(CostReductionCCA(Block), (v * 10_000.0).round());},
+                            GearTrait::ArmorSturdy => {channels.add_multiplicative_bps(CostReductionCCA(Block, Multiplicative), (v * 10_000.0).round());},
                             GearTrait::ArmorImpenetrable => {channels.add_additive(CriticalResistance, v);},
                             GearTrait::ArmorReinforced => {}, // handle in armour code
                             GearTrait::ArmorWellFitted => {
                                 let bps = (v * 10_000.0).round();
-                                channels.add_multiplicative_bps(CostReductionCCA(DodgeRoll), bps);
-                                channels.add_multiplicative_bps(CostReductionCCA(Sprint), bps);
+                                channels.add_multiplicative_bps(CostReductionCCA(DodgeRoll, Multiplicative), bps);
+                                channels.add_multiplicative_bps(CostReductionCCA(Sprint, Multiplicative), bps);
                             },
                             GearTrait::ArmorDivines => {channels.add_multiplicative_bps(MundusBoost, (v * 10_000.0).round());},
                             GearTrait::ArmorNirnhoned => {}, // handle in armour code
@@ -164,7 +165,7 @@ impl Player {
 
                             GearTrait::WeaponInfused => {}, // handled in enchantment code
                             GearTrait::WeaponNirnhoned => {}, // handled in weapon code
-                            GearTrait::WeaponCharged => {channels.add_multiplicative_bps(StatusEffectChance, (v * 10_000.0).round());},
+                            GearTrait::WeaponCharged => {channels.add_multiplicative_bps(StatusEffectChance(StatusEffectContext::All), (v * 10_000.0).round());},
                             GearTrait::WeaponDecisive => {channels.add_multiplicative_bps(DecisiveUltimateChance, (v * 10_000.0).round());},
                             GearTrait::WeaponDefending => {}, // handle in armour code
                             GearTrait::WeaponPowered => {channels.add_multiplicative_bps(HealingDone, (v * 10_000.0).round());},
@@ -199,17 +200,17 @@ impl Player {
                             EnchantType::FrostResistance => {channels.add_additive(Armour(Frost), v)},
                             EnchantType::Health => {channels.add_additive(Resource(Health, Additive), v)},
                             EnchantType::HealthRegen => {channels.add_additive(Recovery(Health, Additive), v)},
-                            EnchantType::IncreaseBashDamage => {channels.add_additive(DamageDone(BashDamage), v);},
-                            EnchantType::IncreasePhysicalDamage => {channels.add_additive(Power, v); channels.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreaseBashDamage => {channels.add_additive(DamageDone(BashDamage, Additive), v);},
+                            EnchantType::IncreasePhysicalDamage => {channels.add_additive(Power(DamageDoneContext::Type(All), AggKind::Additive), v); channels.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
                             EnchantType::IncreasePotionEffectiveness => {channels.add_additive(PotionEffectiveness, v);},
-                            EnchantType::IncreaseSpellDamage => {channels.add_additive(Power, v); channels.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreaseSpellDamage => {channels.add_additive(Power(DamageDoneContext::Type(All), AggKind::Additive), v); channels.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
                             EnchantType::Magicka => {channels.add_additive(Resource(Mag, Additive), v)},
                             EnchantType::MagickaRegen => {channels.add_additive(Recovery(Mag, Additive), v)},
                             EnchantType::PhysicalResistance => {channels.add_additive(Armour(Martial), v)},
                             EnchantType::PoisonResistance => {channels.add_additive(Armour(Poison), v)},
                             EnchantType::PrismaticDefense => {}, // handle below
                             EnchantType::PrismaticRecovery => {}, // handle below
-                            EnchantType::ReduceBlockCost => {channels.add_additive(CostReductionCCA(Block), v);},
+                            EnchantType::ReduceBlockCost => {channels.add_additive(CostReductionCCA(Block, Additive), v);},
                             EnchantType::ReduceFeatCost => {channels.add_additive(CostReduction(Stamina), v);},
                             EnchantType::ReducePotionCooldown => {channels.add_additive(PotionCooldown, v);},
                             EnchantType::ReduceSpellCost => {channels.add_additive(CostReduction(Magicka), v);},

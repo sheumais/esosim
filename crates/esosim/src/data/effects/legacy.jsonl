@@ -3,7 +3,7 @@
 // Units: crit chance, armour and penetration are rating/points; CriticalDamage and CriticalDamageTaken are
 // percentage points. `PerStack.max` 4294967295 = the legacy table recorded no stack cap.
 // Rows sharing an ability id are merged into one effect with several channels.
-// FORTIFIED (142035) is in core.jsonl.
+// FORTIFIED, Precision and Piercing are champion point stars: they come from the game's CP table (cp_effects.jsonl, roadmap 2.2c).
 {"id":13975,"name":"Thief (Mundus)","source":{"Mundus":{"ability_id":13975}},"channels":[{"channel":"CriticalChance","value":1212.0,"value_per_stack":0.0}],"stacking":"Unique"}
 {"id":13984,"name":"The Shadow (Mundus)","source":{"Mundus":{"ability_id":13984}},"channels":[{"channel":"CriticalDamage","value":11.0,"value_per_stack":1.0}],"stacking":{"PerStack":{"max":4294967295}},"note":"Each stack is a piece of CP160 Gold Divines gear, which rounds to an additional 1% crit damage per piece. This relationship does not hold for lower quality and level items. See https://en.uesp.net/wiki/Online:The_Shadow_(Mundus_Stone)"}
 {"id":17906,"name":"Crusher","source":{"Debuff":{"ability_id":17906}},"channels":[{"channel":{"Armour":"All"},"value":-2108.0,"value_per_stack":0.0}],"stacking":"Unique","note":"Assumes infused. todo"}
@@ -54,8 +54,6 @@
 {"id":118506,"name":"Auriel's Bow Accuracy","source":{"Buff":{"ability_id":118506}},"channels":[{"channel":"CriticalChance","value":1314.0,"value_per_stack":0.0}],"stacking":"Unique"}
 {"id":139696,"name":"Skormon Gondar's Savagery","source":{"Buff":{"ability_id":139696}},"channels":[{"channel":"CriticalChance","value":5478.0,"value_per_stack":0.0}],"stacking":"Unique","note":"25% equivalent"}
 {"id":139698,"name":"Sislea's Defense","source":{"Buff":{"ability_id":139698}},"channels":[{"channel":{"Armour":"Spell"},"value":15000.0,"value_per_stack":0.0}],"stacking":"Unique","note":"Kyne's Aegis prisoner buff"}
-{"id":141895,"name":"Piercing","source":{"Buff":{"ability_id":141895}},"channels":[{"channel":{"Penetration":"All"},"value":0.0,"value_per_stack":350.0}],"stacking":{"PerStack":{"max":4294967295}}}
-{"id":141898,"name":"Precision","source":{"Buff":{"ability_id":141898}},"channels":[{"channel":"CriticalChance","value":0.0,"value_per_stack":160.0}],"stacking":{"PerStack":{"max":4294967295}},"note":"CP"}
 {"id":142610,"name":"Flame Weakness","source":{"Debuff":{"ability_id":142610}},"channels":[{"channel":"CriticalDamageTaken","value":5.0,"value_per_stack":0.0}],"stacking":"Unique"}
 {"id":142652,"name":"Frost Weakness","source":{"Debuff":{"ability_id":142652}},"channels":[{"channel":"CriticalDamageTaken","value":5.0,"value_per_stack":0.0}],"stacking":"Unique"}
 {"id":142653,"name":"Shock Weakness","source":{"Debuff":{"ability_id":142653}},"channels":[{"channel":"CriticalDamageTaken","value":5.0,"value_per_stack":0.0}],"stacking":"Unique"}

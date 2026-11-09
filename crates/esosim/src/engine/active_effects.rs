@@ -81,25 +81,29 @@ mod tests {
     const FORTIFIED_ID: u32 = 142035;
 
     #[test]
-    fn fortified_comes_from_data_and_ten_stacks_is_34_62_times_ten() {
+    fn fortified_comes_from_the_cp_table_and_ten_stacks_is_34_61_times_ten() {
         let registry = EffectRegistry::from_bundle(Bundle::embedded());
         let mut active = ActiveEffects::new();
         active.set(FORTIFIED_ID, 10);
         let sheet = active.aggregate(&registry);
         let armour = Channel::Armour(ResistableDamageType::All);
-        assert_eq!(sheet.get(armour), (34.62f64 * 10.0).round() as i64); // 346
+        assert_eq!(sheet.get(armour), 346); // 346.1
 
         let def = registry.get(FORTIFIED_ID).unwrap();
-        assert!((def.value_at(armour, 10) - 346.2).abs() < 1e-9);
+        assert!((def.value_at(armour, 10) - 346.1).abs() < 1e-9);
     }
 
     #[test]
     fn per_stack_is_capped() {
         let registry = EffectRegistry::embedded();
-        let mut active = ActiveEffects::new();
-        active.set(FORTIFIED_ID, 25);
-        let sheet = active.aggregate(&registry);
-        assert_eq!(sheet.get(Channel::Armour(ResistableDamageType::All)), 346);
+        let armour = Channel::Armour(ResistableDamageType::All);
+        let at = |stacks| {
+            let mut active = ActiveEffects::new();
+            active.set(FORTIFIED_ID, stacks);
+            active.aggregate(&registry).get(armour)
+        };
+        assert!(at(50) > at(49), "Fortified has 50 stages in the game's table");
+        assert_eq!(at(80), at(50));
     }
 
     fn test_def(id: u32, stacking: Stacking, condition: Condition) -> EffectDef {

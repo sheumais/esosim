@@ -82,7 +82,9 @@ pub fn derive_sheet(c: &ChannelSet, ctx: &StatContext) -> StatSheet {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use esosim_types::AggKind::{Additive, Multiplicative};
+
+use super::*;
     use crate::engine::effect::{AggKind, Channel};
 
     #[test]
@@ -97,8 +99,8 @@ mod tests {
         // 48.43 % crit chance = 10 % base + 8421 / 21912
         c.add_additive(Channel::CriticalChance, 2629 + 1922 + 219 * 6 + 320 + 657 + 1579);
         // 5179 weapon damage (dual wield example)
-        c.add_additive(Channel::Power, 1851 + 174 * 3 + 129 * 2 + 205);
-        c.add_multiplicative_bps(Channel::Power, 3500);
+        c.add_additive(Channel::Power(esosim_types::DamageDoneContext::All, Additive), 1851 + 174 * 3 + 129 * 2 + 205);
+        c.add_multiplicative_bps(Channel::Power(esosim_types::DamageDoneContext::All, Multiplicative), 3500);
 
         let ctx = StatContext { level: 50, attributes: Attributes { health: 32, magicka: 0, stamina: 0 }, target: None };
         let s = derive_sheet(&c, &ctx);

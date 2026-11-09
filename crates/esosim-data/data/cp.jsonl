@@ -1,0 +1,118 @@
+{"id":1,"name":"Professional Upkeep","ability_id":142121,"perk":"passive","max_stages":50,"cost_per_stage":1,"value_per_stage":-1.0,"tree":"Craft","pos_x":850.2992,"pos_y":206.0397}
+{"id":2,"name":"Boundless Vitality","ability_id":142034,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":28.0,"tree":"Fitness","pos_x":-874.8893,"pos_y":369.1108}
+{"id":3,"name":"Arcane Supremacy","ability_id":141744,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":26.0,"tree":"Warfare","pos_x":513.8032,"pos_y":96.03144}
+{"id":4,"name":"Untamed Aggression","ability_id":146960,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":3.0,"tree":"Warfare","pos_x":623.8114,"pos_y":-46.33218}
+{"id":5,"name":"Endless Endurance","ability_id":141773,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":26.0,"tree":"Warfare","pos_x":429.6793,"pos_y":-143.3983}
+{"id":6,"name":"Tireless Discipline","ability_id":147888,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":260.0,"links":[20,10],"tree":"Warfare","entry":true,"pos_x":183.7785,"pos_y":159.448}
+{"id":8,"name":"Wrathful Strikes","ability_id":141941,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":41.0,"links":[32,30,11],"tree":"Warfare","pos_x":-159.9203,"pos_y":453.7662}
+{"id":9,"name":"Rejuvenator","ability_id":141942,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":41.0,"links":[24,163],"tree":"Warfare","pos_x":-657.4612,"pos_y":488.1785}
+{"id":10,"name":"Piercing","ability_id":141895,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":350.0,"links":[27,23,25,18,17,11,6,99,259,264,276,277,17,21,18,22,259,276,277],"tree":"Warfare","entry":true,"pos_x":379.2049,"pos_y":317.3422}
+{"id":11,"name":"Precision","ability_id":141898,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":160.0,"links":[31,32,8,30,10,108,12],"tree":"Warfare","pos_x":29.76682,"pos_y":243.5719}
+{"id":12,"name":"Fighting Finesse","ability_id":141899,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":4.0,"links":[11,31],"tree":"Warfare","pos_x":164.3017,"pos_y":336.9294}
+{"id":13,"name":"Resilience","ability_id":141900,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":132.0,"links":[20],"tree":"Warfare","pos_x":55.65107,"pos_y":350.9918}
+{"id":14,"name":"Preparation","ability_id":141901,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":5.0,"links":[20],"tree":"Warfare","pos_x":49.18003,"pos_y":-156.3404}
+{"id":15,"name":"Elemental Aegis","ability_id":149273,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":1.0,"links":[20],"tree":"Warfare","pos_x":265.3139,"pos_y":-35.97839}
+{"id":16,"name":"Hardy","ability_id":149274,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":1.0,"links":[20],"tree":"Warfare","pos_x":-208.3688,"pos_y":143.9174}
+{"id":17,"name":"Flawless Ritual","ability_id":149275,"perk":"passive","max_stages":2,"cost_per_stage":20,"value_per_stage":30.0,"links":[10,21],"tree":"Warfare","pos_x":247.1949,"pos_y":225.453}
+{"id":18,"name":"Battle Mastery","ability_id":149276,"perk":"passive","max_stages":2,"cost_per_stage":20,"value_per_stage":30.0,"links":[10,22],"tree":"Warfare","pos_x":661.3436,"pos_y":266.8679}
+{"id":20,"name":"Quick Recovery","ability_id":141929,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":1.0,"links":[133,134,136,99,6,16,15,14,13,265,16,15,14,13,265],"tree":"Warfare","pos_x":51.7685,"pos_y":57.20501}
+{"id":21,"name":"War Mage","ability_id":141931,"perk":"passive","max_stages":1,"cost_per_stage":30,"value_per_stage":100.0,"links":[17],"tree":"Warfare","pos_x":47.88581,"pos_y":101.2083}
+{"id":22,"name":"Mighty","ability_id":141930,"perk":"passive","max_stages":1,"cost_per_stage":30,"value_per_stage":100.0,"links":[18],"tree":"Warfare","pos_x":702.7585,"pos_y":14.49598}
+{"id":23,"name":"Biting Aura","ability_id":141997,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[10],"tree":"Warfare","pos_x":619.9288,"pos_y":450.6463}
+{"id":24,"name":"Soothing Tide","ability_id":141998,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[9,108],"tree":"Warfare","pos_x":-518.9802,"pos_y":288.8694}
+{"id":25,"name":"Deadly Aim","ability_id":141999,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[10],"tree":"Warfare","pos_x":524.157,"pos_y":558.0661}
+{"id":26,"name":"Focused Mending","ability_id":142000,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[108,29],"tree":"Warfare","pos_x":-665.2265,"pos_y":209.9223}
+{"id":27,"name":"Thaumaturge","ability_id":142001,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[10],"tree":"Warfare","pos_x":662.6379,"pos_y":671.957}
+{"id":28,"name":"Swift Renewal","ability_id":142002,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[108,163],"tree":"Warfare","pos_x":-653.5786,"pos_y":350.9918}
+{"id":29,"name":"Cleansing Revival","ability_id":142003,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[26,163],"tree":"Warfare","pos_x":-785.5884,"pos_y":394.9951}
+{"id":30,"name":"Reaving Blows","ability_id":142007,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":0.0008,"links":[8,11],"tree":"Warfare","pos_x":-164.3016,"pos_y":260.9856}
+{"id":31,"name":"Backstabber","ability_id":142006,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[32,11,12],"tree":"Warfare","pos_x":101.5018,"pos_y":466.9103}
+{"id":32,"name":"Occult Overload","ability_id":142010,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":1037.0,"links":[31,8,11],"tree":"Warfare","pos_x":-54.76723,"pos_y":529.71}
+{"id":33,"name":"Cutting Defense","ability_id":142012,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":200.0,"links":[159,161,160],"tree":"Warfare","pos_x":213.5454,"pos_y":-307.7636}
+{"id":34,"name":"Fortified","ability_id":142035,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":34.61,"tree":"Fitness","pos_x":-623.8116,"pos_y":407.9372}
+{"id":35,"name":"Rejuvenation","ability_id":142074,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":1.8,"tree":"Fitness","pos_x":-447.7984,"pos_y":577.4794}
+{"id":37,"name":"Tumbling","ability_id":142077,"perk":"passive","max_stages":2,"cost_per_stage":15,"value_per_stage":120.0,"links":[128,51,53],"tree":"Fitness","entry":true,"pos_x":-302.8463,"pos_y":-147.281}
+{"id":38,"name":"Sprinter","ability_id":142079,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":20.0,"links":[62,42],"tree":"Fitness","entry":true,"pos_x":59.53376,"pos_y":-189.99}
+{"id":39,"name":"Tireless Guardian","ability_id":142080,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":20.0,"links":[43,60,44,40,42],"tree":"Fitness","entry":true,"pos_x":692.4048,"pos_y":-7.50574}
+{"id":40,"name":"Savage Defense","ability_id":142081,"perk":"passive","max_stages":2,"cost_per_stage":15,"value_per_stage":45.0,"links":[39,50],"tree":"Fitness","pos_x":705.347,"pos_y":133.5637}
+{"id":42,"name":"Hasty","ability_id":142083,"perk":"passive","max_stages":2,"cost_per_stage":8,"value_per_stage":2.0,"links":[38,39,113,271,270,272,271,270,272],"tree":"Fitness","pos_x":372.7338,"pos_y":-103.2777}
+{"id":43,"name":"Fortification","ability_id":142086,"perk":"passive","max_stages":2,"cost_per_stage":15,"value_per_stage":2.0,"links":[39],"tree":"Fitness","pos_x":678.1685,"pos_y":-239.1702}
+{"id":44,"name":"Nimble Protector","ability_id":142088,"perk":"passive","max_stages":2,"cost_per_stage":3,"value_per_stage":3.0,"links":[39,266,267,268,268,267,266],"tree":"Fitness","pos_x":864.5355,"pos_y":53.3223}
+{"id":45,"name":"Piercing Gaze","ability_id":142089,"perk":"passive","max_stages":3,"cost_per_stage":10,"value_per_stage":100.0,"links":[113,58],"tree":"Fitness","pos_x":-50.47451,"pos_y":116.7389}
+{"id":46,"name":"Bastion","ability_id":142090,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":3.0,"links":[61,58,49,63],"tree":"Fitness","pos_x":71.18172,"pos_y":297.929}
+{"id":47,"name":"Siphoning Spells","ability_id":141991,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":300.0,"links":[113,49,48],"tree":"Fitness","pos_x":355.9089,"pos_y":169.8017}
+{"id":48,"name":"Bloody Renewal","ability_id":141993,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":300.0,"links":[47,113],"tree":"Fitness","pos_x":374.028,"pos_y":22.2612}
+{"id":49,"name":"Strategic Reserve","ability_id":141995,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[113,47,46],"tree":"Fitness","pos_x":239.4296,"pos_y":225.4529}
+{"id":50,"name":"Bashing Brutality","ability_id":142091,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":60.0,"links":[40],"tree":"Fitness","pos_x":732.5255,"pos_y":571.0083}
+{"id":51,"name":"Expert Evasion","ability_id":142092,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[37],"tree":"Fitness","pos_x":-367.5571,"pos_y":-302.5867}
+{"id":52,"name":"Slippery","ability_id":142094,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[128,64],"tree":"Fitness","pos_x":-394.7356,"pos_y":159.448}
+{"id":53,"name":"Mystic Tenacity","ability_id":142096,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":5.0,"links":[113,37,57,273,275,274,274,275,273],"tree":"Fitness","pos_x":-239.4298,"pos_y":5.436385}
+{"id":54,"name":"Peace of Mind","ability_id":142097,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":40.0,"links":[128],"tree":"Fitness","pos_x":-639.126,"pos_y":225.5698}
+{"id":55,"name":"Hardened","ability_id":142099,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":3.0,"links":[128],"tree":"Fitness","pos_x":-784.2943,"pos_y":224.1587}
+{"id":56,"name":"Spirit Mastery","ability_id":142100,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":33.0,"links":[58],"tree":"Fitness","pos_x":-174.7191,"pos_y":423.4678}
+{"id":57,"name":"Survival Instincts","ability_id":142102,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":5.0,"links":[53,58],"tree":"Fitness","pos_x":-178.6018,"pos_y":160.7422}
+{"id":58,"name":"Tempered Soul","ability_id":142109,"perk":"passive","max_stages":2,"cost_per_stage":25,"value_per_stage":5.0,"links":[56,46,45,57],"tree":"Fitness","pos_x":-128.1274,"pos_y":277.2215}
+{"id":59,"name":"Juggernaut","ability_id":142110,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":1.0,"links":[128],"tree":"Fitness","pos_x":-693.6992,"pos_y":-202.9321}
+{"id":60,"name":"On Guard","ability_id":142111,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[39],"tree":"Fitness","pos_x":827.0031,"pos_y":200.8629}
+{"id":61,"name":"Arcane Alacrity","ability_id":142113,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":160.0,"links":[46],"tree":"Fitness","pos_x":85.41814,"pos_y":442.881}
+{"id":62,"name":"Rousing Speed","ability_id":142115,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":50.0,"links":[38],"tree":"Fitness","pos_x":-239.4298,"pos_y":-276.7025}
+{"id":63,"name":"Shield Master","ability_id":149283,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[46,113],"tree":"Fitness","pos_x":64.71064,"pos_y":123.20997}
+{"id":64,"name":"Unchained","ability_id":149282,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":11.0,"links":[52],"tree":"Fitness","pos_x":-424.5026,"pos_y":391.1124}
+{"id":65,"name":"Sustaining Shadows","ability_id":142123,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":1.0,"tree":"Craft","pos_x":663.9322,"pos_y":216.3934}
+{"id":66,"name":"Steed's Blessing","ability_id":142125,"perk":"base_active","max_stages":50,"cost_per_stage":1,"value_per_stage":0.4,"tree":"Craft","pos_x":873.5949,"pos_y":4.142171}
+{"id":67,"name":"Fleet Phantom","ability_id":142203,"perk":"passive","max_stages":5,"cost_per_stage":8,"value_per_stage":5.0,"links":[68],"tree":"Craft","pos_x":-376.6166,"pos_y":-205.5207}
+{"id":68,"name":"Out of Sight","ability_id":142204,"perk":"passive","max_stages":3,"cost_per_stage":10,"value_per_stage":-100.0,"links":[67,76],"tree":"Craft","entry":true,"pos_x":-261.4315,"pos_y":-310.3521}
+{"id":69,"name":"Breakfall","ability_id":142205,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":7.0,"links":[70,87],"tree":"Craft","entry":true,"pos_x":340.3784,"pos_y":-162.8116}
+{"id":70,"name":"Wanderer","ability_id":142206,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":10.0,"links":[69,75,71],"tree":"Craft","pos_x":144.952,"pos_y":-68.33384}
+{"id":71,"name":"Fortune's Favor","ability_id":142207,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":10.0,"links":[74,70,72,76],"tree":"Craft","pos_x":11.64786,"pos_y":-109.7488}
+{"id":72,"name":"Inspiration Boost","ability_id":142208,"perk":"passive","max_stages":3,"cost_per_stage":15,"value_per_stage":10.0,"links":[83,71],"tree":"Craft","pos_x":9.059491,"pos_y":35.20332}
+{"id":74,"name":"Gilded Fingers","ability_id":142210,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[71],"tree":"Craft","entry":true,"pos_x":-47.88598,"pos_y":-210.6975}
+{"id":75,"name":"Steadfast Enchantment","ability_id":142211,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":10.0,"links":[70,85,79],"tree":"Craft","pos_x":192.838,"pos_y":143.9174}
+{"id":76,"name":"Friends in Low Places","ability_id":142213,"perk":"active","max_stages":1,"cost_per_stage":25,"value_per_stage":1.0,"links":[77,71,84,68],"tree":"Craft","pos_x":-130.7158,"pos_y":-78.68755}
+{"id":77,"name":"Infamous","ability_id":142215,"perk":"passive","max_stages":1,"cost_per_stage":25,"value_per_stage":25.0,"links":[80,76],"tree":"Craft","pos_x":-592.7504,"pos_y":-279.2909}
+{"id":78,"name":"Master Gatherer","ability_id":142217,"perk":"active","max_stages":5,"cost_per_stage":15,"value_per_stage":10.0,"links":[92,81,79,84,83],"tree":"Craft","pos_x":3.882595,"pos_y":335.4612}
+{"id":79,"name":"Treasure Hunter","ability_id":142218,"perk":"passive","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[75,78,83],"tree":"Craft","pos_x":120.3619,"pos_y":252.6314}
+{"id":80,"name":"Shadowstrike","ability_id":142219,"perk":"active","max_stages":1,"cost_per_stage":75,"value_per_stage":1.0,"links":[77,90],"tree":"Craft","pos_x":-820.5323,"pos_y":-1.034726}
+{"id":81,"name":"Plentiful Harvest","ability_id":142220,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":10.0,"links":[82,78,91],"tree":"Craft","pos_x":111.3025,"pos_y":449.3521}
+{"id":82,"name":"War Mount","ability_id":142223,"perk":"active","max_stages":1,"cost_per_stage":75,"value_per_stage":1.0,"links":[92,81],"tree":"Craft","pos_x":-14.23639,"pos_y":602.0694}
+{"id":83,"name":"Meticulous Disassembly","ability_id":142224,"perk":"passive","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[72,84,79,78],"tree":"Craft","pos_x":6.471043,"pos_y":155.5653}
+{"id":84,"name":"Fade Away","ability_id":142228,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":25.0,"links":[83,78,90,76],"tree":"Craft","pos_x":-130.7158,"pos_y":256.514}
+{"id":85,"name":"Rationer","ability_id":142230,"perk":"passive","max_stages":3,"cost_per_stage":10,"value_per_stage":600000.0,"links":[75,86],"tree":"Craft","pos_x":528.0396,"pos_y":-306.4695}
+{"id":86,"name":"Liquid Efficiency","ability_id":142231,"perk":"passive","max_stages":1,"cost_per_stage":50,"value_per_stage":10.0,"links":[85,89],"tree":"Craft","pos_x":664.0936,"pos_y":-200.3523}
+{"id":87,"name":"Soul Reservoir","ability_id":142232,"perk":"passive","max_stages":1,"cost_per_stage":30,"value_per_stage":33.0,"links":[69],"tree":"Craft","pos_x":330.0248,"pos_y":-323.2942}
+{"id":88,"name":"Reel Technique","ability_id":142233,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":25.0,"links":[89,91],"tree":"Craft","pos_x":449.0925,"pos_y":42.96858}
+{"id":89,"name":"Angler's Instincts","ability_id":142234,"perk":"active","max_stages":1,"cost_per_stage":25,"value_per_stage":10.0,"links":[88,86],"tree":"Craft","pos_x":624.34393,"pos_y":-22.164072}
+{"id":90,"name":"Cutpurse's Art","ability_id":142235,"perk":"passive","max_stages":1,"cost_per_stage":25,"value_per_stage":1.0,"links":[84,80],"tree":"Craft","pos_x":-438.73886,"pos_y":23.555376}
+{"id":91,"name":"Homemaker","ability_id":142236,"perk":"passive","max_stages":1,"cost_per_stage":25,"value_per_stage":1.0,"links":[81,88],"tree":"Craft","pos_x":254.9603,"pos_y":286.281}
+{"id":92,"name":"Gifted Rider","ability_id":149286,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[78,82],"tree":"Craft","pos_x":-116.4794,"pos_y":437.7041}
+{"id":99,"name":"Eldritch Insight","ability_id":149305,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":260.0,"links":[20,108,10],"tree":"Warfare","entry":true,"pos_x":-164.3654,"pos_y":53.32237}
+{"id":108,"name":"Blessed","ability_id":149439,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":1.0,"links":[28,26,24,99,11,260,261,263,262,260,261,262,263],"tree":"Warfare","pos_x":-408.972,"pos_y":-37.27268}
+{"id":113,"name":"Hero's Vigor","ability_id":149311,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":280.0,"links":[47,53,49,48,45,63,42],"tree":"Fitness","pos_x":24.59002,"pos_y":-47.6264}
+{"id":128,"name":"Defiance","ability_id":149624,"perk":"passive","max_stages":2,"cost_per_stage":10,"value_per_stage":110.0,"links":[37,55,54,59,52],"tree":"Fitness","pos_x":-665.2265,"pos_y":33.90916}
+{"id":133,"name":"Unassailable","ability_id":151748,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[20,159],"tree":"Warfare","pos_x":171.604,"pos_y":-1.897065}
+{"id":134,"name":"Duelist's Rebuff","ability_id":151749,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[20,162],"tree":"Warfare","pos_x":-85.43686,"pos_y":-42.7899}
+{"id":136,"name":"Enduring Resolve","ability_id":151750,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[20,160],"tree":"Warfare","pos_x":55.65119,"pos_y":-90.33547}
+{"id":159,"name":"Bulwark","ability_id":64079,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1900.0,"links":[133,33,160],"tree":"Warfare","pos_x":173.4247,"pos_y":-144.6925}
+{"id":160,"name":"Reinforced","ability_id":64067,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":5140.0,"links":[136,33,161,159,162],"tree":"Warfare","pos_x":68.59325,"pos_y":-244.347}
+{"id":161,"name":"Last Stand","ability_id":60413,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[162,33,160],"tree":"Warfare","pos_x":-75.06453,"pos_y":-319.4114}
+{"id":162,"name":"Riposte","ability_id":60229,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":0.0,"links":[134,161,160],"tree":"Warfare","pos_x":-75.06453,"pos_y":-167.9883}
+{"id":163,"name":"Foresight","ability_id":59526,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":66.0,"links":[28,9,29],"tree":"Warfare","pos_x":-830.886,"pos_y":572.3025}
+{"id":259,"name":"Weapons Expert","ability_id":155859,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":4.0,"links":[10],"tree":"Warfare","pos_x":384.3817,"pos_y":75.32403}
+{"id":260,"name":"Salve of Renewal","ability_id":155978,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":1280.0,"links":[108],"tree":"Warfare","pos_x":-377.9108,"pos_y":196.9802}
+{"id":261,"name":"Hope Infusion","ability_id":155992,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":0.0,"links":[108],"tree":"Warfare","pos_x":49.18001,"pos_y":-19.15363}
+{"id":262,"name":"From the Brink","ability_id":156017,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2200.0,"links":[108],"tree":"Warfare","pos_x":-500.86127,"pos_y":-253.40651}
+{"id":263,"name":"Enlivening Overflow","ability_id":156008,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":0.0,"links":[108],"tree":"Warfare","pos_x":-773.9407,"pos_y":-285.7619}
+{"id":264,"name":"Master-at-Arms","ability_id":92134,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[10],"tree":"Warfare","pos_x":700.1702,"pos_y":549.0066}
+{"id":265,"name":"Ironclad","ability_id":159972,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[20],"tree":"Warfare","pos_x":217.4279,"pos_y":167.2133}
+{"id":266,"name":"Ward Master","ability_id":160190,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[44],"tree":"Fitness","pos_x":1069.021,"pos_y":209.9223}
+{"id":267,"name":"Bracing Anchor","ability_id":160162,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":4.0,"links":[44],"tree":"Fitness","pos_x":1030.195,"pos_y":-277.9967}
+{"id":268,"name":"Soothing Shield","ability_id":160199,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":147.0,"links":[44],"tree":"Fitness","pos_x":393.4413,"pos_y":-244.3471}
+{"id":270,"name":"Celerity","ability_id":160044,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[42],"tree":"Fitness","pos_x":313.1998,"pos_y":-378.9454}
+{"id":271,"name":"Refreshing Stride","ability_id":160048,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":100.0,"links":[42],"tree":"Fitness","pos_x":168.2478,"pos_y":106.3851}
+{"id":272,"name":"Thrill of the Hunt","ability_id":160045,"perk":"active","max_stages":2,"cost_per_stage":25,"value_per_stage":3.0,"links":[42],"tree":"Fitness","pos_x":425.79657,"pos_y":190.50908}
+{"id":273,"name":"Sustained by Suffering","ability_id":160057,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":30.0,"links":[53],"tree":"Fitness","pos_x":-464.6232,"pos_y":-239.1702}
+{"id":274,"name":"Relentlessness","ability_id":160072,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":3.0,"links":[53],"tree":"Fitness","pos_x":-104.8316,"pos_y":-277.9966}
+{"id":275,"name":"Pain's Refuge","ability_id":160065,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":1.0,"links":[53],"tree":"Fitness","pos_x":-231.6645,"pos_y":345.8149}
+{"id":276,"name":"Force of Nature","ability_id":174250,"perk":"active","max_stages":1,"cost_per_stage":50,"value_per_stage":900.0,"links":[10],"tree":"Warfare","pos_x":343.3726,"pos_y":630.5422}
+{"id":277,"name":"Exploiter","ability_id":63880,"perk":"active","max_stages":5,"cost_per_stage":10,"value_per_stage":2.0,"links":[10],"tree":"Warfare","pos_x":760.0879,"pos_y":569.4948}
+{"id":279,"name":"Discipline Artisan","ability_id":242521,"perk":"passive","max_stages":5,"cost_per_stage":10,"value_per_stage":3.0,"tree":"Craft","pos_x":750.44635,"pos_y":-256.55005}

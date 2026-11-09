@@ -124,7 +124,7 @@ mod tests {
 
     /// The roots of `c`: its player skills plus `sets` as set roots, nothing else.
     fn roots(c: &Corpus, sets: &[u32]) -> Roots {
-        Roots::build(c, &sets.iter().copied().collect::<BTreeSet<u32>>(), &RootConfig::default()).0
+        Roots::build(c, &sets.iter().copied().collect::<BTreeSet<u32>>(), &BTreeSet::new(), &RootConfig::default()).0
     }
 
     fn skill(id: u32) -> SkillData34 {
@@ -216,7 +216,7 @@ mod tests {
         c.names.insert(61747, "Major Force".into());
         let g = Graph::build(&c);
         let cfg = crate::roots::parse_config("[buffs]\nids = [61747]\n").unwrap();
-        let (r, _) = Roots::build(&c, &BTreeSet::new(), &cfg);
+        let (r, _) = Roots::build(&c, &BTreeSet::new(), &BTreeSet::new(), &cfg);
 
         let out = compile(&c, &g, &r);
         assert_eq!(out.iter().map(|a| a.id).collect::<Vec<_>>(), vec![61747]);

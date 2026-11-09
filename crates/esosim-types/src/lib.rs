@@ -7,6 +7,7 @@
 pub mod cca;
 pub mod channel;
 pub mod condition;
+pub mod cp;
 pub mod damage;
 pub mod effect_def;
 pub mod set_behaviour;
@@ -15,6 +16,7 @@ pub mod skill_serde;
 pub use cca::CoreCombatAbility;
 pub use channel::{AggKind, Channel, DamageDoneContext, DamageTakenContext, ResourceKind};
 pub use condition::{ArmourWeight, Bar, Condition, ConditionContext, NoContext};
+pub use cp::{CP_SLOTS_PER_TREE, CpIssue, CpLoadout, CpPerk, CpStar};
 pub use damage::ResistableDamageType;
 pub use effect_def::{ChannelValue, EffectDef, EffectSource, Stacking};
 pub use set_behaviour::{BehaviourClass, BlockBehaviour, SetBehaviour, SetKind};
@@ -34,9 +36,6 @@ mod tests {
     fn plain_channels_round_trip() {
         round_trip(Channel::Armour(ResistableDamageType::Spell));
         round_trip(Channel::Resource(ResourceKind::Health, AggKind::Multiplicative));
-        round_trip(Channel::DamageDone(DamageDoneContext::Type(ResistableDamageType::Flame)));
-        round_trip(Channel::DamageTaken(DamageTakenContext::AreaOfEffect));
-        round_trip(Channel::CostReductionCCA(CoreCombatAbility::Block));
     }
 
     #[test]
@@ -61,5 +60,21 @@ mod tests {
             Channel::Resource(ResourceKind::Stamina, AggKind::Multiplicative).agg_kind(),
             AggKind::Multiplicative
         );
+    }
+
+    #[test]
+    fn agg_kind_follows_the_payload_of_every_channel_that_has_one() {
+        use crate::{CoreCombatAbility, DamageDoneContext, DamageTakenContext};
+        let kinds = [AggKind::Additive, AggKind::Multiplicative];
+        for kind in kinds {
+            assert_eq!(Channel::Power(DamageDoneContext::All, kind).agg_kind(), kind);
+            assert_eq!(Channel::DamageDone(DamageDoneContext::Bash, kind).agg_kind(), kind);
+            assert_eq!(Channel::DamageTaken(DamageTakenContext::Monsters, kind).agg_kind(), kind);
+            assert_eq!(Channel::CostReductionCCA(CoreCombatAbility::Sneak, kind).agg_kind(), kind);
+            assert_eq!(Channel::Recovery(ResourceKind::Health, kind).agg_kind(), kind);
+        }
+        // no payload: always additive
+        assert_eq!(Channel::MovementSpeed.agg_kind(), AggKind::Additive);
+        assert_eq!(Channel::HealingDone.agg_kind(), AggKind::Additive);
     }
 }

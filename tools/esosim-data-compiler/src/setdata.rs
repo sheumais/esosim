@@ -26,7 +26,7 @@
 //! `Channel`, so the engine loads it without any generated Rust that mentions engine types.
 
 use esosim_types::damage::ResistableDamageType as Dmg;
-use esosim_types::{AggKind as Agg, Channel, ResourceKind as Res};
+use esosim_types::{AggKind as Agg, Channel, DamageDoneContext, ResourceKind as Res};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt::Write as _;
@@ -203,7 +203,7 @@ pub fn parse(data: &[u8]) -> Result<Vec<SetRecord>, String> {
 fn channel_of(code: u32) -> Option<Channel> {
     use Channel as C;
     Some(match code {
-        2 => C::Power,
+        2 => C::Power(DamageDoneContext::All, Agg::Additive),
         3 => C::Armour(Dmg::All),
         4 => C::Resource(Res::Magicka, Agg::Additive),
         7 => C::Resource(Res::Health, Agg::Additive),
@@ -850,7 +850,7 @@ mod tests {
 
     #[test]
     fn channel_codes_cover_what_the_old_generator_knew() {
-        assert_eq!(channel_of(2), Some(Channel::Power));
+        assert_eq!(channel_of(2), Some(Channel::Power(DamageDoneContext::All, Agg::Additive)));
         assert_eq!(channel_of(29), Some(Channel::Resource(Res::Stamina, Agg::Additive)));
         assert_eq!(channel_of(13), None);
     }

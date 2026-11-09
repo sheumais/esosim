@@ -1,6 +1,6 @@
 //! `verify`: hold everything a person wrote to the game data (roadmap 2.0 item 5).
 //!
-//! It works on files, not on the game: `bundle.jsonl`, `sets.jsonl`, `overrides.toml` and
+//! It works on files, not on the game: `bundle.jsonl`, `sets.jsonl`, `cp.jsonl`, `overrides.toml` and
 //! `roots.toml`, so it runs in `cargo xtask check` on a machine with no game install, and after
 //! `compile` on the fresh output. Every failure is a patch (or a typo) that made hand-written
 //! data stale:
@@ -24,6 +24,7 @@ use std::collections::{BTreeSet, HashMap};
 pub struct VerifyInput<'a> {
     pub abilities_jsonl: &'a str,
     pub sets_jsonl: &'a str,
+    pub cp_jsonl: &'a str,
     pub overrides_toml: &'a str,
     pub roots_toml: &'a str,
     /// Effect files written by hand elsewhere, as `(label, jsonl)`; an override must not reuse their ids.
@@ -320,6 +321,23 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
         }
         Err(e) => r.errors.push(e),
     }
+
+    // ---- champion point abilities that are not in the bundle; informative only
+    match crate::cp::ability_ids_of_jsonl(input.cp_jsonl) {
+        Ok(ids) => {
+            let missing: Vec<u32> = ids.into_iter().filter(|id| !by_id.contains_key(id)).collect();
+            if !missing.is_empty() {
+                let shown: Vec<String> = missing.iter().take(5).map(u32::to_string).collect();
+                r.warnings.push(format!(
+                    "{} champion point ability id(s) are not in the bundle: {}{}",
+                    missing.len(),
+                    shown.join(", "),
+                    if missing.len() > 5 { ", ..." } else { "" }
+                ));
+            }
+        }
+        Err(e) => r.errors.push(e),
+    }
     r
 }
 
@@ -346,6 +364,7 @@ mod tests {
         verify(&VerifyInput {
             abilities_jsonl: abilities,
             sets_jsonl: SETS,
+            cp_jsonl: "",
             overrides_toml: overrides,
             roots_toml: roots,
             other_effects: vec![("legacy.jsonl".into(), "{\"id\":61746,\"name\":\"x\"}\n// c\n")],

@@ -1,1 +1,2 @@
-{"id":142035,"name":"Fortified","source":{"Buff":{"ability_id":142035}},"channels":[{"channel":{"Armour":"All"},"value":0.0,"value_per_stack":34.62}],"stacking":{"PerStack":{"max":10}},"note":"Red CP. Migrated from engine::effect::FORTIFIED (roadmap 1.5). Max 10 stacks assumed from the 1.5 acceptance test; verify in game."}
+// Effects that are neither legacy rows nor generated. Empty: FORTIFIED moved to the game's CP table (cp_effects.jsonl, roadmap 2.2c),
+// where it is 34.61 armour per stage for up to 50 stages (this file had 34.62 and 10).

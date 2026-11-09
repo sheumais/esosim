@@ -156,7 +156,7 @@ pub struct ResolvedClassification {
 }
 
 /// Why an ability is in the bundle: the root category whose closure over the ability graph
-/// contains it (roadmap 2.0 item 1). `Skills` and `Sets` come from the game tables, the rest
+/// contains it (roadmap 2.0 item 1). `Skills`, `Sets` and `Cp` come from the game tables, the rest
 /// from `data/roots.toml`. An ability can belong to several.
 ///
 /// The declaration order is the sort order of `categories` in `bundle.jsonl`.

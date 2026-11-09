@@ -48,6 +48,28 @@ pub enum DamageTakenContext {
     Type(ResistableDamageType),
 }
 
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum StatusEffectContext {
+    All,
+    Martial,
+    Magical,
+    Type(StatusEffect),
+}
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum StatusEffect {
+    Burning,
+    Chilled,
+    Concussion,
+    Poisoned,
+    Diseased,
+    Hemorrhaging,
+    Sundered,
+    Overcharged,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Channel {
     Armour(ResistableDamageType),
@@ -55,7 +77,7 @@ pub enum Channel {
     CriticalDamage,
     /// Measured in 1% = 66
     CriticalResistance,
-    Power,
+    Power(DamageDoneContext, AggKind),
     Penetration(ResistableDamageType),
     Resource(ResourceKind, AggKind),
     Recovery(ResourceKind, AggKind),
@@ -63,17 +85,17 @@ pub enum Channel {
     HealingDone,
     HealingTaken,
     MovementSpeed,
-    CostReductionCCA(CoreCombatAbility),
+    CostReductionCCA(CoreCombatAbility, AggKind),
     CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
     CostReductionSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
     MundusBoost,
-    StatusEffectChance,
+    StatusEffectChance(StatusEffectContext),
     DecisiveUltimateChance,
     KillExperience,
     OffhandWeaponPowerBonus,
 
-    DamageDone(DamageDoneContext),
-    DamageTaken(DamageTakenContext),
+    DamageDone(DamageDoneContext, AggKind),
+    DamageTaken(DamageTakenContext, AggKind),
     DamageShieldStrength,
     BlockMitigation,
     CriticalDamageTaken,
@@ -102,11 +124,21 @@ pub enum Channel {
 }
 
 impl Channel {
+    /// Which bucket of the aggregator a value of this channel goes into. Channels that carry an
+    /// [`AggKind`] say so themselves; every other channel is additive.
+    ///
+    /// Units follow the bucket: an additive value is a flat amount (or percentage points for
+    /// channels such as `CriticalDamage`), a multiplicative value is a *fraction* (0.03 = 3 %) that
+    /// the aggregator turns into basis points.
     pub fn agg_kind(&self) -> AggKind {
         match self {
-            Channel::Resource(_, kind) => *kind,
-            Channel::Recovery(_, kind) => *kind,
-            Channel::SynergyRestore(_, kind) => *kind,
+            Channel::Resource(_, kind)
+            | Channel::Recovery(_, kind)
+            | Channel::SynergyRestore(_, kind)
+            | Channel::Power(_, kind)
+            | Channel::DamageDone(_, kind)
+            | Channel::DamageTaken(_, kind)
+            | Channel::CostReductionCCA(_, kind) => *kind,
             _ => AggKind::Additive,
         }
     }

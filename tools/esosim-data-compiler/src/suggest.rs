@@ -76,7 +76,8 @@ fn source_line(category: RootCategory, id: u32) -> String {
     match category {
         RootCategory::Buffs => format!("source = {{ Buff = {{ ability_id = {id} }} }}"),
         RootCategory::Mundus => format!("source = {{ Mundus = {{ ability_id = {id} }} }}"),
-        RootCategory::Cp => format!("source = {{ ChampionPoint = {{ cp_id = {id} }} }}"),
+        // a star is not described by its ability (`cp_id` is the star id, which only cp.jsonl knows)
+        RootCategory::Cp => format!("# champion points are written in cp_effects.toml (by star id), not here; ability {id}"),
         RootCategory::Skills => format!("source = {{ ActiveSkill = {{ ability_id = {id} }} }} # or Passive"),
         RootCategory::Racial => "source = { Race = { name = \"TODO\" } }".to_string(),
         RootCategory::Consumables => "source = \"Food\" # or \"Potion\"".to_string(),
@@ -249,7 +250,7 @@ mod tests {
     fn the_source_follows_the_category() {
         let a = ability(CLASSIFIED);
         assert!(skeleton(&a, RootCategory::Mundus).contains("Mundus = { ability_id = 76617 }"));
-        assert!(skeleton(&a, RootCategory::Cp).contains("ChampionPoint = { cp_id = 76617 }"));
+        assert!(skeleton(&a, RootCategory::Cp).contains("cp_effects.toml"));
         assert!(skeleton(&a, RootCategory::Racial).contains("Race = { name = \"TODO\" }"));
     }
 }

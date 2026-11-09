@@ -26,7 +26,9 @@
 //! they can be read (and linted) as a table. Patterns match lower-case text, use the
 //! `regex` crate's syntax (no look-around, no back-references) and must not contain `"`.
 
+use esosim_types::AggKind::Multiplicative;
 use esosim_types::cca::CoreCombatAbility as Cca;
+use esosim_types::channel::StatusEffectContext;
 use esosim_types::damage::ResistableDamageType as Dmg;
 use esosim_types::{
     AggKind as Agg, Channel, DamageDoneContext as DoneCtx, DamageTakenContext as TakenCtx,
@@ -41,13 +43,7 @@ use crate::resolved::{
 use eso_skill_data::SkillData34;
 use eso_skill_data::enums::tooltip_type::TooltipType;
 use regex::{Captures, Regex};
-use std::collections::BTreeMap;
 use std::sync::LazyLock;
-
-/// Human-readable channel set for reports, e.g. `Armour(All) + Power`.
-pub fn label(channels: &[Channel]) -> String {
-    channels.iter().map(|c| format!("{c:?}")).collect::<Vec<_>>().join(" + ")
-}
 
 /// The channel with its aggregation flavour set (only `Resource`/`Recovery` have one).
 fn with_agg(ch: Channel, agg: Agg) -> Channel {
@@ -333,45 +329,45 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("weapon_crit", r"weapon critical(?: strike)?(?: rating| chance)?", |_| vec![C::WeaponCriticalChance]),
         noun("crit_chance", r"critical(?: strike)? (?:chance|rating)(?: rating)?", |_| vec![C::CriticalChance]),
         // ---- damage taken ----------------------------------------------
-        noun("taken_aoe", r"damage (?:you )?(?:take|taken) from (?:area|aoe)(?: of effect)?(?: attacks| damage| abilities| effects)?|area(?: of effect)? damage taken|damage from area(?: of effect)?(?: attacks| damage| abilities)?", |_| vec![C::DamageTaken(TakenCtx::AreaOfEffect)]),
-        noun("taken_dot", r"damage (?:you )?(?:take|taken) from damage over time(?: abilities| effects| damage)?|damage over time damage taken", |_| vec![C::DamageTaken(TakenCtx::DamageOverTime)]),
-        noun("taken_projectile", r"damage (?:you )?(?:take|taken) from projectiles?(?: attacks| abilities)?|projectile damage taken|damage from projectiles?", |_| vec![C::DamageTaken(TakenCtx::Projectile)]),
-        noun("taken_monsters", r"damage (?:you )?(?:take|taken) from (?:dungeon,? ?trial,? and arena )?monsters|damage from (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageTaken(TakenCtx::Monsters)]),
-        noun("taken_players", r"damage (?:you )?(?:take|taken) from players?|damage from players?", |_| vec![C::DamageTaken(TakenCtx::Players)]),
-        noun("taken_siege", r"damage (?:you )?(?:take|taken) from siege(?: weapons)?|siege damage taken|damage from siege(?: weapons)?", |_| vec![C::DamageTaken(TakenCtx::Siege)]),
-        noun("taken_fall", r"fall damage(?: taken| you take)?", |_| vec![C::DamageTaken(TakenCtx::Fall)]),
+        noun("taken_aoe", r"damage (?:you )?(?:take|taken) from (?:area|aoe)(?: of effect)?(?: attacks| damage| abilities| effects)?|area(?: of effect)? damage taken|damage from area(?: of effect)?(?: attacks| damage| abilities)?", |_| vec![C::DamageTaken(TakenCtx::AreaOfEffect, Multiplicative)]),
+        noun("taken_dot", r"damage (?:you )?(?:take|taken) from damage over time(?: abilities| effects| damage)?|damage over time damage taken", |_| vec![C::DamageTaken(TakenCtx::DamageOverTime, Multiplicative)]),
+        noun("taken_projectile", r"damage (?:you )?(?:take|taken) from projectiles?(?: attacks| abilities)?|projectile damage taken|damage from projectiles?", |_| vec![C::DamageTaken(TakenCtx::Projectile, Multiplicative)]),
+        noun("taken_monsters", r"damage (?:you )?(?:take|taken) from (?:dungeon,? ?trial,? and arena )?monsters|damage from (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageTaken(TakenCtx::Monsters, Multiplicative)]),
+        noun("taken_players", r"damage (?:you )?(?:take|taken) from players?|damage from players?", |_| vec![C::DamageTaken(TakenCtx::Players, Multiplicative)]),
+        noun("taken_siege", r"damage (?:you )?(?:take|taken) from siege(?: weapons)?|siege damage taken|damage from siege(?: weapons)?", |_| vec![C::DamageTaken(TakenCtx::Siege, Multiplicative)]),
+        noun("taken_fall", r"fall damage(?: taken| you take)?", |_| vec![C::DamageTaken(TakenCtx::Fall, Multiplicative)]),
         noun("taken_element", r"(?P<el>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|physical|magic|spell) damage(?: taken| you take)|damage (?:you )?(?:take|taken) from (?P<el2>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|physical|magic|spell) (?:attacks|abilities|effects|damage)", |c| {
             let e = cap(c, "el").or(cap(c, "el2")).unwrap_or("");
-            vec![C::DamageTaken(TakenCtx::Type(el_of(e)))]
+            vec![C::DamageTaken(TakenCtx::Type(el_of(e)), Multiplicative)]
         }),
-        noun("taken_all", r"damage (?:you |they and their allies )?(?:take|taken)|incoming damage|damage reduction", |_| vec![C::DamageTaken(TakenCtx::All)]),
+        noun("taken_all", r"damage (?:you |they and their allies )?(?:take|taken)|incoming damage|damage reduction", |_| vec![C::DamageTaken(TakenCtx::All, Multiplicative)]),
         // ---- damage done -----------------------------------------------
-        noun("done_element", r"(?:spell )?damage with (?P<el>fire|flame|cold|frost|shock|lightning|poison|disease|bleed|physical|magic) effects?", |c| vec![C::DamageDone(DoneCtx::Type(el_of(cap(c, "el").unwrap_or(""))))]),
-        noun("done_element_by", r"damage (?:done|dealt) (?:by|with) (?P<el>fire|flame|cold|frost|shock|lightning|poison|disease|bleed|physical|magic) (?:attacks|abilities|effects|damage)", |c| vec![C::DamageDone(DoneCtx::Type(el_of(cap(c, "el").unwrap_or(""))))]),
-        noun("done_light_heavy", r"damage done with (?:light and heavy|heavy and light) attacks|(?:light and heavy|heavy and light) attack damage", |_| vec![C::DamageDone(DoneCtx::LightAttack), C::DamageDone(DoneCtx::HeavyAttack)]),
-        noun("done_light", r"damage done with light attacks|light attack damage", |_| vec![C::DamageDone(DoneCtx::LightAttack)]),
-        noun("done_heavy", r"damage done with heavy attacks|heavy attack damage", |_| vec![C::DamageDone(DoneCtx::HeavyAttack)]),
+        noun("done_element", r"(?:spell )?damage with (?P<el>fire|flame|cold|frost|shock|lightning|poison|disease|bleed|physical|magic) effects?", |c| vec![C::DamageDone(DoneCtx::Type(el_of(cap(c, "el").unwrap_or(""))), Multiplicative)]),
+        noun("done_element_by", r"damage (?:done|dealt) (?:by|with) (?P<el>fire|flame|cold|frost|shock|lightning|poison|disease|bleed|physical|magic) (?:attacks|abilities|effects|damage)", |c| vec![C::DamageDone(DoneCtx::Type(el_of(cap(c, "el").unwrap_or(""))), Multiplicative)]),
+        noun("done_light_heavy", r"damage done with (?:light and heavy|heavy and light) attacks|(?:light and heavy|heavy and light) attack damage", |_| vec![C::DamageDone(DoneCtx::LightAttack, Multiplicative), C::DamageDone(DoneCtx::HeavyAttack, Multiplicative)]),
+        noun("done_light", r"damage done with light attacks|light attack damage", |_| vec![C::DamageDone(DoneCtx::LightAttack, Multiplicative)]),
+        noun("done_heavy", r"damage done with heavy attacks|heavy attack damage", |_| vec![C::DamageDone(DoneCtx::HeavyAttack, Multiplicative)]),
         noun("done_dot", r"damage done with damage over time(?: effects| abilities)?(?P<status>(?: and| or) status effects)?|damage over time damage done", |c| {
-            let mut v = vec![C::DamageDone(DoneCtx::DamageOverTime)];
+            let mut v = vec![C::DamageDone(DoneCtx::DamageOverTime, Multiplicative)];
             if c.name("status").is_some() {
-                v.push(C::DamageDone(DoneCtx::StatusEffects));
+                v.push(C::DamageDone(DoneCtx::StatusEffects, Multiplicative));
             }
             v
         }),
         noun("done_aoe", r"damage done with area(?: of effect)?(?P<ot> and over time)?(?: attacks| abilities| effects)?", |c| {
-            let mut v = vec![C::DamageDone(DoneCtx::AreaOfEffect)];
+            let mut v = vec![C::DamageDone(DoneCtx::AreaOfEffect, Multiplicative)];
             if c.name("ot").is_some() {
-                v.push(C::DamageDone(DoneCtx::DamageOverTime));
+                v.push(C::DamageDone(DoneCtx::DamageOverTime, Multiplicative));
             }
             v
         }),
-        noun("done_direct", r"damage done with direct damage(?: and channeled)?(?: attacks| effects| abilities)?", |_| vec![C::DamageDone(DoneCtx::Direct)]),
-        noun("done_single", r"damage done with single target(?: attacks| abilities| damage)?", |_| vec![C::DamageDone(DoneCtx::SingleTarget)]),
-        noun("done_class", r"damage done with class abilities", |_| vec![C::DamageDone(DoneCtx::ClassAbilities)]),
-        noun("done_monsters", r"damage (?:done )?(?:against|to) (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageDone(DoneCtx::Monsters)]),
-        noun("done_noncrit", r"non-critical damage(?: done)?", |_| vec![C::DamageDone(DoneCtx::NonCritical)]),
-        noun("done_and_healing", r"damage and healing done|damage done and healing done|healing and damage done|damage and healing", |_| vec![C::DamageDone(DoneCtx::All), C::HealingDone]),
-        noun("done_all", r"damage (?:done|dealt)|outgoing damage|damage enemies do|damage they deal", |_| vec![C::DamageDone(DoneCtx::All)]),
+        noun("done_direct", r"damage done with direct damage(?: and channeled)?(?: attacks| effects| abilities)?", |_| vec![C::DamageDone(DoneCtx::Direct, Multiplicative)]),
+        noun("done_single", r"damage done with single target(?: attacks| abilities| damage)?", |_| vec![C::DamageDone(DoneCtx::SingleTarget, Multiplicative)]),
+        noun("done_class", r"damage done with class abilities", |_| vec![C::DamageDone(DoneCtx::ClassAbilities, Multiplicative)]),
+        noun("done_monsters", r"damage (?:done )?(?:against|to) (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageDone(DoneCtx::Monsters, Multiplicative)]),
+        noun("done_noncrit", r"non-critical damage(?: done)?", |_| vec![C::DamageDone(DoneCtx::NonCritical, Multiplicative)]),
+        noun("done_and_healing", r"damage and healing done|damage done and healing done|healing and damage done|damage and healing", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative), C::HealingDone]),
+        noun("done_all", r"damage (?:done|dealt)|outgoing damage|damage enemies do|damage they deal", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative)]),
         // ---- healing & shields ------------------------------------------
         noun("heal_taken", r"healing (?:received|taken)", |_| vec![C::HealingTaken]),
         noun("heal_done_restoration", r"healing with restoration staff(?: spells| abilities)?", |_| vec![C::HealingDoneSkillLine(Line::RestorationStaff)]),
@@ -396,12 +392,12 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("pen_spell", r"spell penetration", |_| vec![C::Penetration(Dmg::Spell)]),
         noun("pen_bare", r"penetration", |_| vec![C::Penetration(Dmg::All)]),
         // ---- costs -----------------------------------------------------------
-        noun("cost_roll", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?(?:roll dodge|dodge roll|rolling)|roll dodge(?: stamina)? cost|dodge roll cost", |_| vec![C::CostReductionCCA(Cca::DodgeRoll)]),
-        noun("cost_sprint", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?sprint(?:ing)?|sprint(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Sprint)]),
-        noun("cost_block", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?block(?:ing)?|block(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Block)]),
-        noun("cost_bash", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?bash|bash cost", |_| vec![C::CostReductionCCA(Cca::Bash)]),
-        noun("cost_sneak", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?sneak(?:ing)?|sneak(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Sneak)]),
-        noun("cost_break_free", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?break free|break free cost", |_| vec![C::CostReductionCCA(Cca::BreakFree)]),
+        noun("cost_roll", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?(?:roll dodge|dodge roll|rolling)|roll dodge(?: stamina)? cost|dodge roll cost", |_| vec![C::CostReductionCCA(Cca::DodgeRoll, Agg::Additive)]),
+        noun("cost_sprint", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?sprint(?:ing)?|sprint(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Sprint, Agg::Additive)]),
+        noun("cost_block", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?block(?:ing)?|block(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Block, Agg::Additive)]),
+        noun("cost_bash", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?bash|bash cost", |_| vec![C::CostReductionCCA(Cca::Bash, Agg::Additive)]),
+        noun("cost_sneak", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?sneak(?:ing)?|sneak(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Sneak, Agg::Additive)]),
+        noun("cost_break_free", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?break free|break free cost", |_| vec![C::CostReductionCCA(Cca::BreakFree, Agg::Additive)]),
         noun("cost_mechanic", r"(?P<m>magicka|stamina|health|ultimate) costs?|cost of (?:your )?(?P<m2>magicka|stamina|health|ultimate) abilities", |c| vec![C::CostReduction(mech_of(cap(c, "m").or(cap(c, "m2")).unwrap_or("")))]),
         // ---- everything else -----------------------------------------------
         noun("block_mitigation", r"block mitigation|amount of damage you (?:can )?block", |_| vec![C::BlockMitigation]),
@@ -416,10 +412,10 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("dodge_chance", r"dodge chance", |_| vec![C::DodgeChance]),
         noun("miss_chance", r"miss chance", |_| vec![C::MissChance]),
         noun("detection_radius", r"(?:radius|area) (?:where |in which )?you can be detected(?: while sneaking)?|detection radius(?: in stealth)?|stealth detection radius", |_| vec![C::DetectionRadius]),
-        noun("status_effect_chance", r"chance to apply status effects?|status effect chance", |_| vec![C::StatusEffectChance]),
+        noun("status_effect_chance", r"chance to apply status effects?|status effect chance", |_| vec![C::StatusEffectChance(StatusEffectContext::All)]),
         noun("stealth_detection", r"stealth detection", |_| vec![C::StealthDetection]),
         // ---- power (last: "spell damage" is a suffix of several phrases above) --
-        noun("power_both", r"weapon and spell (?:damage|power)|spell and weapon (?:damage|power)|weapon damage and spell damage|spell damage and weapon damage|weapon power and spell power|spell power and weapon power", |_| vec![C::Power]),
+        noun("power_both", r"weapon and spell (?:damage|power)|spell and weapon (?:damage|power)|weapon damage and spell damage|spell damage and weapon damage|weapon power and spell power|spell power and weapon power", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
         noun("power_weapon", r"weapon (?:damage|power)", |_| vec![C::WeaponPower]),
         noun("power_spell", r"spell (?:damage|power)", |_| vec![C::SpellPower]),
     ]
@@ -429,7 +425,7 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
 /// "<verb> <noun> by @" frame (so "dealing @ damage" never becomes a channel).
 static BARE: LazyLock<Vec<Noun>> = LazyLock::new(|| {
     vec![
-        noun("bare_damage", r"^(?:(?:your|their|the|all|enemy|enemies|target's)\s+)*damage$", |_| vec![C::DamageDone(DoneCtx::All)]),
+        noun("bare_damage", r"^(?:(?:your|their|the|all|enemy|enemies|target's)\s+)*damage$", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative)]),
         noun("bare_healing", r"^(?:(?:your|their|the|all)\s+)*healing$", |_| vec![C::HealingDone]),
     ]
 });
@@ -542,23 +538,13 @@ fn unclassified(reason: &str, clauses: Vec<String>) -> ResolvedClassification {
 /// How `<<n>>` is tied to the (type, id) pairs of `tooltip_data` (see [`TooltipRef`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Mapping {
-    /// `<<n>>` = `tooltip_data[n-1]` (the original, wrong assumption).
-    EntryIndex,
     /// `<<n>>` = pair `n - 1` of all entries' (type, id) pairs, flattened.
     #[default]
     PairFlattened,
-    /// No mapping: try every placeholder of the text; only clean matches are kept.
-    AnyPlaceholder,
 }
 
-pub const ALL_MAPPINGS: [Mapping; 3] = [Mapping::EntryIndex, Mapping::PairFlattened, Mapping::AnyPlaceholder];
-
 fn candidate_placeholders(r: &TooltipRef, text: &str, m: Mapping) -> Vec<usize> {
-    match m {
-        Mapping::EntryIndex => vec![r.entry + 1],
-        Mapping::PairFlattened => vec![r.flat + 1],
-        Mapping::AnyPlaceholder => (1..=max_placeholder(text)).collect(),
-    }
+    vec![r.flat + 1]
 }
 
 /// `None` when the ability has no value/coef (nothing to classify).

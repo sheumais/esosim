@@ -6,6 +6,8 @@
 //! * `data/set_behaviour.jsonl` one line per set: its behaviour class and classified ability blocks (roadmap 2.1b)
 //! * `data/set_items.csv`  `set id,item id,...` per set: which items belong to which set (roadmap 2.1e)
 //! * `data/effects.jsonl` overrides + high-confidence auto-classified effects, one `EffectDef` per line plus a `provenance` (roadmap 2.0)
+//! * `data/cp.jsonl`       one champion point star per line: stages, cost and value per stage, its tree (roadmap 2.2a, 2.2b)
+//! * `data/cp_effects.jsonl` one `EffectDef` per modelled champion point star, from `cp.jsonl` and the compiler's `cp_effects.toml` (roadmap 2.2c)
 //! * `data/bundle.jsonl`    one resolved ability per line (not compiled in; no engine code reads it yet)
 //! * `data/bundle.meta.json` statistics from an older compiler run, no longer written by the current compiler
 //! * `src/set_ids.rs`       one `pub const <NAME>_SET_ID: u16` per set
@@ -26,6 +28,15 @@ pub const SET_ITEMS_CSV: &str = include_str!("../data/set_items.csv");
 /// a listed buff. Not read by the engine yet: its rows are not unit-checked (see `effects.rs`
 /// in the compiler).
 pub const EFFECTS_JSONL: &str = include_str!("../data/effects.jsonl");
+
+/// `data/cp.jsonl`: one `esosim_types::CpStar` per line, sorted by star id, each with its tree (`cp_trees.toml`). The abilities the stars
+/// point at (with their tooltips) are in `bundle.jsonl`.
+pub const CP_JSONL: &str = include_str!("../data/cp.jsonl");
+
+/// `data/cp_effects.jsonl`: one `esosim_types::EffectDef` per modelled champion point star, sorted by
+/// ability id. `PerStack` with `value_per_stack` = the star's value per stage and `max` = its stages, so
+/// `ActiveEffects::set(ability_id, stages)` is a star with that many stages bought. The engine loads it.
+pub const CP_EFFECTS_JSONL: &str = include_str!("../data/cp_effects.jsonl");
 
 #[cfg(test)]
 mod tests {

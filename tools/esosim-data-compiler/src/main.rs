@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-const DEFAULT_OUT_DIR: &str = "bundle";
+const DEFAULT_OUT_DIR: &str = "../../crates/esosim-data/data";
 
 const USAGE: &str = "\
 usage:
@@ -11,7 +11,7 @@ usage:
       read the game, write the generated files into <dir> (default `bundle`), then run `verify`
       on them; exits 1 when verify fails (the files are written either way, for inspection)
   esosim-data-compiler verify [--dir <dir>] [inputs]
-      hold overrides.toml and roots.toml against <dir>/bundle.jsonl and <dir>/sets.jsonl;
+      hold overrides.toml and roots.toml against <dir>/bundle.jsonl, sets.jsonl and cp.jsonl;
       needs no game install
   esosim-data-compiler suggest-effects <category> [--dir <dir>] [inputs]
       print overrides.toml skeletons for the unreviewed roots of a category
@@ -104,10 +104,20 @@ fn options(cli: &Cli) -> Result<Options, String> {
     Ok(o)
 }
 
-/// `<dir>/bundle.jsonl` and `<dir>/sets.jsonl`.
-fn generated(cli: &Cli) -> Result<(String, String), String> {
+/// `<dir>/bundle.jsonl`, `<dir>/sets.jsonl` and `<dir>/cp.jsonl`.
+fn generated(cli: &Cli) -> Result<(String, String, String), String> {
     let dir = cli.dir.clone().unwrap_or_else(|| PathBuf::from(DEFAULT_OUT_DIR));
-    Ok((read(&dir.join("bundle.jsonl"))?, read(&dir.join("sets.jsonl"))?))
+    let cp_path = dir.join("cp.jsonl");
+    if !cp_path.exists() {
+        return Err(format!(
+            "{} not found: {} was written by an older compiler. Run the compile step first \
+             (`esosim-data-compiler <path to eso.mnf> --out {}`) so cp.jsonl and the champion point abilities exist",
+            cp_path.display(),
+            dir.display(),
+            dir.display()
+        ));
+    }
+    Ok((read(&dir.join("bundle.jsonl"))?, read(&dir.join("sets.jsonl"))?, read(&cp_path)?))
 }
 
 /// Run a command; `Ok(false)` is "ran, and the verdict was no".
@@ -115,15 +125,15 @@ fn run(cli: &Cli) -> Result<bool, String> {
     let opts = options(cli)?;
     match cli.command.as_str() {
         "verify" => {
-            let (bundle, sets) = generated(cli)?;
-            let report = esosim_data_compiler::verify_files(&bundle, &sets, &opts);
+            let (bundle, sets, cp) = generated(cli)?;
+            let report = esosim_data_compiler::verify_files(&bundle, &sets, &cp, &opts);
             eprintln!("{}", report.summary());
             Ok(report.ok())
         }
         "suggest-effects" => {
-            let (bundle, sets) = generated(cli)?;
+            let (bundle, sets, cp) = generated(cli)?;
             let category = cli.category.as_deref().unwrap_or_default();
-            let (text, count) = esosim_data_compiler::suggest_effects(category, &bundle, &sets, &opts)?;
+            let (text, count) = esosim_data_compiler::suggest_effects(category, &bundle, &sets, &cp, &opts)?;
             print!("{text}");
             eprintln!("suggest-effects: {count} skeleton(s)");
             Ok(true)

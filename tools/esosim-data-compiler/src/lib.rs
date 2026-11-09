@@ -16,6 +16,7 @@ mod behaviour;
 mod classify;
 mod compile;
 mod corpus;
+pub mod cp;
 pub mod effects;
 mod graph;
 mod manifest;
@@ -50,6 +51,10 @@ pub struct Options {
     pub roots_toml: String,
     /// Text of `overrides.toml`.
     pub overrides_toml: String,
+    /// Text of `cp_effects.toml`: which channel each champion point star feeds (roadmap 2.2c).
+    pub cp_effects_toml: String,
+    /// Text of `cp_trees.toml`: which tree each champion point star is in, and its way in (roadmap 2.2b).
+    pub cp_trees_toml: String,
     /// Effect files written by hand elsewhere (the engine's `core.jsonl`, `legacy.jsonl`), as
     /// `(label, jsonl)`. Their ids are never auto-generated, and an override may not reuse them.
     pub hand_written: Vec<(String, String)>,
@@ -60,6 +65,8 @@ impl Default for Options {
         Options {
             roots_toml: roots::ROOTS_TOML.to_string(),
             overrides_toml: overrides::OVERRIDES_TOML.to_string(),
+            cp_effects_toml: cp::CP_EFFECTS_TOML.to_string(),
+            cp_trees_toml: cp::CP_TREES_TOML.to_string(),
             hand_written: Vec::new(),
         }
     }
@@ -75,10 +82,16 @@ impl Options {
         Ok(ids)
     }
 
-    fn verify_input<'a>(&'a self, abilities_jsonl: &'a str, sets_jsonl: &'a str) -> VerifyInput<'a> {
+    fn verify_input<'a>(
+        &'a self,
+        abilities_jsonl: &'a str,
+        sets_jsonl: &'a str,
+        cp_jsonl: &'a str,
+    ) -> VerifyInput<'a> {
         VerifyInput {
             abilities_jsonl,
             sets_jsonl,
+            cp_jsonl,
             overrides_toml: &self.overrides_toml,
             roots_toml: &self.roots_toml,
             other_effects: self.hand_written.iter().map(|(l, t)| (l.clone(), t.as_str())).collect(),
@@ -87,8 +100,8 @@ impl Options {
 }
 
 /// `verify` on generated files (`bundle.jsonl`, `sets.jsonl`) and the hand-written inputs in `opts`.
-pub fn verify_files(abilities_jsonl: &str, sets_jsonl: &str, opts: &Options) -> VerifyReport {
-    verify::verify(&opts.verify_input(abilities_jsonl, sets_jsonl))
+pub fn verify_files(abilities_jsonl: &str, sets_jsonl: &str, cp_jsonl: &str, opts: &Options) -> VerifyReport {
+    verify::verify(&opts.verify_input(abilities_jsonl, sets_jsonl, cp_jsonl))
 }
 
 /// `suggest-effects <category>`: `overrides.toml` skeletons for every root of `category` that has no
@@ -98,6 +111,7 @@ pub fn suggest_effects(
     category: &str,
     abilities_jsonl: &str,
     sets_jsonl: &str,
+    cp_jsonl: &str,
     opts: &Options,
 ) -> Result<(String, usize), String> {
     let category = RootCategory::parse(category).ok_or_else(|| {
@@ -106,10 +120,17 @@ pub fn suggest_effects(
     })?;
     let abilities = verify::parse_abilities(abilities_jsonl)?;
     let config = roots::parse_config(&opts.roots_toml)?;
-    let root_ids = roots::root_ids_from_files(category, &abilities, sets_jsonl, &config)?;
+    let root_ids = roots::root_ids_from_files(category, &abilities, sets_jsonl, cp_jsonl, &config)?;
 
     let mut reviewed = opts.hand_written_ids()?;
     reviewed.extend(overrides::parse(&opts.overrides_toml)?.iter().map(|o| o.def.id));
+    if matches!(category, RootCategory::Cp) {
+        // a star written in cp_effects.toml is reviewed
+        let stars = cp::stars_of_jsonl(cp_jsonl)?;
+        for m in cp::parse_effects(&opts.cp_effects_toml)? {
+            reviewed.extend(stars.iter().filter(|s| s.id == m.id).map(|s| s.ability_id));
+        }
+    }
     Ok(suggest::suggest(&abilities, category, &root_ids, &reviewed))
 }
 
@@ -120,6 +141,8 @@ pub struct Bundle {
     pub abilities_jsonl: String,
     /// `sets.jsonl`: one set per line.
     pub sets_jsonl: String,
+    /// `cp.jsonl`: one champion point star per line (`esosim_types::CpStar`), sorted by id (roadmap 2.2a).
+    pub cp_jsonl: String,
     /// `set_ids.rs`: one `pub const <NAME>_SET_ID: u16` per set.
     pub set_ids_rs: String,
     /// `set_behaviour.jsonl`: one line per set with its behaviour class (roadmap 2.1b).
@@ -129,6 +152,9 @@ pub struct Bundle {
     /// `effects.jsonl`: every override plus the high-confidence auto-classified effects, each with
     /// its `provenance` (roadmap 2.0 item 4).
     pub effects_jsonl: String,
+    /// `cp_effects.jsonl`: one `EffectDef` per modelled champion point star, from `cp.jsonl` and
+    /// `cp_effects.toml` (roadmap 2.2c). The engine loads it next to `core.jsonl` and `legacy.jsonl`.
+    pub cp_effects_jsonl: String,
     /// One-paragraph report of the classification (counts per class, unclassified blocks).
     pub behaviour_report: String,
     /// What building the roots found: counts per category, listed ids the game does not have.
@@ -138,7 +164,7 @@ pub struct Bundle {
 impl Bundle {
     /// Hold the compiled files and the hand-written inputs in `opts` against each other (`verify`).
     pub fn verify(&self, opts: &Options) -> VerifyReport {
-        verify_files(&self.abilities_jsonl, &self.sets_jsonl, opts)
+        verify_files(&self.abilities_jsonl, &self.sets_jsonl, &self.cp_jsonl, opts)
     }
 
     /// Write every output file into `dir` (created if missing).
@@ -147,10 +173,12 @@ impl Bundle {
         for (name, text) in [
             ("bundle.jsonl", &self.abilities_jsonl),
             ("sets.jsonl", &self.sets_jsonl),
+            ("cp.jsonl", &self.cp_jsonl),
             ("set_ids.rs", &self.set_ids_rs),
             ("set_behaviour.jsonl", &self.set_behaviour_jsonl),
             ("set_items.csv", &self.set_items_csv),
             ("effects.jsonl", &self.effects_jsonl),
+            ("cp_effects.jsonl", &self.cp_effects_jsonl),
         ] {
             let path = dir.join(name);
             fs::write(&path, text).map_err(|e| format!("writing {path:?}: {e}"))?;
@@ -159,7 +187,7 @@ impl Bundle {
     }
 }
 
-/// Read the game's ability table, set table and lang from the manifest at `mnf` and compile them.
+/// Read the game's ability table, set table, champion point table and lang from the manifest at `mnf` and compile them.
 pub fn compile(mnf: &Path) -> Result<Bundle, String> {
     compile_with(mnf, &Options::default())
 }
@@ -200,12 +228,25 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
 
     let corpus = Corpus::build(data.skills, lang);
     let graph = Graph::build(&corpus);
-    let (roots, roots_report) = Roots::build(&corpus, &sets.ability_roots, &config);
+    let mut cp_stars = cp::stars(&data.cp, |id| corpus.names.get(&id).cloned())?;
+    let cp_trees_report = cp::assign_trees(&mut cp_stars, &cp::parse_trees(&opts.cp_trees_toml)?)?;
+    let one_way = cp::one_way_links(&cp_stars);
+    // a star's effect is keyed by its ability id: it must not collide with a hand-written effect
+    let cp_effects = cp::effects(&cp_stars, &cp::parse_effects(&opts.cp_effects_toml)?)?;
+    let mut taken = opts.hand_written_ids()?;
+    taken.extend(overrides.iter().map(|o| o.def.id));
+    if let Some(d) = cp_effects.iter().find(|d| taken.contains(&d.id)) {
+        return Err(format!(
+            "champion point `{}` (ability {}) is also written by hand in overrides.toml or an engine effect file; the effect would count twice",
+            d.name, d.id
+        ));
+    }
+    let (roots, roots_report) =
+        Roots::build(&corpus, &sets.ability_roots, &cp::ability_roots(&cp_stars), &config);
     let abilities = compile::compile(&corpus, &graph, &roots);
 
     // an override wins over the classifier, and an id written by hand elsewhere is never generated
-    let mut taken = opts.hand_written_ids()?;
-    taken.extend(overrides.iter().map(|o| o.def.id));
+    taken.extend(cp_effects.iter().map(|d| d.id));
     let auto = effects::auto_effects(&abilities, &config, &taken);
     let effects_jsonl = effects::to_jsonl(&overrides, &auto)?;
 
@@ -216,12 +257,24 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
     Ok(Bundle {
         abilities_jsonl: compile::to_jsonl(&abilities)?,
         sets_jsonl: sets.jsonl,
+        cp_jsonl: cp::to_jsonl(&cp_stars)?,
         set_ids_rs: sets.ids_rs,
         set_behaviour_jsonl: behaviour::to_jsonl(&set_behaviours)?,
         set_items_csv: sets.items_csv,
         effects_jsonl,
+        cp_effects_jsonl: cp::effects_to_jsonl(&cp_effects)?,
         behaviour_report: report.summary(),
-        roots_report: roots_report.summary(),
+        roots_report: format!(
+            "{}\ncp table: {} record(s) read, {} real star(s) (a star has an ability and a map position)\ncp {cp_trees_report}{}",
+            roots_report.summary(),
+            data.cp.len(),
+            cp_stars.len(),
+            if one_way.is_empty() {
+                String::new()
+            } else {
+                format!("\ncp links listed by one star only (prerequisites follow each star's own list): {one_way:?}")
+            }
+        ),
     })
 }
 
@@ -260,6 +313,12 @@ mod tests {
         s
     }
 
+    /// The shipped inputs, except for the champion point ones: the test games have no CP table, and
+    /// the shipped mapping and trees name the real stars.
+    fn no_cp() -> Options {
+        Options { cp_effects_toml: String::new(), cp_trees_toml: String::new(), ..Options::default() }
+    }
+
     fn data() -> manifest::GameData {
         let mut lang = LangTexts::default();
         lang.ability_names.insert(5, "Set Proc".into());
@@ -267,13 +326,14 @@ mod tests {
         manifest::GameData {
             skills: vec![skill(5), skill(6)],
             set_table: set_table(20, 5),
+            cp: Vec::new(),
             lang,
         }
     }
 
     #[test]
     fn set_abilities_become_roots_and_everything_is_named() {
-        let b = build(data(), &Options::default()).unwrap();
+        let b = build(data(), &no_cp()).unwrap();
         let ids: Vec<u64> = b
             .abilities_jsonl
             .lines()
@@ -294,7 +354,7 @@ mod tests {
 
     /// Inputs with no extra roots and the given overrides.
     fn opts(overrides: &str) -> Options {
-        Options { roots_toml: String::new(), overrides_toml: overrides.into(), hand_written: Vec::new() }
+        Options { overrides_toml: overrides.into(), roots_toml: String::new(), ..no_cp() }
     }
 
     const PROC_OVERRIDE: &str = "[[effect]]\nid = 5\nname = \"Set Proc\"\nsource = { Passive = { ability_id = 5 } }\nchannels = [{ channel = \"CriticalChance\", value = 0.0 }]\n";
@@ -360,13 +420,13 @@ mod tests {
         let b = build(data(), &o).unwrap();
 
         // the one set ability (5) already has an override
-        let (text, n) = suggest_effects("sets", &b.abilities_jsonl, &b.sets_jsonl, &opts("")).unwrap();
+        let (text, n) = suggest_effects("sets", &b.abilities_jsonl, &b.sets_jsonl, &b.cp_jsonl, &opts("")).unwrap();
         assert_eq!(n, 1, "{text}");
         assert!(text.contains("id = 5\n") && text.contains("Set = { set_id = 0"), "{text}");
-        let (_, n) = suggest_effects("sets", &b.abilities_jsonl, &b.sets_jsonl, &o).unwrap();
+        let (_, n) = suggest_effects("sets", &b.abilities_jsonl, &b.sets_jsonl, &b.cp_jsonl, &o).unwrap();
         assert_eq!(n, 0);
 
-        let e = suggest_effects("mundis", &b.abilities_jsonl, &b.sets_jsonl, &o).unwrap_err();
+        let e = suggest_effects("mundis", &b.abilities_jsonl, &b.sets_jsonl, &b.cp_jsonl, &o).unwrap_err();
         assert!(e.contains("unknown category `mundis`") && e.contains("mundus"), "{e}");
     }
 
@@ -377,7 +437,7 @@ mod tests {
         let buffs = cfg.listed_ids(RootCategory::Buffs);
         assert!(buffs.contains(&76617), "Minor Slayer");
         assert!(buffs.contains(&61746), "Minor Force (Velothi Ur-Mage's Amulet)");
-        assert!(cfg.listed_ids(RootCategory::Cp).contains(&141898), "Precision");
+        assert!(cfg.listed_ids(RootCategory::Cp).is_empty(), "cp roots come from the CP table, not roots.toml");
         assert!(overrides::parse(&o.overrides_toml).is_ok());
     }
 
@@ -402,8 +462,8 @@ mod tests {
     #[test]
     fn write_to_creates_every_output_file() {
         let dir = std::env::temp_dir().join(format!("esosim-compiler-test-{}", std::process::id()));
-        build(data(), &Options::default()).unwrap().write_to(&dir).unwrap();
-        for f in ["bundle.jsonl", "sets.jsonl", "set_ids.rs", "set_behaviour.jsonl"] {
+        build(data(), &no_cp()).unwrap().write_to(&dir).unwrap();
+        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl"] {
             assert!(dir.join(f).is_file(), "{f}");
         }
         fs::remove_dir_all(&dir).unwrap();

@@ -26,6 +26,7 @@ pub mod data {
 pub mod engine {
     pub mod active_effects;
     pub mod aggregator;
+    pub mod champion;
     pub mod conditional;
     pub mod effect;
     pub mod grant_rule;
