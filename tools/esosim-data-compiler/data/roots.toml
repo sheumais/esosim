@@ -45,11 +45,8 @@ debuff_ids = [
 name_prefix = "Boon: "
 expect = 14
 
-# Racial passives seen in the legacy tables: Argonian Resistance, Spell Attunement (Breton),
-# Resist Frost (Nord), Rugged (Nord), Resist Affliction (Wood Elf).
 [racial]
-ids = [45255, 45262, 45304, 45306, 45319]
+tags = [357]
 
-# Potions seen in the legacy tables: Spell Resist, Physical Resist.
 [consumables]
-ids = [64562, 64564]
+tags = [156, 474, 97, 298]

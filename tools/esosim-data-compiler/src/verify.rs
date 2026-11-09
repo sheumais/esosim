@@ -9,8 +9,7 @@
 //! * every id an override refers to exists: its `source` ability, the buffs its `condition`
 //!   asks about, the abilities it needs slotted, the sets it needs pieces of;
 //! * where the override carries a `check`, its value equals the number in the ability record;
-//! * no override repeats an id that is hand-written elsewhere (the engine's `core.jsonl` /
-//!   `legacy.jsonl`): the effect would be counted twice;
+//! * no override repeats an id that is hand-written elsewhere: the effect would be counted twice;
 //! * every id and name rule of `roots.toml` still finds what it was written for (once the
 //!   bundle carries `categories`, i.e. was written by a compiler that knows root categories).
 

@@ -86,7 +86,6 @@ pub fn resolve(s: &SkillData34, corpus: &Corpus, graph: &Graph) -> ResolvedAbili
 pub fn compile(corpus: &Corpus, graph: &Graph, roots: &Roots) -> Vec<ResolvedAbility> {
     let wanted = graph.reachable(roots.all(), |_| true);
 
-    // `by_category` iterates in category order, so every label list comes out sorted
     let mut labels: BTreeMap<u32, Vec<RootCategory>> = BTreeMap::new();
     for (category, ids) in &roots.by_category {
         for id in graph.reachable(ids.iter().copied(), |_| true) {
@@ -94,15 +93,11 @@ pub fn compile(corpus: &Corpus, graph: &Graph, roots: &Roots) -> Vec<ResolvedAbi
         }
     }
 
-    wanted
-        .iter()
-        .filter_map(|id| corpus.skills.get(id))
-        .map(|s| {
-            let mut a = resolve(s, corpus, graph);
-            a.categories = labels.remove(&s.ability_id1).unwrap_or_default();
-            a
-        })
-        .collect()
+    wanted.iter().filter_map(|id| corpus.skills.get(id)).map(|s| {
+        let mut a = resolve(s, corpus, graph);
+        a.categories = labels.remove(&s.ability_id1).unwrap_or_default();
+        a
+    }).collect()
 }
 
 /// `bundle.jsonl`: one ability per line, sorted by id, LF endings, no absolute paths or

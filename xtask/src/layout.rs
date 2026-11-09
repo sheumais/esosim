@@ -10,11 +10,6 @@ pub const DATA_DIR: &str = "crates/esosim-data/data";
 /// The generated set-id constants file (`esosim_data::set_ids`).
 pub const IDS_FILE: &str = "crates/esosim-data/src/set_ids.rs";
 
-/// Effect files written by hand (relative to the workspace root). The compiler never generates an
-/// effect for their ids, and `verify` rejects an override that reuses one.
-pub const HAND_WRITTEN_EFFECTS: &[&str] =
-    &["crates/esosim/src/data/effects/core.jsonl", "crates/esosim/src/data/effects/legacy.jsonl"];
-
 /// `--hand-written <file>` for each of [`HAND_WRITTEN_EFFECTS`].
 pub fn hand_written_args(root: &Path) -> Vec<String> {
     HAND_WRITTEN_EFFECTS

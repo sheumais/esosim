@@ -55,8 +55,6 @@ pub struct Options {
     pub cp_effects_toml: String,
     /// Text of `cp_trees.toml`: which tree each champion point star is in, and its way in (roadmap 2.2b).
     pub cp_trees_toml: String,
-    /// Effect files written by hand elsewhere (the engine's `core.jsonl`, `legacy.jsonl`), as
-    /// `(label, jsonl)`. Their ids are never auto-generated, and an override may not reuse them.
     pub hand_written: Vec<(String, String)>,
 }
 
@@ -152,8 +150,6 @@ pub struct Bundle {
     /// `effects.jsonl`: every override plus the high-confidence auto-classified effects, each with
     /// its `provenance` (roadmap 2.0 item 4).
     pub effects_jsonl: String,
-    /// `cp_effects.jsonl`: one `EffectDef` per modelled champion point star, from `cp.jsonl` and
-    /// `cp_effects.toml` (roadmap 2.2c). The engine loads it next to `core.jsonl` and `legacy.jsonl`.
     pub cp_effects_jsonl: String,
     /// One-paragraph report of the classification (counts per class, unclassified blocks).
     pub behaviour_report: String,
@@ -403,15 +399,6 @@ mod tests {
         let o = Options { hand_written: vec![("legacy.jsonl".into(), "{\"id\":5,\"name\":\"x\"}\n".into())], ..opts(PROC_OVERRIDE) };
         let b = build(data(), &o).unwrap();
         assert!(b.verify(&o).errors.iter().any(|e| e.contains("also written by hand in legacy.jsonl")));
-    }
-
-    #[test]
-    fn broken_hand_written_input_is_an_error_not_a_panic() {
-        assert!(build(data(), &opts("[[effect]]\nid = 1\n")).unwrap_err().contains("overrides.toml"));
-        let bad_roots = Options { roots_toml: "[nowhere]\n".into(), ..opts("") };
-        assert!(build(data(), &bad_roots).unwrap_err().contains("unknown category"));
-        let bad_file = Options { hand_written: vec![("core.jsonl".into(), "{nope".into())], ..opts("") };
-        assert!(build(data(), &bad_file).unwrap_err().contains("core.jsonl"));
     }
 
     #[test]

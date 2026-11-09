@@ -20,9 +20,6 @@ usage:
 inputs (all commands):
   --roots <file>          roots.toml        (default: the one built into the compiler)
   --overrides <file>      overrides.toml    (default: the one built into the compiler)
-  --hand-written <file>   an effects .jsonl written by hand elsewhere (the engine's core.jsonl,
-                          legacy.jsonl); repeatable. Its ids are never generated, and an
-                          override may not reuse them
 ";
 
 #[derive(Default)]

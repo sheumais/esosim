@@ -38,6 +38,9 @@ pub struct CategorySpec {
     /// `buffs` only: ids applied to the enemy. They are roots too.
     #[serde(default)]
     pub debuff_ids: Vec<u32>,
+    /// Every ability carrying one of these `ability_tags` (`SkillData34::ability_tags`).
+    #[serde(default)]
+    pub tags: Vec<u16>,
 }
 
 /// The parsed `roots.toml`.
@@ -180,6 +183,13 @@ impl Roots {
                 }
                 found.extend(by_name.iter().copied());
             }
+            if !spec.tags.is_empty() {
+            for (id, s) in &corpus.skills {
+                    if s.ability_tags.iter().any(|t| spec.tags.contains(t)) {
+                        found.insert(*id);
+                    }
+                }
+            }
             if let Some(expected) = spec.expect {
                 if by_name.len() != expected {
                     report.unexpected.push((*category, expected, by_name.len()));
@@ -218,7 +228,13 @@ pub fn root_ids_from_files(
         }
         RootCategory::Sets => set_ability_ids(sets_jsonl),
         RootCategory::Cp => crate::cp::ability_ids_of_jsonl(cp_jsonl),
-        other => Ok(config.listed_ids(other)),
+        other => {
+            let mut ids = config.listed_ids(other);
+            if let Some(spec) = config.categories.get(&other) {
+                ids.extend(abilities.iter().filter(|a| matches_rules(spec, a)).map(|a| a.id));
+            }
+            Ok(ids)
+        }
     }
 }
 
@@ -244,6 +260,12 @@ pub fn set_ability_ids(sets_jsonl: &str) -> Result<BTreeSet<u32>, String> {
     }
     ids.remove(&0);
     Ok(ids)
+}
+
+pub fn matches_rules(spec: &CategorySpec, a: &ResolvedAbility) -> bool {
+    spec.names.iter().any(|n| *n == a.name)
+        || spec.name_prefix.as_deref().is_some_and(|p| a.name.starts_with(p))
+        || a.tags.iter().any(|t| spec.tags.contains(t))
 }
 
 #[cfg(test)]
