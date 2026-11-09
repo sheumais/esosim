@@ -717,7 +717,7 @@ mod tests {
         assert_eq!(rows[1][0]["value"], 129.0);
         assert_eq!(rows[2][0]["channel"], "HealingTaken");
         assert_eq!(rows[2][0]["value"], 4.0);
-        assert_eq!(rows[2][1]["channel"], "Power");
+        assert_eq!(rows[2][1]["channel"], serde_json::json!({"Power": ["All", "Additive"]}));
         assert_eq!(rows[2][1]["value"], 258.0);
         assert_eq!(rows[3].as_array().unwrap().len(), 0);
         // an unmapped stat is kept, with a null channel and its source numbers

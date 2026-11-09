@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::aggregator::ChannelSet;
-use super::effect::{AggKind, Condition, ConditionContext, NoContext};
+use super::effect::{AggKind, Channel, Condition, ConditionContext, EffectDef, EffectSource, NoContext};
 use super::registry::EffectRegistry;
 
 /// Which effects are on, and with how many stacks. What a stack count means depends on the
@@ -50,23 +50,60 @@ impl ActiveEffects {
     /// Aggregate, applying an effect only when its condition evaluates to `Some(true)`.
     /// Undecidable (`None`) conditions are left out.
     pub fn aggregate_with(&self, registry: &EffectRegistry, ctx: &dyn ConditionContext) -> ChannelSet {
+        self.aggregate_with_boost(registry, ctx, 0)
+    }
+
+    /// Like [`aggregate_with`](Self::aggregate_with), for a build whose gear gives a mundus boost
+    /// of its own (`extra_mundus_boost_bps`, in basis points: Divines pieces, roadmap 2.3).
+    ///
+    /// Every effect whose source is a mundus stone is worth `value * (1 + boost)`, where the boost is
+    /// `extra_mundus_boost_bps` plus whatever the other active effects put on `Channel::MundusBoost`
+    /// (a fraction, so 9.1 % is `0.091`), truncated to a whole number. Boosts add up (seven 9.1 % Divines pieces are +63.7 %), and a
+    /// stone never boosts itself. The returned set holds only what effects produce, so the `extra`
+    /// boost is not in its `MundusBoost`: whoever supplied it already has it.
+    pub fn aggregate_with_boost(
+        &self,
+        registry: &EffectRegistry,
+        ctx: &dyn ConditionContext,
+        extra_mundus_boost_bps: i64,
+    ) -> ChannelSet {
         let mut out = ChannelSet::new();
+        let mut stones: Vec<(&EffectDef, u32)> = Vec::new();
         for (&id, &stacks) in &self.stacks {
             let Some(fx) = registry.get(id) else { continue };
             if fx.condition != Condition::Always && fx.condition.evaluate(ctx) != Some(true) {
                 continue;
             }
-            for cv in &fx.channels {
-                let value = fx.channel_value_at(cv, stacks);
-                match cv.channel.agg_kind() {
-                    AggKind::Additive => out.add_additive(cv.channel, value.round() as i64),
-                    AggKind::Multiplicative => {
-                        out.add_multiplicative_bps(cv.channel, (value * 10_000.0).round() as i64)
-                    }
-                }
+            if matches!(fx.source, EffectSource::Mundus { .. }) {
+                stones.push((fx, stacks));
+                continue;
+            }
+            add_effect(&mut out, fx, stacks, 1.0, false);
+        }
+        if !stones.is_empty() {
+            let boost_bps = out.get_multiplicative_bps(Channel::MundusBoost) + extra_mundus_boost_bps;
+            let scale = 1.0 + boost_bps as f64 / 10_000.0;
+            for (fx, stacks) in stones {
+                add_effect(&mut out, fx, stacks, scale, true);
             }
         }
         out
+    }
+}
+
+/// Add every channel of `fx` at `stacks` stacks, each value times `scale`. A mundus stone's value is
+/// truncated to a whole number, as the character sheet does (2023 x 1.727 = 3493.8 shows 3493); every
+/// other effect is rounded.
+fn add_effect(out: &mut ChannelSet, fx: &EffectDef, stacks: u32, scale: f64, truncate: bool) {
+    for cv in &fx.channels {
+        let mut value = fx.channel_value_at(cv, stacks) * scale;
+        if truncate {
+            value = (value + 1e-6).floor(); // the epsilon keeps 1212 * 1.5 style products from landing just under
+        }
+        match cv.channel.agg_kind() {
+            AggKind::Additive => out.add_additive(cv.channel, value.round() as i64),
+            AggKind::Multiplicative => out.add_multiplicative_bps(cv.channel, (value * 10_000.0).round() as i64),
+        }
     }
 }
 

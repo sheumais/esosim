@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
 use esosim_types::{AggKind::{self, Multiplicative}, DamageDoneContext, channel::StatusEffectContext};
 
-use crate::{data::{enums::{cca::CoreCombatAbility::{self, Bash, Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{self, All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::{self, *}, DamageDoneContext::{Bash as BashDamage, *}, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}};
+use crate::{data::{enums::{cca::CoreCombatAbility::{self, Bash, Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{self, All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, NoContext, Channel::{self, *}, DamageDoneContext::{Bash as BashDamage, *}, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}};
 
 pub enum ActiveBar {
     Front,
@@ -27,6 +27,10 @@ pub struct Player {
     pub backup_abilities: Vec<u32>,
     pub werewolf_abilities: Vec<u32>,
     pub attributes: (u8, u8, u8),
+    /// The stones picked, in pick order (the first is the one that survives without Twice-Born Star).
+    /// Kept here, not only in `active_effects`, so a bar swap that loses the second stone's slot and
+    /// then gets it back re-applies the same stone (`recompute` gates by `mundus_slots`).
+    pub mundus_pick: esosim_types::MundusLoadout,
 }
 
 impl Player {
@@ -40,6 +44,7 @@ impl Player {
             backup_abilities: Vec::new(),
             werewolf_abilities: Vec::new(),
             attributes: (0, 0, 0),
+            mundus_pick: esosim_types::MundusLoadout::default(),
         }
     }
 
@@ -101,18 +106,35 @@ impl Player {
 
     pub fn recompute(&mut self, registry: &EffectRegistry, grant_rules: &[GrantRule]) {
         let mut active = self.active_effects.clone();
+        // Only as many stones as the gear on the active bar has room for, in pick order. The picks
+        // themselves are never forgotten, so swapping to a bar with fewer than 5 Twice-Born Star pieces
+        // switches the second stone off and swapping back switches the same stone on again.
+        let slots = self.mundus_slots();
+        let stones = self.mundus_pick.distinct().into_iter().filter(|id| {
+            registry.get(*id).is_some_and(|d| matches!(d.source, crate::engine::effect::EffectSource::Mundus { .. }))
+        });
+        for id in stones.skip(slots) {
+            active.set(id, 0);
+        }
         for rule in grant_rules {
             if let Some(stacks) = rule.evaluate(self) {
                 active.set(rule.effect_id, stacks);
             }
         }
-        let mut channels = active.aggregate(registry);
+        // Gear and sets first: their `MundusBoost` (Divines) scales the mundus stones, which are
+        // worth `value * (1 + boost)` (roadmap 2.3), so the boost has to be known before the effects
+        // are added. `aggregate_with_boost` leaves the boost out of its own `MundusBoost`, so it is
+        // counted once.
+        let mut channels = ChannelSet::new();
         self.apply_gear(&mut channels);
         self.apply_set_bonuses(&mut channels);
+        let mundus_boost_bps = channels.get_multiplicative_bps(MundusBoost);
+        channels.merge(&active.aggregate_with_boost(registry, &NoContext, mundus_boost_bps));
         self.channels = channels;
     }
 
     pub fn apply_gear(&self, channels: &mut ChannelSet) { // todo add tests
+        let mut divines_seen = 0u32;
         for (slot, gear) in self.get_active_gear_with_slots() {
             let power = gear.get_weapon_power();
             if power > 0f32 {
@@ -123,7 +145,7 @@ impl Player {
                     _ => OFFHAND_MULTIPLIER,
                 };
                 let p = (power * m).round();
-                channels.add_additive(Power(DamageDoneContext::Type(All), Additive), p);
+                channels.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), Additive), p);
             } 
             channels.add_additive(Armour(ResistableDamageTypeAll), gear.get_armour_value(&slot));
             if let Some(gear_trait) = gear.get_item_trait() {
@@ -153,7 +175,15 @@ impl Player {
                                 channels.add_multiplicative_bps(CostReductionCCA(DodgeRoll, Multiplicative), bps);
                                 channels.add_multiplicative_bps(CostReductionCCA(Sprint, Multiplicative), bps);
                             },
-                            GearTrait::ArmorDivines => {channels.add_multiplicative_bps(MundusBoost, (v * 10_000.0).round());},
+                            GearTrait::ArmorDivines => {
+                                // The character sheet counts the second Divines piece at a whole percent
+                                // (9.1 % shows as 9.0 %), the others exactly: eight Legendary pieces are
+                                // +72.7 %, not 72.8 % (checked against the game's sheet, roadmap 2.3).
+                                let exact = (v * 10_000.0).round();
+                                let bps = if divines_seen == 1 { (v * 100.0).round() * 100.0 } else { exact };
+                                divines_seen += 1;
+                                channels.add_multiplicative_bps(MundusBoost, bps);
+                            },
                             GearTrait::ArmorNirnhoned => {}, // handle in armour code
                             GearTrait::ArmorInfused => {}, // handle in enchantment code
                             GearTrait::ArmorTraining => {channels.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
@@ -201,9 +231,9 @@ impl Player {
                             EnchantType::Health => {channels.add_additive(Resource(Health, Additive), v)},
                             EnchantType::HealthRegen => {channels.add_additive(Recovery(Health, Additive), v)},
                             EnchantType::IncreaseBashDamage => {channels.add_additive(DamageDone(BashDamage, Additive), v);},
-                            EnchantType::IncreasePhysicalDamage => {channels.add_additive(Power(DamageDoneContext::Type(All), AggKind::Additive), v); channels.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreasePhysicalDamage => {channels.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); channels.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
                             EnchantType::IncreasePotionEffectiveness => {channels.add_additive(PotionEffectiveness, v);},
-                            EnchantType::IncreaseSpellDamage => {channels.add_additive(Power(DamageDoneContext::Type(All), AggKind::Additive), v); channels.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreaseSpellDamage => {channels.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); channels.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
                             EnchantType::Magicka => {channels.add_additive(Resource(Mag, Additive), v)},
                             EnchantType::MagickaRegen => {channels.add_additive(Recovery(Mag, Additive), v)},
                             EnchantType::PhysicalResistance => {channels.add_additive(Armour(Martial), v)},

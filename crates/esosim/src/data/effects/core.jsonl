@@ -1,2 +1,0 @@
-// Effects that are neither legacy rows nor generated. Empty: FORTIFIED moved to the game's CP table (cp_effects.jsonl, roadmap 2.2c),
-// where it is 34.61 armour per stage for up to 50 stages (this file had 34.62 and 10).

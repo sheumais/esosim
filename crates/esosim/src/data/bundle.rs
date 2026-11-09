@@ -1,6 +1,7 @@
 //! Runtime view of the effect data (roadmap 1.5, Appendix A.3).
 //!
-//! Holds the `EffectDef`s and the champion point stars; abilities and mundus data join it in 2.0.
+//! Holds the `EffectDef`s (hand-written files, the champion point stars' effects and the reviewed rows of
+//! the compiler's `effects.jsonl`, which is where the mundus stones live) and the champion point stars.
 //! Everything is compiled in with `include_str!`, so it works in WASM with no file IO.
 
 use std::collections::{BTreeMap, HashMap};
@@ -34,6 +35,11 @@ impl Bundle {
             bundle
                 .add_jsonl(esosim_data::CP_EFFECTS_JSONL)
                 .unwrap_or_else(|e| panic!("embedded effect file cp_effects.jsonl: {e}"));
+            // the rows a person wrote in the compiler's overrides.toml (roadmap 2.3: the mundus stones); the
+            // auto-classified rows of the same file have unchecked units and stay out
+            bundle
+                .add_reviewed_jsonl(esosim_data::EFFECTS_JSONL)
+                .unwrap_or_else(|e| panic!("embedded effect file effects.jsonl: {e}"));
             bundle.add_stars_jsonl(esosim_data::CP_JSONL).unwrap_or_else(|e| panic!("embedded cp.jsonl: {e}"));
             bundle
         })
@@ -55,12 +61,38 @@ impl Bundle {
             }
             let def: EffectDef =
                 serde_json::from_str(line).map_err(|e| format!("effects line {}: {e}", i + 1))?;
-            let id = def.id;
-            if let Some(prev) = self.effects.insert(id, def) {
-                return Err(format!("effects line {}: duplicate id {id} (`{}`)", i + 1, prev.name));
-            }
+            self.insert_def(i, def)?;
         }
         Ok(())
+    }
+
+    /// The rows of the compiler's `effects.jsonl` that a person wrote (`"provenance":"override"`, from
+    /// `overrides.toml`). Rows with `"provenance":"auto"` are skipped: their units are not checked
+    /// against the engine's channels (see the compiler's `effects.rs`). A duplicate id is an error.
+    pub fn add_reviewed_jsonl(&mut self, effects: &str) -> Result<(), String> {
+        for (i, line) in effects.lines().enumerate() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with("//") {
+                continue;
+            }
+            let row: serde_json::Value =
+                serde_json::from_str(line).map_err(|e| format!("effects line {}: {e}", i + 1))?;
+            if row.get("provenance").and_then(|p| p.as_str()) != Some("override") {
+                continue;
+            }
+            let def: EffectDef =
+                serde_json::from_value(row).map_err(|e| format!("effects line {}: {e}", i + 1))?;
+            self.insert_def(i, def)?;
+        }
+        Ok(())
+    }
+
+    fn insert_def(&mut self, line_index: usize, def: EffectDef) -> Result<(), String> {
+        let id = def.id;
+        match self.effects.insert(id, def) {
+            Some(prev) => Err(format!("effects line {}: duplicate id {id} (`{}`)", line_index + 1, prev.name)),
+            None => Ok(()),
+        }
     }
 
     /// One `CpStar` per line. A repeated star id is an error.
@@ -113,13 +145,14 @@ mod tests {
     }
 
     /// Roadmap 1.6: all legacy rows are in the data. FORTIFIED, Piercing and Precision moved to the CP table
-    /// (2.2c, where the game gives their real stage caps); legacy.jsonl keeps the other 64 effects,
-    /// 73 channel entries (several effects cover more than one channel).
+    /// (2.2c, where the game gives their real stage caps) and the two mundus rows (Thief, Shadow) to the
+    /// compiler's overrides (2.3); legacy.jsonl keeps the other 62 effects, 71 channel entries (several
+    /// effects cover more than one channel).
     #[test]
     fn every_legacy_row_is_in_the_effect_data() {
         let b = Bundle::from_jsonl(include_str!("effects/legacy.jsonl")).unwrap();
-        assert_eq!(channel_total(&b), 73);
-        assert_eq!(b.effects.len(), 64);
+        assert_eq!(channel_total(&b), 71);
+        assert_eq!(b.effects.len(), 62);
     }
 
     #[test]
@@ -149,7 +182,32 @@ mod tests {
     fn duplicate_ids_are_rejected() {
         let line = include_str!("effects/legacy.jsonl").lines().find(|l| l.starts_with('{')).unwrap();
         let err = Bundle::from_jsonl(&format!("{line}\n{line}\n")).unwrap_err();
-        assert!(err.contains("duplicate id 13975"), "{err}");
+        assert!(err.contains("duplicate id 17906"), "{err}");
+    }
+
+    #[test]
+    fn only_reviewed_rows_of_effects_jsonl_are_loaded() {
+        let row = |id: u32, provenance: &str| {
+            format!(
+                r#"{{"id":{id},"name":"E{id}","source":"Food","channels":[{{"channel":"CriticalChance","value":1.0,"value_per_stack":0.0}}],"condition":"Always","stacking":"Unique","provenance":"{provenance}"}}"#
+            )
+        };
+        let mut b = Bundle::default();
+        b.add_reviewed_jsonl(&format!("{}\n{}\n", row(1, "override"), row(2, "auto"))).unwrap();
+        assert_eq!(b.effects.keys().copied().collect::<Vec<_>>(), [1]);
+        // an override that repeats an id of the hand-written files is an error, not a double count
+        let err = b.add_reviewed_jsonl(&row(1, "override")).unwrap_err();
+        assert!(err.contains("duplicate id 1"), "{err}");
+    }
+
+    #[test]
+    fn the_mundus_stones_come_from_the_reviewed_overrides_and_not_from_the_legacy_rows() {
+        use esosim_types::{Channel, EffectSource};
+        let b = Bundle::embedded();
+        let thief = b.effect(13975).expect("The Thief (13975)");
+        assert_eq!(thief.source, EffectSource::Mundus { ability_id: 13975 });
+        assert_eq!(thief.value_at(Channel::CriticalChance, 1), 1212.0);
+        assert!(!include_str!("effects/legacy.jsonl").contains("\"id\":13975"));
     }
 
     #[test]

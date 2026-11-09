@@ -84,6 +84,7 @@ pub enum Channel {
     SynergyRestore(ResourceKind, AggKind),
     HealingDone,
     HealingTaken,
+    CriticalHealing,
     MovementSpeed,
     CostReductionCCA(CoreCombatAbility, AggKind),
     CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
@@ -139,6 +140,8 @@ impl Channel {
             | Channel::DamageDone(_, kind)
             | Channel::DamageTaken(_, kind)
             | Channel::CostReductionCCA(_, kind) => *kind,
+            // a fraction (0.091 = 9.1 %), summed over Divines pieces and scaling every mundus stone
+            Channel::MundusBoost => AggKind::Multiplicative,
             _ => AggKind::Additive,
         }
     }

@@ -30,6 +30,7 @@ pub mod engine {
     pub mod conditional;
     pub mod effect;
     pub mod grant_rule;
+    pub mod mundus;
     pub mod registry;
     pub mod set_descriptor;
 }

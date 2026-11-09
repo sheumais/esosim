@@ -196,7 +196,7 @@ mod tests {
         serde_json::from_str(json).unwrap()
     }
 
-    const CLASSIFIED: &str = r#"{"id":76617,"name":"Minor Slayer","value1":5,"duration_ms":4000,"tooltip_text":"Increases damage done to Dungeon, Trial and Arena monsters by <<1>>%.","classification":{"status":"classified","channels":[{"DamageDone":"Monsters"}],"direction":"raises","evidence":[]}}"#;
+    const CLASSIFIED: &str = r#"{"id":76617,"name":"Minor Slayer","value1":5,"duration_ms":4000,"tooltip_text":"Increases damage done to Dungeon, Trial and Arena monsters by <<1>>%.","classification":{"status":"classified","channels":[{"DamageDone":["Monsters", "Multiplicative"]}],"direction":"raises","evidence":[]}}"#;
     const UNCLASSIFIED: &str = r#"{"id":50,"name":"Mystery \"X\"","triggers":[{"u2":[78,0,0,0]},{"u2":[0,0,0,0]}],"classification":{"status":"unclassified","reason":"no_rule_matched","unmatched_clauses":["does a thing"]}}"#;
 
     #[test]

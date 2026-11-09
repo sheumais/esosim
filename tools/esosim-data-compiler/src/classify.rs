@@ -705,9 +705,9 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
     fn verb_by_shape() {
         assert_eq!(chans("increases your max health by @"), ["Resource(Health, Additive)"]);
         assert_eq!(dir("increases your max health by @"), Direction::Raises);
-        assert_eq!(chans("reduces damage taken from area attacks by @"), ["DamageTaken(AreaOfEffect)"]);
+        assert_eq!(chans("reduces damage taken from area attacks by @"), ["DamageTaken(AreaOfEffect, Multiplicative)"]);
         assert_eq!(dir("reduces damage taken from area attacks by @"), Direction::Lowers);
-        assert_eq!(chans("increases your weapon and spell damage by @"), ["Power"]);
+        assert_eq!(chans("increases your weapon and spell damage by @"), ["Power(All, Additive)"]);
         assert_eq!(chans("increases your weapon damage by @"), ["WeaponPower"]);
         assert_eq!(chans("increases your spell damage by @"), ["SpellPower"]);
     }
@@ -720,7 +720,7 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
         );
         assert_eq!(
             chans("increasing damage done by # and increasing damage done with heavy attacks against monsters by @"),
-            ["DamageDone(HeavyAttack)"]
+            ["DamageDone(HeavyAttack, Multiplicative)"]
         );
         // "against monsters" is an extra condition no rule models, so it is flagged partial
         // (and therefore not accepted at ability level)
@@ -750,7 +750,7 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
         );
         assert_eq!(
             chans("increases your light and heavy attack damage by @"),
-            ["DamageDone(LightAttack)", "DamageDone(HeavyAttack)"]
+            ["DamageDone(LightAttack, Multiplicative)", "DamageDone(HeavyAttack, Multiplicative)"]
         );
     }
 
@@ -763,9 +763,9 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
         assert_eq!(chans("increases your physical and spell resistance by @"), ["Armour(All)"]);
         assert_eq!(chans("increases your physical resistance by @"), ["Armour(Martial)"]);
         assert_eq!(chans("increases your fire resistance by @"), ["Armour(Flame)"]);
-        assert_eq!(chans("reduces fall damage taken by @"), ["DamageTaken(Fall)"]);
-        assert_eq!(chans("reduces your damage taken from players by @"), ["DamageTaken(Players)"]);
-        assert_eq!(chans("reduces damage taken by @"), ["DamageTaken(All)"]);
+        assert_eq!(chans("reduces fall damage taken by @"), ["DamageTaken(Fall, Multiplicative)"]);
+        assert_eq!(chans("reduces your damage taken from players by @"), ["DamageTaken(Players, Multiplicative)"]);
+        assert_eq!(chans("reduces damage taken by @"), ["DamageTaken(All, Multiplicative)"]);
     }
 
     #[test]
@@ -786,14 +786,14 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
 
     #[test]
     fn bare_nouns_only_inside_a_by_frame() {
-        assert_eq!(chans("increases damage by @"), ["DamageDone(All)"]);
+        assert_eq!(chans("increases damage by @"), ["DamageDone(All, Multiplicative)"]);
         assert!(chans("deals @ damage").is_empty());
     }
 
     #[test]
     fn costs_and_misc() {
-        assert_eq!(chans("reduces the cost of sprint by @"), ["CostReductionCCA(Sprint)"]);
-        assert_eq!(chans("reduces the cost of roll dodge by @"), ["CostReductionCCA(DodgeRoll)"]);
+        assert_eq!(chans("reduces the cost of sprint by @"), ["CostReductionCCA(Sprint, Additive)"]);
+        assert_eq!(chans("reduces the cost of roll dodge by @"), ["CostReductionCCA(DodgeRoll, Additive)"]);
         assert_eq!(chans("reduces your magicka cost by @"), ["CostReduction(Magicka)"]);
         assert_eq!(chans("increases your movement speed by @"), ["MovementSpeed"]);
         assert_eq!(chans("increases potion effectiveness by @"), ["PotionEffectiveness"]);
@@ -836,11 +836,11 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
             chans("increases your disease and poison resistance by @"),
             ["Armour(Disease)", "Armour(Poison)"]
         );
-        assert_eq!(chans("damage dealt by fire attacks increased by @"), ["DamageDone(Type(Flame))"]);
-        assert_eq!(chans("reduces the stamina cost of roll dodge by @"), ["CostReductionCCA(DodgeRoll)"]);
-        assert_eq!(chans("reduces the cost of sneak by @"), ["CostReductionCCA(Sneak)"]);
+        assert_eq!(chans("damage dealt by fire attacks increased by @"), ["DamageDone(Type(Flame), Multiplicative)"]);
+        assert_eq!(chans("reduces the stamina cost of roll dodge by @"), ["CostReductionCCA(DodgeRoll, Additive)"]);
+        assert_eq!(chans("reduces the cost of sneak by @"), ["CostReductionCCA(Sneak, Additive)"]);
         assert_eq!(chans("increases the amount of damage you block by @"), ["BlockMitigation"]);
-        assert_eq!(chans("increases your damage done to dungeon, trial, and arena monsters by @"), ["DamageDone(Monsters)"]);
+        assert_eq!(chans("increases your damage done to dungeon, trial, and arena monsters by @"), ["DamageDone(Monsters, Multiplicative)"]);
         assert_eq!(chans("increases your healing with restoration staff spells by @"), ["HealingDoneSkillLine(RestorationStaff)"]);
     }
 

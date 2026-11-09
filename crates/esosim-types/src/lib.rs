@@ -10,6 +10,7 @@ pub mod condition;
 pub mod cp;
 pub mod damage;
 pub mod effect_def;
+pub mod mundus;
 pub mod set_behaviour;
 pub mod skill_serde;
 
@@ -19,6 +20,7 @@ pub use condition::{ArmourWeight, Bar, Condition, ConditionContext, NoContext};
 pub use cp::{CP_SLOTS_PER_TREE, CpIssue, CpLoadout, CpPerk, CpStar};
 pub use damage::ResistableDamageType;
 pub use effect_def::{ChannelValue, EffectDef, EffectSource, Stacking};
+pub use mundus::{BASE_MUNDUS_STONES, MUNDUS_STONES_WITH_EXTRA_SLOT, MundusIssue, MundusLoadout};
 pub use set_behaviour::{BehaviourClass, BlockBehaviour, SetBehaviour, SetKind};
 
 #[cfg(test)]

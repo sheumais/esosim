@@ -22,13 +22,122 @@
 # An id must not also be written by hand in the engine's `core.jsonl` / `legacy.jsonl`: `verify`
 # rejects it, because the effect would count twice. Move the row here and delete it there.
 #
-# Example (not active):
-#
-# [[effect]]
-# id = 13975
-# name = "Thief (Mundus)"
-# game_name = "Boon: The Thief"
-# source = { Mundus = { ability_id = 13975 } }
-# channels = [{ channel = "CriticalChance", value = 1212 }]
-# check = { field = "value1" }
-# source_url = "https://en.uesp.net/wiki/Online:The_Thief_(Mundus_Stone)"
+
+# ---- Mundus stones (roadmap 2.3) ------------------------------------------------------------
+# The game's ability records carry no usable magnitude for a stone (the tooltip says "by <<1>>"), so the
+# base values are hand-written: collected from the game's character sheet (no Divines), so there is no
+# `check`. `verify` still holds the ids and the game names. Every stone is `Unique`; the Divines boost is
+# applied by the engine: floor(value x (1 + MundusBoost)).
+# Units: ratings, resources, resistances and recoveries are flat; CriticalDamage, HealingDone,
+# MovementSpeed and KillExperience are percentage points.
+
+[[effect]]
+id = 13940
+name = "The Warrior (Mundus)"
+game_name = "Boon: The Warrior"
+source = { Mundus = { ability_id = 13940 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 238.0 }]
+note = "Weapon and Spell Damage (the game's tooltip); `Power(All)` is what set stat 2 (\"both\") maps to."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13943
+name = "The Mage (Mundus)"
+game_name = "Boon: The Mage"
+source = { Mundus = { ability_id = 13943 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 2023.0 }]
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13974
+name = "The Serpent (Mundus)"
+game_name = "Boon: The Serpent"
+source = { Mundus = { ability_id = 13974 } }
+channels = [{ channel = { Recovery = ["Stamina", "Additive"] }, value = 310.0 }]
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13975
+name = "The Thief (Mundus)"
+game_name = "Boon: The Thief"
+source = { Mundus = { ability_id = 13975 } }
+channels = [{ channel = "CriticalChance", value = 1212.0 }]
+note = "Weapon and Spell Critical Strike rating: `CriticalChance` is the channel both ratings read."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13976
+name = "The Lady (Mundus)"
+game_name = "Boon: The Lady"
+source = { Mundus = { ability_id = 13976 } }
+channels = [{ channel = { Armour = "All" }, value = 2744.0 }]
+note = "Physical and Spell Resistance: `Armour(All)`, which resistance() adds to the Martial and Spell groups alike."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13977
+name = "The Steed (Mundus)"
+game_name = "Boon: The Steed"
+source = { Mundus = { ability_id = 13977 } }
+channels = [{ channel = "MovementSpeed", value = 10.0 }, { channel = { Recovery = ["Health", "Additive"] }, value = 264.0 }]
+note = "MovementSpeed is in percentage points (10 = +10 %), like the champion point Celerity."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13978
+name = "The Lord (Mundus)"
+game_name = "Boon: The Lord"
+source = { Mundus = { ability_id = 13978 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 2225.0 }]
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13979
+name = "The Apprentice (Mundus)"
+game_name = "Boon: The Apprentice"
+source = { Mundus = { ability_id = 13979 } }
+channels = [{ channel = "KillExperience", value = 8.0 }]
+note = "Experience and crafting inspiration gain, 8 % (percentage points). Not spell damage: the game's tooltip says experience. Its twin record 269724 is not modelled. `KillExperience` is the closest channel; it has no crafting-inspiration split."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13980
+name = "The Ritual (Mundus)"
+game_name = "Boon: The Ritual"
+source = { Mundus = { ability_id = 13980 } }
+channels = [{ channel = "HealingDone", value = 8.0 }]
+note = "HealingDone is in percentage points (8 = +8 %)."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13981
+name = "The Lover (Mundus)"
+game_name = "Boon: The Lover"
+source = { Mundus = { ability_id = 13981 } }
+channels = [{ channel = { Penetration = "All" }, value = 2744.0 }]
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13982
+name = "The Atronach (Mundus)"
+game_name = "Boon: The Atronach"
+source = { Mundus = { ability_id = 13982 } }
+channels = [{ channel = { Recovery = ["Magicka", "Additive"] }, value = 310.0 }]
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13984
+name = "The Shadow (Mundus)"
+game_name = "Boon: The Shadow"
+source = { Mundus = { ability_id = 13984 } }
+channels = [{ channel = "CriticalDamage", value = 11.0 }]
+note = "Critical Damage in percentage points (11 = +11 %). The stone also raises critical healing; there is no channel for that yet."
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"
+
+[[effect]]
+id = 13985
+name = "The Tower (Mundus)"
+game_name = "Boon: The Tower"
+source = { Mundus = { ability_id = 13985 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2023.0 }]
+source_url = "https://en.uesp.net/wiki/Online:Mundus_Stone"

@@ -39,7 +39,8 @@ debuff_ids = [
     61742, 145975, 79867, 61726, 79907, 86304, 88401, 61723, 61733, 140699, 79895, 79717,
 ]
 
-# The 13 stones are found by name: "Boon: The Thief" ... (Thief 13975, Shadow 13984).
+# The 13 stones are found by name: "Boon: The Thief" ... (Thief 13975, Shadow 13984); the Apprentice has a
+# twin record (269724), hence 14. Their numbers are hand-written in overrides.toml (roadmap 2.3).
 [mundus]
 name_prefix = "Boon: "
 expect = 14

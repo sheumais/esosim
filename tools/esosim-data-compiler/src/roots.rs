@@ -273,7 +273,7 @@ mod tests {
         assert!(buffs.contains(&61747), "Major Force");
         assert!(cfg.debuff_ids().contains(&61743), "Major Breach is a debuff");
         assert!(!cfg.debuff_ids().contains(&76617));
-        assert_eq!(cfg.categories[&RootCategory::Mundus].expect, Some(13));
+        assert_eq!(cfg.categories[&RootCategory::Mundus].expect, Some(14));
         assert!(cfg.categories.get(&RootCategory::Cp).is_none(), "cp comes from the CP table");
     }
 
