@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
-use esosim_types::{AggKind::{self, Multiplicative}, DamageDoneContext, channel::StatusEffectContext};
+use esosim_types::{AggKind::{self, Multiplicative}, Channel, DamageDoneContext, MundusLoadout, PlayerClass, channel::StatusEffectContext};
 
-use crate::{data::{enums::{cca::CoreCombatAbility::{self, Bash, Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{self, All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, NoContext, Channel::{self, *}, DamageDoneContext::{Bash as BashDamage, *}, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
+use crate::{data::{enums::{cca::CoreCombatAbility::{Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::*, DamageDoneContext::Bash as BashDamage, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
+
+use crate::engine::effect::EffectSource;
 
 pub enum ActiveBar {
     Front,
@@ -34,7 +36,13 @@ pub struct Player {
     /// The stones picked, in pick order (the first is the one that survives without Twice-Born Star).
     /// Kept here, not only in `active_effects`, so a bar swap that loses the second stone's slot and
     /// then gets it back re-applies the same stone (`recompute` gates by `mundus_slots`).
-    pub mundus_pick: esosim_types::MundusLoadout,
+    pub mundus_pick: MundusLoadout,
+    /// The character's class. `None` = not set, which leaves `Condition::ClassIs` undecided
+    /// (`ConditionContext for Player`, roadmap 1.2); `Build::to_player` sets it (1.3).
+    pub class: Option<PlayerClass>,
+    /// Where `channels` came from: one entry per source (a gear category, a set bonus row, an
+    /// effect), written by `recompute`. `channels` is the merge of all of them; `explain` reads it.
+    pub sources: Vec<(EffectSource, ChannelSet)>,
 }
 
 impl Player {
@@ -50,6 +58,8 @@ impl Player {
             ability_skill_lines: HashMap::new(),
             attributes: Attributes::default(),
             mundus_pick: esosim_types::MundusLoadout::default(),
+            class: None,
+            sources: Vec::new(),
         }
     }
 
@@ -110,6 +120,14 @@ impl Player {
     }
 
     pub fn recompute(&mut self, registry: &EffectRegistry, grant_rules: &[GrantRule]) {
+        self.recompute_with(registry, grant_rules);
+    }
+
+    /// Derive `channels` and `sources` from the gear, the picks and `active_effects`, in the order
+    /// gear, sets, then effects (grants, champion points, mundus, consumables, group buffs: all of
+    /// them are effects that were switched on). Effects gated on a build-time condition are decided
+    /// with the player as the context (roadmap 1.2).
+    pub fn recompute_with<'a>(&mut self, registry: &EffectRegistry, grant_rules: impl IntoIterator<Item = &'a GrantRule>) {
         let mut active = self.active_effects.clone();
         // Only as many stones as the gear on the active bar has room for, in pick order. The picks
         // themselves are never forgotten, so swapping to a bar with fewer than 5 Twice-Born Star pieces
@@ -128,17 +146,58 @@ impl Player {
         }
         // Gear and sets first: their `MundusBoost` (Divines) scales the mundus stones, which are
         // worth `value * (1 + boost)` (roadmap 2.3), so the boost has to be known before the effects
-        // are added. `aggregate_with_boost` leaves the boost out of its own `MundusBoost`, so it is
+        // are added. `aggregate_parts` leaves the boost out of its own `MundusBoost`, so it is
         // counted once.
+        let mut sources: Vec<(EffectSource, ChannelSet)> = self.gear_parts();
+        sources.extend(self.set_bonus_parts());
+        let mut so_far = ChannelSet::new();
+        for (_, part) in &sources {
+            so_far.merge(part);
+        }
+        let mundus_boost_bps = so_far.get_multiplicative_bps(MundusBoost);
+        for (fx, part) in active.aggregate_parts(registry, &*self, mundus_boost_bps) {
+            sources.push((fx.source.clone(), part));
+        }
         let mut channels = ChannelSet::new();
-        self.apply_gear(&mut channels);
-        self.apply_set_bonuses(&mut channels);
-        let mundus_boost_bps = channels.get_multiplicative_bps(MundusBoost);
-        channels.merge(&active.aggregate_with_boost(registry, &NoContext, mundus_boost_bps));
+        for (_, part) in &sources {
+            channels.merge(part);
+        }
         self.channels = channels;
+        self.sources = sources;
     }
 
-    pub fn apply_gear(&self, channels: &mut ChannelSet) { // todo add tests
+    /// Where the value of `channel` comes from: one entry per source that contributes, in the order
+    /// the sources were gathered, in the channel's own unit (a fraction for a multiplicative
+    /// channel: 0.05 is 5 %). Needs `recompute` to have run (`Build::to_player` does).
+    pub fn explain(&self, channel: Channel) -> Vec<(EffectSource, f64)> {
+        self.sources
+            .iter()
+            .filter_map(|(source, part)| {
+                let value = match channel.agg_kind() {
+                    Additive => part.get(channel) as f64,
+                    Multiplicative => part.get_multiplicative_bps(channel) as f64 / 10_000.0,
+                };
+                (value != 0.0).then(|| (source.clone(), value))
+            })
+            .collect()
+    }
+
+    /// Everything the gear gives, in one set (see [`gear_parts`](Self::gear_parts) for where it comes from).
+    pub fn apply_gear(&self, channels: &mut ChannelSet) {
+        for (_, part) in self.gear_parts() {
+            channels.merge(&part);
+        }
+    }
+
+    /// What the gear gives, by kind: the pieces themselves (armour, weapon power), their traits and
+    /// their enchants.
+    pub fn gear_parts(&self) -> Vec<(EffectSource, ChannelSet)> {
+        let (mut base, mut traits, mut enchants) = (ChannelSet::new(), ChannelSet::new(), ChannelSet::new());
+        self.apply_gear_into(&mut base, &mut traits, &mut enchants);
+        vec![(EffectSource::Gear, base), (EffectSource::GearTrait, traits), (EffectSource::Enchant, enchants)]
+    }
+
+    fn apply_gear_into(&self, base: &mut ChannelSet, traits: &mut ChannelSet, enchants: &mut ChannelSet) { // todo add tests
         let mut divines_seen = 0u32;
         for (slot, gear) in self.get_active_gear_with_slots() {
             let power = gear.get_weapon_power();
@@ -150,9 +209,9 @@ impl Player {
                     _ => OFFHAND_MULTIPLIER,
                 };
                 let p = (power * m).round();
-                channels.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), Additive), p);
+                base.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), Additive), p);
             } 
-            channels.add_additive(Armour(ResistableDamageTypeAll), gear.get_armour_value(&slot));
+            base.add_additive(Armour(ResistableDamageTypeAll), gear.get_armour_value(&slot));
             if let Some(gear_trait) = gear.get_item_trait() {
                 let wrapper = gear.get_trait_value();
                 match wrapper {
@@ -160,25 +219,25 @@ impl Player {
                         match gear_trait {
                             GearTrait::JewelryBloodthirsty => {},
                             GearTrait::JewelryHarmony => {
-                                channels.add_additive(SynergyRestore(Health, Additive), v);
-                                channels.add_additive(SynergyRestore(Mag, Additive), v);
-                                channels.add_additive(SynergyRestore(Stam, Additive), v);
+                                traits.add_additive(SynergyRestore(Health, Additive), v);
+                                traits.add_additive(SynergyRestore(Mag, Additive), v);
+                                traits.add_additive(SynergyRestore(Stam, Additive), v);
                             },
                             GearTrait::JewelryProtective => {}, // handle in armour code
-                            GearTrait::JewelrySwift => {channels.add_additive(MovementSpeed, v);},
+                            GearTrait::JewelrySwift => {traits.add_additive(MovementSpeed, v);},
                             GearTrait::JewelryTriune => {}, // handle below
                             GearTrait::JewelryInfused => {}, // handle in enchantment code
-                            GearTrait::JewelryArcane => {channels.add_additive(Resource(Mag, Additive), v)},
-                            GearTrait::JewelryRobust => {channels.add_additive(Resource(Stam, Additive), v)},
-                            GearTrait::JewelryHealthy => {channels.add_additive(Resource(Health, Additive), v)},
+                            GearTrait::JewelryArcane => {traits.add_additive(Resource(Mag, Additive), v)},
+                            GearTrait::JewelryRobust => {traits.add_additive(Resource(Stam, Additive), v)},
+                            GearTrait::JewelryHealthy => {traits.add_additive(Resource(Health, Additive), v)},
 
-                            GearTrait::ArmorSturdy => {channels.add_multiplicative_bps(CostReductionCCA(Block, Multiplicative), (v * 10_000.0).round());},
-                            GearTrait::ArmorImpenetrable => {channels.add_additive(CriticalResistance, v);},
+                            GearTrait::ArmorSturdy => {traits.add_multiplicative_bps(CostReductionCCA(Block, Multiplicative), (v * 10_000.0).round());},
+                            GearTrait::ArmorImpenetrable => {traits.add_additive(CriticalResistance, v);},
                             GearTrait::ArmorReinforced => {}, // handle in armour code
                             GearTrait::ArmorWellFitted => {
                                 let bps = (v * 10_000.0).round();
-                                channels.add_multiplicative_bps(CostReductionCCA(DodgeRoll, Multiplicative), bps);
-                                channels.add_multiplicative_bps(CostReductionCCA(Sprint, Multiplicative), bps);
+                                traits.add_multiplicative_bps(CostReductionCCA(DodgeRoll, Multiplicative), bps);
+                                traits.add_multiplicative_bps(CostReductionCCA(Sprint, Multiplicative), bps);
                             },
                             GearTrait::ArmorDivines => {
                                 // The character sheet counts the second Divines piece at a whole percent
@@ -187,35 +246,35 @@ impl Player {
                                 let exact = (v * 10_000.0).round();
                                 let bps = if divines_seen == 1 { (v * 100.0).round() * 100.0 } else { exact };
                                 divines_seen += 1;
-                                channels.add_multiplicative_bps(MundusBoost, bps);
+                                traits.add_multiplicative_bps(MundusBoost, bps);
                             },
                             GearTrait::ArmorNirnhoned => {}, // handle in armour code
                             GearTrait::ArmorInfused => {}, // handle in enchantment code
-                            GearTrait::ArmorTraining => {channels.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
+                            GearTrait::ArmorTraining => {traits.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
                             GearTrait::ArmorInvigorating => {
-                                {channels.add_additive(Recovery(Mag, Additive), v)};
-                                {channels.add_additive(Recovery(Stam, Additive), v)};
-                                {channels.add_additive(Recovery(Health, Additive), v)};
+                                {traits.add_additive(Recovery(Mag, Additive), v)};
+                                {traits.add_additive(Recovery(Stam, Additive), v)};
+                                {traits.add_additive(Recovery(Health, Additive), v)};
                             },
 
                             GearTrait::WeaponInfused => {}, // handled in enchantment code
                             GearTrait::WeaponNirnhoned => {}, // handled in weapon code
-                            GearTrait::WeaponCharged => {channels.add_multiplicative_bps(StatusEffectChance(StatusEffectContext::All), (v * 10_000.0).round());},
-                            GearTrait::WeaponDecisive => {channels.add_multiplicative_bps(DecisiveUltimateChance, (v * 10_000.0).round());},
+                            GearTrait::WeaponCharged => {traits.add_multiplicative_bps(StatusEffectChance(StatusEffectContext::All), (v * 10_000.0).round());},
+                            GearTrait::WeaponDecisive => {traits.add_multiplicative_bps(DecisiveUltimateChance, (v * 10_000.0).round());},
                             GearTrait::WeaponDefending => {}, // handle in armour code
-                            GearTrait::WeaponPowered => {channels.add_multiplicative_bps(HealingDone, (v * 10_000.0).round());},
-                            GearTrait::WeaponPrecise => {channels.add_additive(CriticalChance, v)},
-                            GearTrait::WeaponSharpened => {channels.add_additive(Penetration(ResistableDamageTypeAll), v)},
-                            GearTrait::WeaponTraining => {channels.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
+                            GearTrait::WeaponPowered => {traits.add_multiplicative_bps(HealingDone, (v * 10_000.0).round());},
+                            GearTrait::WeaponPrecise => {traits.add_additive(CriticalChance, v)},
+                            GearTrait::WeaponSharpened => {traits.add_additive(Penetration(ResistableDamageTypeAll), v)},
+                            GearTrait::WeaponTraining => {traits.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
                             _ => {},
                         }
                     }
                     PrismaticValueWrapper::Prismatic(v) => {
                         match gear_trait {
                             GearTrait::JewelryTriune => {
-                                channels.add_additive(Resource(Health, Additive), v.0);
-                                channels.add_additive(Resource(Mag, Additive), v.1);
-                                channels.add_additive(Resource(Stam, Additive), v.2);
+                                traits.add_additive(Resource(Health, Additive), v.0);
+                                traits.add_additive(Resource(Mag, Additive), v.1);
+                                traits.add_additive(Resource(Stam, Additive), v.2);
                             },
                             _ => {},
                         }
@@ -230,29 +289,29 @@ impl Player {
                     PrismaticValueWrapper::F32(v_) => {
                         let v = v_ * infused_multiplier * slot_multiplier;
                         match e.glyph {
-                            EnchantType::DiseaseResistance => {channels.add_additive(Armour(Disease), v)},
-                            EnchantType::FlameResistance => {channels.add_additive(Armour(Flame), v)},
-                            EnchantType::FrostResistance => {channels.add_additive(Armour(Frost), v)},
-                            EnchantType::Health => {channels.add_additive(Resource(Health, Additive), v)},
-                            EnchantType::HealthRegen => {channels.add_additive(Recovery(Health, Additive), v)},
-                            EnchantType::IncreaseBashDamage => {channels.add_additive(DamageDone(BashDamage, Additive), v);},
-                            EnchantType::IncreasePhysicalDamage => {channels.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); channels.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
-                            EnchantType::IncreasePotionEffectiveness => {channels.add_additive(PotionEffectiveness, v);},
-                            EnchantType::IncreaseSpellDamage => {channels.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); channels.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
-                            EnchantType::Magicka => {channels.add_additive(Resource(Mag, Additive), v)},
-                            EnchantType::MagickaRegen => {channels.add_additive(Recovery(Mag, Additive), v)},
-                            EnchantType::PhysicalResistance => {channels.add_additive(Armour(Martial), v)},
-                            EnchantType::PoisonResistance => {channels.add_additive(Armour(Poison), v)},
+                            EnchantType::DiseaseResistance => {enchants.add_additive(Armour(Disease), v)},
+                            EnchantType::FlameResistance => {enchants.add_additive(Armour(Flame), v)},
+                            EnchantType::FrostResistance => {enchants.add_additive(Armour(Frost), v)},
+                            EnchantType::Health => {enchants.add_additive(Resource(Health, Additive), v)},
+                            EnchantType::HealthRegen => {enchants.add_additive(Recovery(Health, Additive), v)},
+                            EnchantType::IncreaseBashDamage => {enchants.add_additive(DamageDone(BashDamage, Additive), v);},
+                            EnchantType::IncreasePhysicalDamage => {enchants.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); enchants.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreasePotionEffectiveness => {enchants.add_additive(PotionEffectiveness, v);},
+                            EnchantType::IncreaseSpellDamage => {enchants.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); enchants.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::Magicka => {enchants.add_additive(Resource(Mag, Additive), v)},
+                            EnchantType::MagickaRegen => {enchants.add_additive(Recovery(Mag, Additive), v)},
+                            EnchantType::PhysicalResistance => {enchants.add_additive(Armour(Martial), v)},
+                            EnchantType::PoisonResistance => {enchants.add_additive(Armour(Poison), v)},
                             EnchantType::PrismaticDefense => {}, // handle below
                             EnchantType::PrismaticRecovery => {}, // handle below
-                            EnchantType::ReduceBlockCost => {channels.add_additive(CostReductionCCA(Block, Additive), v);},
-                            EnchantType::ReduceFeatCost => {channels.add_additive(CostReduction(Stamina), v);},
-                            EnchantType::ReducePotionCooldown => {channels.add_additive(PotionCooldown, v);},
-                            EnchantType::ReduceSpellCost => {channels.add_additive(CostReduction(Magicka), v);},
-                            EnchantType::ShockResistance => {channels.add_additive(Armour(Shock), v)},
-                            EnchantType::SpellResistance => {channels.add_additive(Armour(Spell), v)},
-                            EnchantType::Stamina => {channels.add_additive(Resource(Stam, Additive), v)},
-                            EnchantType::StaminaRegen => {channels.add_additive(Recovery(Stam, Additive), v)},
+                            EnchantType::ReduceBlockCost => {enchants.add_additive(CostReductionCCA(Block, Additive), v);},
+                            EnchantType::ReduceFeatCost => {enchants.add_additive(CostReduction(Stamina), v);},
+                            EnchantType::ReducePotionCooldown => {enchants.add_additive(PotionCooldown, v);},
+                            EnchantType::ReduceSpellCost => {enchants.add_additive(CostReduction(Magicka), v);},
+                            EnchantType::ShockResistance => {enchants.add_additive(Armour(Shock), v)},
+                            EnchantType::SpellResistance => {enchants.add_additive(Armour(Spell), v)},
+                            EnchantType::Stamina => {enchants.add_additive(Resource(Stam, Additive), v)},
+                            EnchantType::StaminaRegen => {enchants.add_additive(Recovery(Stam, Additive), v)},
                             _ => {},
                         }
                     },
@@ -260,14 +319,14 @@ impl Player {
                         let v = (v_.0 * infused_multiplier * slot_multiplier, v_.1 * infused_multiplier * slot_multiplier, v_.2 * infused_multiplier * slot_multiplier);
                         match e.glyph {
                             EnchantType::PrismaticDefense => {
-                                channels.add_additive(Resource(Health, Additive), v.0);
-                                channels.add_additive(Resource(Mag, Additive), v.1);
-                                channels.add_additive(Resource(Stam, Additive), v.2);
+                                enchants.add_additive(Resource(Health, Additive), v.0);
+                                enchants.add_additive(Resource(Mag, Additive), v.1);
+                                enchants.add_additive(Resource(Stam, Additive), v.2);
                             },
                             EnchantType::PrismaticRecovery => {
-                                channels.add_additive(Recovery(Health, Additive), v.0);
-                                channels.add_additive(Recovery(Mag, Additive), v.1);
-                                channels.add_additive(Recovery(Stam, Additive), v.2);
+                                enchants.add_additive(Recovery(Health, Additive), v.0);
+                                enchants.add_additive(Recovery(Mag, Additive), v.1);
+                                enchants.add_additive(Recovery(Stam, Additive), v.2);
                             },
                             _ => {},
                         }
@@ -278,17 +337,35 @@ impl Player {
     }
 
     pub fn apply_set_bonuses(&self, channels: &mut ChannelSet) {
-        for (set_id, count) in self.get_active_sets_counts() {
+        for (_, part) in self.set_bonus_parts() {
+            channels.merge(&part);
+        }
+    }
+
+    /// The stat bonuses of the worn sets, one entry per bonus row that applies (`pieces_required` is
+    /// the row's piece count), in set id order.
+    pub fn set_bonus_parts(&self) -> Vec<(EffectSource, ChannelSet)> {
+        let mut counts: Vec<(u16, u8)> = self.get_active_sets_counts().into_iter().collect();
+        counts.sort_unstable();
+        let mut parts = Vec::new();
+        for (set_id, count) in counts {
             let Some(set) = SETS.get(set_id) else { continue };
-            for row in set.bonuses.iter().take(count as usize) {
+            for (i, row) in set.bonuses.iter().take(count as usize).enumerate() {
+                let mut part = ChannelSet::new();
+                let mut any = false;
                 for bonus in row.iter() {
                     // `None`: a stat the compiler has no channel for yet (see sets.jsonl)
                     if let Some(channel) = bonus.channel {
-                        channels.add_additive(channel, bonus.value);
+                        part.add_additive(channel, bonus.value);
+                        any = true;
                     }
+                }
+                if any {
+                    parts.push((EffectSource::Set { set_id, pieces_required: (i + 1) as u8 }, part));
                 }
             }
         }
+        parts
     }
 
     pub fn get_active_sets_counts(&self) -> HashMap<u16, u8> {
@@ -335,6 +412,7 @@ mod tests {
     use crate::data::tables::armour::armour_from_armour_piece;
     use crate::entity::gear::GearEnchant;
     use eso_skill_data::enums::mechanic::Mechanic;
+    use esosim_types::Channel;
 
     fn armour() -> Channel {
         Channel::Armour(ResistableDamageTypeAll)

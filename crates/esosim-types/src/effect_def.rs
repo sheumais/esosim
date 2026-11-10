@@ -21,6 +21,8 @@ pub enum EffectSource {
     Debuff { ability_id: u32 },
     Food,
     Potion,
+    /// The pieces themselves: armour value and weapon power. Traits and enchants are their own sources.
+    Gear,
     GearTrait,
     Enchant,
     /// Block, sprint, roll dodge…

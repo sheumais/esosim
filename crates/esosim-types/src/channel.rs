@@ -122,6 +122,7 @@ pub enum Channel {
     DetectionRadius,
     MountSpeed,
     ResurrectionSpeed,
+    StatusEffectDuration,
 }
 
 impl Channel {

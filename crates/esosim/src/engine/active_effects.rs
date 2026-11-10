@@ -68,8 +68,28 @@ impl ActiveEffects {
         extra_mundus_boost_bps: i64,
     ) -> ChannelSet {
         let mut out = ChannelSet::new();
-        let mut stones: Vec<(&EffectDef, u32)> = Vec::new();
-        for (&id, &stacks) in &self.stacks {
+        for (_, part) in self.aggregate_parts(registry, ctx, extra_mundus_boost_bps) {
+            out.merge(&part);
+        }
+        out
+    }
+
+    /// [`aggregate_with_boost`](Self::aggregate_with_boost), but one `ChannelSet` per effect that
+    /// applies, in id order, so a caller can say where each number came from (roadmap 1.3,
+    /// `Player::explain`). Merging the parts gives exactly `aggregate_with_boost`.
+    pub fn aggregate_parts<'r>(
+        &self,
+        registry: &'r EffectRegistry,
+        ctx: &dyn ConditionContext,
+        extra_mundus_boost_bps: i64,
+    ) -> Vec<(&'r EffectDef, ChannelSet)> {
+        let mut ids: Vec<u32> = self.stacks.keys().copied().collect();
+        ids.sort_unstable();
+        let mut parts: Vec<(&'r EffectDef, ChannelSet)> = Vec::new();
+        let mut stones: Vec<(&'r EffectDef, u32)> = Vec::new();
+        let mut boost_bps = extra_mundus_boost_bps;
+        for id in ids {
+            let stacks = self.stacks[&id];
             let Some(fx) = registry.get(id) else { continue };
             if fx.condition != Condition::Always && fx.condition.evaluate(ctx) != Some(true) {
                 continue;
@@ -78,16 +98,18 @@ impl ActiveEffects {
                 stones.push((fx, stacks));
                 continue;
             }
-            add_effect(&mut out, fx, stacks, 1.0, false);
+            let mut part = ChannelSet::new();
+            add_effect(&mut part, fx, stacks, 1.0, false);
+            boost_bps += part.get_multiplicative_bps(Channel::MundusBoost);
+            parts.push((fx, part));
         }
-        if !stones.is_empty() {
-            let boost_bps = out.get_multiplicative_bps(Channel::MundusBoost) + extra_mundus_boost_bps;
-            let scale = 1.0 + boost_bps as f64 / 10_000.0;
-            for (fx, stacks) in stones {
-                add_effect(&mut out, fx, stacks, scale, true);
-            }
+        let scale = 1.0 + boost_bps as f64 / 10_000.0;
+        for (fx, stacks) in stones {
+            let mut part = ChannelSet::new();
+            add_effect(&mut part, fx, stacks, scale, true);
+            parts.push((fx, part));
         }
-        out
+        parts
     }
 }
 

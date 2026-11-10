@@ -34,6 +34,8 @@ pub mod engine {
 
 pub mod entity {
     pub mod build;
+    pub mod build_player;
+    pub mod condition_context;
     pub mod enemy;
     pub mod gear;
     pub mod player;
