@@ -33,6 +33,7 @@ pub mod engine {
 }
 
 pub mod entity {
+    pub mod build;
     pub mod enemy;
     pub mod gear;
     pub mod player;

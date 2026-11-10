@@ -1,4 +1,6 @@
-#[derive(PartialEq, Debug, Clone, Copy)]
+use serde::{Deserialize, Serialize};
+
+#[derive(PartialEq, Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ItemType {
     Axe,
     Dagger,
@@ -21,7 +23,7 @@ pub enum ItemType {
     Unknown,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum GearTrait {
     JewelryBloodthirsty,
     JewelryHarmony,
@@ -70,7 +72,7 @@ impl GearTrait {
 }
 
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Deserialize)]
 pub enum ItemQuality {
     Normal,
     Fine,
@@ -121,7 +123,7 @@ impl GearSlot {
 // Note that enchants are only bound to specific gear pieces by the rules of what can be applied in the game. This is why they are listed here as one enum.
 // In fact, bugged items exist on live servers from trials that have armour enchantments on weapons, such as a +Max Stamina Lightning Staff
 // If such an item exists but with traits instead of enchants then please let me know (however I doubt such an item exists).
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum EnchantType {
     AbsorbHealth,
     AbsorbMagicka,

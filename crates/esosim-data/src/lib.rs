@@ -5,6 +5,7 @@
 //! * `data/sets.jsonl`      one set per line (embedded below)
 //! * `data/set_behaviour.jsonl` one line per set: its behaviour class and classified ability blocks (roadmap 2.1b)
 //! * `data/set_items.csv`  `set id,item id,...` per set: which items belong to which set (roadmap 2.1e)
+//! * `data/skill_lines.csv` `skill line id,ability id,...` per skill line: which abilities are in which line (roadmap 1.4)
 //! * `data/effects.jsonl` overrides + high-confidence auto-classified effects, one `EffectDef` per line plus a `provenance` (roadmap 2.0)
 //! * `data/cp.jsonl`       one champion point star per line: stages, cost and value per stage, its tree (roadmap 2.2a, 2.2b)
 //! * `data/cp_effects.jsonl` one `EffectDef` per modelled champion point star, from `cp.jsonl` and the compiler's `cp_effects.toml` (roadmap 2.2c)
@@ -22,6 +23,9 @@ pub const SET_BEHAVIOUR_JSONL: &str = include_str!("../data/set_behaviour.jsonl"
 
 /// `data/set_items.csv`: `set id,item id,item id,...` one line per set (roadmap 2.1e).
 pub const SET_ITEMS_CSV: &str = include_str!("../data/set_items.csv");
+
+/// `data/skill_lines.csv`: `skill line id,ability id,ability id,...` one line per skill line (roadmap 1.4).
+pub const SKILL_LINES_CSV: &str = include_str!("../data/skill_lines.csv");
 
 /// `data/effects.jsonl`: one `esosim_types::EffectDef` per line (plus a `provenance` of `override`
 /// or `auto`), sorted by id. Empty until `overrides.toml` has entries or the classifier is sure of

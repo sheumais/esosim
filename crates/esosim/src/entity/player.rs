@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
 use esosim_types::{AggKind::{self, Multiplicative}, DamageDoneContext, channel::StatusEffectContext};
 
-use crate::{data::{enums::{cca::CoreCombatAbility::{self, Bash, Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{self, All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, NoContext, Channel::{self, *}, DamageDoneContext::{Bash as BashDamage, *}, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}};
+use crate::{data::{enums::{cca::CoreCombatAbility::{self, Bash, Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{self, All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, NoContext, Channel::{self, *}, DamageDoneContext::{Bash as BashDamage, *}, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
 
 pub enum ActiveBar {
     Front,
@@ -26,7 +26,11 @@ pub struct Player {
     pub primary_abilities: Vec<u32>,
     pub backup_abilities: Vec<u32>,
     pub werewolf_abilities: Vec<u32>,
-    pub attributes: (u8, u8, u8),
+    /// Which skill line each slotted ability belongs to (`ResolvedAbility::skill_line`). Abilities not
+    /// listed here belong to no line the engine knows, so they count towards none. Filled from the
+    /// `Bundle` once it carries `skill_line_of` (roadmap 1.4 / 1.3).
+    pub ability_skill_lines: HashMap<u32, SkillLine>,
+    pub attributes: Attributes,
     /// The stones picked, in pick order (the first is the one that survives without Twice-Born Star).
     /// Kept here, not only in `active_effects`, so a bar swap that loses the second stone's slot and
     /// then gets it back re-applies the same stone (`recompute` gates by `mundus_slots`).
@@ -43,7 +47,8 @@ impl Player {
             primary_abilities: Vec::new(),
             backup_abilities: Vec::new(),
             werewolf_abilities: Vec::new(),
-            attributes: (0, 0, 0),
+            ability_skill_lines: HashMap::new(),
+            attributes: Attributes::default(),
             mundus_pick: esosim_types::MundusLoadout::default(),
         }
     }
@@ -217,8 +222,8 @@ impl Player {
                     }
                 }
             }
-            if let Some(e) = gear.get_enchant() {
-                let wrapper = gear.get_enchant_value().expect("An enchant should always have a value");
+            // Weapon enchants (Fiery, Absorb, ...) have no stat value: `get_enchant_value` is `None` for them.
+            if let (Some(e), Some(wrapper)) = (gear.get_enchant(), gear.get_enchant_value()) {
                 let infused_multiplier = gear.get_infused_value();
                 let slot_multiplier = get_armour_enchant_multiplier(&slot);
                 match wrapper {
@@ -304,12 +309,112 @@ impl Player {
         self.get_active_sets_counts().get(&set_id).copied().unwrap_or(0)
     }
 
+    /// How many abilities on the active bar belong to `skill_line` (`GrantCondition::ActiveSkillsFromLine`).
+    /// Only the active bar counts: a bar swap changes the answer.
     pub fn get_number_of_active_skills_from_skill_line(&self, skill_line: &SkillLine) -> u8 {
-        todo!()
+        let bar = match self.active_bar {
+            Front => &self.primary_abilities,
+            Backup => &self.backup_abilities,
+        };
+        bar.iter()
+            .filter(|id| self.ability_skill_lines.get(*id) == Some(skill_line))
+            .count() as u8
     }
 
-    pub fn set_attributes(&mut self, magicka: u8, health: u8, stamina: u8) {
-        debug_assert!(magicka + health + stamina <= 64);
-        self.attributes = (magicka, health, stamina);
+    /// No range check here: the 64-point limit is `Build::validate`'s job (roadmap 4.2). The old
+    /// `debug_assert!(m + h + s <= 64)` itself overflowed `u8` on large input.
+    pub fn set_attributes(&mut self, attributes: Attributes) {
+        self.attributes = attributes;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::enums::gear::ItemQuality::Legendary;
+    use crate::data::tables::armour::armour_from_armour_piece;
+    use crate::entity::gear::GearEnchant;
+    use eso_skill_data::enums::mechanic::Mechanic;
+
+    fn armour() -> Channel {
+        Channel::Armour(ResistableDamageTypeAll)
+    }
+
+    /// The channels `apply_gear` gives a player wearing only `piece` in `slot`.
+    fn gear_channels(slot: GearSlot, piece: GearPiece) -> ChannelSet {
+        let mut player = Player::new();
+        player.set_gear_piece(slot, piece);
+        let mut channels = ChannelSet::new();
+        player.apply_gear(&mut channels);
+        channels
+    }
+
+    fn ring_with_enchant(glyph: EnchantType) -> GearPiece {
+        let enchant = GearEnchant { glyph, effective_level: 66, quality: Legendary };
+        GearPiece::new(ItemType::Ring, 66, None, Legendary, None, Some(enchant))
+    }
+
+    // Armour from a trait is folded into `GearPiece::get_armour_value`; the trait match in
+    // `apply_gear` must leave these traits alone, or the value is added twice.
+
+    #[test]
+    fn defending_weapon_armour_is_counted_once() {
+        let one_hand = GearPiece::new(ItemType::Sword, 66, Some(GearTrait::WeaponDefending), Legendary, None, None);
+        assert_eq!(gear_channels(GearSlot::MainHand, one_hand).get(armour()), 1638);
+        let two_hand = GearPiece::new(ItemType::TwoHandedSword, 66, Some(GearTrait::WeaponDefending), Legendary, None, None);
+        assert_eq!(gear_channels(GearSlot::MainHand, two_hand).get(armour()), 3276);
+    }
+
+    #[test]
+    fn protective_jewellery_armour_is_counted_once() {
+        let ring = GearPiece::new(ItemType::Ring, 66, Some(GearTrait::JewelryProtective), Legendary, None, None);
+        assert_eq!(gear_channels(GearSlot::Ring1, ring).get(armour()), 1190);
+    }
+
+    #[test]
+    fn nirnhoned_armour_is_counted_once() {
+        let base = armour_from_armour_piece(&ItemType::Heavy, &GearSlot::Chest, &Legendary).unwrap() as u32;
+        let chest = GearPiece::new(ItemType::Heavy, 66, Some(GearTrait::ArmorNirnhoned), Legendary, None, None);
+        assert_eq!(gear_channels(GearSlot::Chest, chest).get(armour()), (base + 253) as i64);
+    }
+
+    #[test]
+    fn feat_cost_spell_cost_and_potion_enchants_are_mapped() {
+        // 203 is the CP160 Legendary row of the shared jewellery "reduce" table
+        let feat = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::ReduceFeatCost));
+        assert_eq!(feat.get(Channel::CostReduction(Mechanic::Stamina)), 203);
+        let spell = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::ReduceSpellCost));
+        assert_eq!(spell.get(Channel::CostReduction(Mechanic::Magicka)), 203);
+        // only checks the mapping, not the value: the table says 3.6 (%) but `add_additive` rounds an
+        // f32 to a whole number (roadmap 2.8 asks which unit this channel uses)
+        let potion = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::IncreasePotionEffectiveness));
+        assert_ne!(potion.get(Channel::PotionEffectiveness), 0);
+    }
+
+    #[test]
+    fn a_weapon_enchant_has_no_stat_value_and_does_not_panic() {
+        let enchant = GearEnchant { glyph: EnchantType::FieryWeapon, effective_level: 66, quality: Legendary };
+        let sword = GearPiece::new(ItemType::Sword, 66, None, Legendary, None, Some(enchant));
+        gear_channels(GearSlot::MainHand, sword);
+    }
+
+    #[test]
+    fn skills_count_towards_a_line_only_on_the_active_bar() {
+        let mut lines = (0u32..4096).filter_map(|id| SkillLine::from_id(&id));
+        let (a, b) = (lines.next().unwrap(), lines.next().unwrap());
+        let mut player = Player::new();
+        player.ability_skill_lines = HashMap::from([(1, a), (2, a), (3, b), (4, a)]);
+        player.primary_abilities = vec![1, 2, 3, 99]; // 99 has no known line
+        player.backup_abilities = vec![4];
+        assert_eq!(player.get_number_of_active_skills_from_skill_line(&a), 2);
+        assert_eq!(player.get_number_of_active_skills_from_skill_line(&b), 1);
+        player.active_bar = Backup;
+        assert_eq!(player.get_number_of_active_skills_from_skill_line(&a), 1);
+        assert_eq!(player.get_number_of_active_skills_from_skill_line(&b), 0);
+    }
+
+    #[test]
+    fn any_attribute_input_is_accepted() {
+        Player::new().set_attributes(Attributes { health: 255, magicka: 255, stamina: 255 });
     }
 }

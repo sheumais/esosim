@@ -1,12 +1,14 @@
 //! Runtime view of the effect data (roadmap 1.5, Appendix A.3).
 //!
 //! Holds the `EffectDef`s (hand-written files, the champion point stars' effects and the reviewed rows of
-//! the compiler's `effects.jsonl`, which is where the mundus stones live) and the champion point stars.
+//! the compiler's `effects.jsonl`, which is where the mundus stones live), the champion point stars and
+//! which skill line each ability is in.
 //! Everything is compiled in with `include_str!`, so it works in WASM with no file IO.
 
 use std::collections::{BTreeMap, HashMap};
 use std::sync::OnceLock;
 
+use eso_skill_data::enums::skill_line::SkillLine;
 use esosim_types::{CpStar, EffectDef};
 
 #[derive(Default, Debug)]
@@ -14,6 +16,12 @@ pub struct Bundle {
     pub effects: HashMap<u32, EffectDef>,
     /// The champion point table, by star id (`cp.jsonl`).
     pub stars: BTreeMap<u32, CpStar>,
+    /// The skill line of each ability that has one (`skill_lines.csv`).
+    skill_lines: HashMap<u32, SkillLine>,
+    abilities_by_line: HashMap<SkillLine, Vec<u32>>,
+    /// Skill line ids in `skill_lines.csv` that `eso_skill_data` has no `SkillLine` for; their
+    /// abilities are not indexed. Empty when the data and the parser are from the same patch.
+    pub unknown_skill_lines: Vec<u32>,
 }
 
 impl Bundle {
@@ -32,6 +40,9 @@ impl Bundle {
                 .add_reviewed_jsonl(esosim_data::EFFECTS_JSONL)
                 .unwrap_or_else(|e| panic!("embedded effect file effects.jsonl: {e}"));
             bundle.add_stars_jsonl(esosim_data::CP_JSONL).unwrap_or_else(|e| panic!("embedded cp.jsonl: {e}"));
+            bundle
+                .add_skill_lines_csv(esosim_data::SKILL_LINES_CSV)
+                .unwrap_or_else(|e| panic!("embedded skill_lines.csv: {e}"));
             bundle
         })
     }
@@ -102,6 +113,40 @@ impl Bundle {
         Ok(())
     }
 
+    /// `skill line id,ability id,...` per line, as the compiler writes `skill_lines.csv`. An ability
+    /// in two lines is an error.
+    pub fn add_skill_lines_csv(&mut self, csv: &str) -> Result<(), String> {
+        for (n, row) in csv.lines().enumerate().filter(|(_, l)| !l.trim().is_empty()) {
+            let mut cells = row.trim().split(',');
+            let line_cell = cells.next().unwrap_or("");
+            let line_id: u32 =
+                line_cell.parse().map_err(|_| format!("skill lines line {}: bad skill line id {line_cell:?}", n + 1))?;
+            let line = SkillLine::from_id(&line_id);
+            if line.is_none() {
+                self.unknown_skill_lines.push(line_id);
+            }
+            for cell in cells {
+                let id: u32 = cell.parse().map_err(|_| format!("skill lines line {}: bad ability id {cell:?}", n + 1))?;
+                let Some(line) = line else { continue };
+                if self.skill_lines.insert(id, line).is_some() {
+                    return Err(format!("skill lines line {}: ability {id} is in two skill lines", n + 1));
+                }
+                self.abilities_by_line.entry(line).or_default().push(id);
+            }
+        }
+        Ok(())
+    }
+
+    /// The skill line an ability belongs to (`None`: it is in no line, or in one the parser does not know).
+    pub fn skill_line_of(&self, ability_id: u32) -> Option<SkillLine> {
+        self.skill_lines.get(&ability_id).copied()
+    }
+
+    /// Every ability of `line`, in id order.
+    pub fn abilities_in_skill_line(&self, line: &SkillLine) -> &[u32] {
+        self.abilities_by_line.get(line).map(Vec::as_slice).unwrap_or(&[])
+    }
+
     pub fn effect(&self, id: u32) -> Option<&EffectDef> {
         self.effects.get(&id)
     }
@@ -144,6 +189,26 @@ mod tests {
         // an override that repeats an id of the hand-written files is an error, not a double count
         let err = b.add_reviewed_jsonl(&row(1, "override")).unwrap_err();
         assert!(err.contains("duplicate id 1"), "{err}");
+    }
+
+    #[test]
+    fn embedded_skill_lines_load_and_every_line_is_known() {
+        let b = Bundle::embedded();
+        assert!(b.unknown_skill_lines.is_empty(), "skill lines the parser does not know: {:?}", b.unknown_skill_lines);
+        // Toppling Charge (15540) is in skill line 22
+        let line = b.skill_line_of(15540).expect("Toppling Charge has a skill line");
+        assert_eq!(SkillLine::from_id(&22), Some(line));
+        assert!(b.abilities_in_skill_line(&line).contains(&15540));
+        assert_eq!(b.skill_line_of(1), None);
+    }
+
+    #[test]
+    fn an_ability_in_two_skill_lines_is_an_error() {
+        let mut known = (0u32..4096).filter(|id| SkillLine::from_id(id).is_some());
+        let (a, b) = (known.next().unwrap(), known.next().unwrap());
+        let err = Bundle::default().add_skill_lines_csv(&format!("{a},5,6\n{b},6\n")).unwrap_err();
+        assert!(err.contains("ability 6 is in two skill lines"), "{err}");
+        assert!(Bundle::default().add_skill_lines_csv("x,5\n").is_err());
     }
 
     #[test]

@@ -2,6 +2,15 @@ use crate::engine::active_effects::ActiveEffects;
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::ResistableDamageType;
 use crate::stats::armour;
+use serde::{Deserialize, Serialize};
+
+/// The target a build is calculated against (roadmap 2.9 turns a preset into an `Enemy`).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub enum EnemyPreset {
+    #[default]
+    TrialDummy,
+    Custom { max_health: f64, resistance: u32 },
+}
 
 pub struct Enemy {
     pub id: u32,

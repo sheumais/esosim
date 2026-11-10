@@ -148,6 +148,8 @@ pub struct Bundle {
     pub set_behaviour_jsonl: String,
     /// `set_items.csv`: `set id,item id,...` one line per set (roadmap 2.1e).
     pub set_items_csv: String,
+    /// `skill_lines.csv`: `skill line id,ability id,...` one line per skill line (roadmap 1.4).
+    pub skill_lines_csv: String,
     /// `effects.jsonl`: every override plus the high-confidence auto-classified effects, each with
     /// its `provenance` (roadmap 2.0 item 4).
     pub effects_jsonl: String,
@@ -174,6 +176,7 @@ impl Bundle {
             ("set_ids.rs", &self.set_ids_rs),
             ("set_behaviour.jsonl", &self.set_behaviour_jsonl),
             ("set_items.csv", &self.set_items_csv),
+            ("skill_lines.csv", &self.skill_lines_csv),
             ("effects.jsonl", &self.effects_jsonl),
             ("cp_effects.jsonl", &self.cp_effects_jsonl),
         ] {
@@ -258,6 +261,7 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
         set_ids_rs: sets.ids_rs,
         set_behaviour_jsonl: behaviour::to_jsonl(&set_behaviours)?,
         set_items_csv: sets.items_csv,
+        skill_lines_csv: compile::skill_lines_csv(&abilities),
         effects_jsonl,
         cp_effects_jsonl: cp::effects_to_jsonl(&cp_effects)?,
         behaviour_report: report.summary(),
@@ -451,7 +455,7 @@ mod tests {
     fn write_to_creates_every_output_file() {
         let dir = std::env::temp_dir().join(format!("esosim-compiler-test-{}", std::process::id()));
         build(data(), &no_cp()).unwrap().write_to(&dir).unwrap();
-        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl"] {
+        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl", "skill_lines.csv"] {
             assert!(dir.join(f).is_file(), "{f}");
         }
         fs::remove_dir_all(&dir).unwrap();

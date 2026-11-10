@@ -11,6 +11,7 @@ pub mod cp;
 pub mod damage;
 pub mod effect_def;
 pub mod mundus;
+pub mod race;
 pub mod set_behaviour;
 pub mod skill_serde;
 pub mod trigger;
@@ -25,6 +26,7 @@ pub use cp::{CP_SLOTS_PER_TREE, CpIssue, CpLoadout, CpPerk, CpStar};
 pub use damage::ResistableDamageType;
 pub use effect_def::{ChannelValue, EffectDef, EffectSource, Stacking};
 pub use mundus::{BASE_MUNDUS_STONES, MUNDUS_STONES_WITH_EXTRA_SLOT, MundusIssue, MundusLoadout};
+pub use race::Race;
 pub use set_behaviour::{BehaviourClass, BlockBehaviour, SetBehaviour, SetKind};
 pub use trigger::{CastKind, Trigger, TriggerEvent};
 
@@ -80,6 +82,9 @@ mod tests {
             assert_eq!(Channel::CostReductionCCA(CoreCombatAbility::Sneak, kind).agg_kind(), kind);
             assert_eq!(Channel::Recovery(ResourceKind::Health, kind).agg_kind(), kind);
         }
+        assert_eq!(Channel::SynergyRestore(ResourceKind::Magicka, AggKind::Multiplicative).agg_kind(), AggKind::Multiplicative);
+        // the one payload-less channel that is a fraction: Divines pieces sum, every mundus stone scales by it
+        assert_eq!(Channel::MundusBoost.agg_kind(), AggKind::Multiplicative);
         // no payload: always additive
         assert_eq!(Channel::MovementSpeed.agg_kind(), AggKind::Additive);
         assert_eq!(Channel::HealingDone.agg_kind(), AggKind::Additive);

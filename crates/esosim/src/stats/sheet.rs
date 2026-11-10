@@ -6,6 +6,7 @@
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::{ResistableDamageType as Dmg, ResourceKind};
 use crate::entity::enemy::Enemy;
+use serde::{Deserialize, Serialize};
 
 pub use super::armour::{effective_resistance, penetration, resistance, resistance_to_mitigation};
 pub use super::critical::{crit_chance, crit_damage_pct, crit_rating, crit_rating_to_chance, effective_level};
@@ -13,7 +14,7 @@ pub use super::power::{spell_damage, weapon_damage};
 pub use super::resource::{max_resource, recovery};
 
 /// Attribute points spent on each pool.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Attributes {
     pub health: u8,
     pub magicka: u8,
@@ -21,7 +22,7 @@ pub struct Attributes {
 }
 
 impl Attributes {
-    /// `Player::attributes` order: (magicka, health, stamina).
+    /// From a (magicka, health, stamina) tuple.
     pub fn from_player_tuple((magicka, health, stamina): (u8, u8, u8)) -> Self {
         Self { health, magicka, stamina }
     }

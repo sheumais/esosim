@@ -1,14 +1,15 @@
 use crate::{data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::armour_from_armour_piece, enchant::*, item_type::*, power::power_from_weapon_type, traits::*}}, entity::gear::PrismaticValueWrapper::{F32, Prismatic}};
+use serde::{Deserialize, Serialize};
 
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct GearEnchant {
     pub glyph: EnchantType,
     pub effective_level: u8,
     pub quality: ItemQuality,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct GearPiece {
     pub item_id: u32,
     pub item_type: ItemType,
@@ -224,7 +225,9 @@ impl GearPiece {
     }
 }
 
-#[derive(Debug, PartialEq)]
+/// An empty slot is `null`; a hand-written file may leave it out.
+#[derive(Debug, PartialEq, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Loadout {
     pub head: Option<GearPiece>,
     pub shoulders: Option<GearPiece>,
@@ -245,27 +248,6 @@ pub struct Loadout {
 }
 
 impl Loadout {
-    pub fn default() -> Self {
-        Loadout { 
-            head: None,
-            shoulders: None,
-            chest: None,
-            hands: None,
-            waist: None,
-            legs: None,
-            feet: None,
-            necklace: None,
-            ring1: None,
-            ring2: None,
-            main_hand: None,
-            main_hand_backup: None,
-            poison: None,
-            off_hand: None,
-            off_hand_backup: None,
-            poison_backup: None
-        }
-    }
-
     pub fn get_gear_piece(&self, slot: &GearSlot) -> Option<&GearPiece> {
         let option = match slot {
             GearSlot::Head => &self.head,
@@ -420,5 +402,30 @@ impl Loadout {
                 self.poison_backup.is_some()
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn poison() -> GearPiece {
+        GearPiece::new(ItemType::Unknown, 66, None, ItemQuality::Legendary, None, None)
+    }
+
+    #[test]
+    fn enchant_suppression_follows_the_poison_of_the_bar_asked_about() {
+        let mut loadout = Loadout::default();
+        assert!(!loadout.is_enchant_suppressed(false));
+        assert!(!loadout.is_enchant_suppressed(true));
+
+        loadout.set_gear_piece(GearSlot::Poison, poison());
+        assert!(loadout.is_enchant_suppressed(false));
+        assert!(!loadout.is_enchant_suppressed(true));
+
+        let mut loadout = Loadout::default();
+        loadout.set_gear_piece(GearSlot::BackupPoison, poison());
+        assert!(!loadout.is_enchant_suppressed(false));
+        assert!(loadout.is_enchant_suppressed(true));
     }
 }

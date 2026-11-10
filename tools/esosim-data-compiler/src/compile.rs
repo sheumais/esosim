@@ -8,6 +8,26 @@ use crate::roots::Roots;
 use eso_skill_data::SkillData34;
 use std::collections::BTreeMap;
 
+/// `skill_lines.csv`: `skill line id,ability id,ability id,...` one line per skill line, lines and
+/// ids ascending (roadmap 1.4). Abilities that are in no skill line are left out.
+pub fn skill_lines_csv(abilities: &[ResolvedAbility]) -> String {
+    let mut by_line: BTreeMap<u32, Vec<u32>> = BTreeMap::new();
+    for a in abilities.iter().filter(|a| a.skill_line != 0) {
+        by_line.entry(a.skill_line).or_default().push(a.id);
+    }
+    let mut out = String::new();
+    for (line, mut ids) in by_line {
+        ids.sort_unstable();
+        out.push_str(&line.to_string());
+        for id in ids {
+            out.push(',');
+            out.push_str(&id.to_string());
+        }
+        out.push('\n');
+    }
+    out
+}
+
 pub fn is_root(s: &SkillData34) -> bool {
     s.base_data.player_skill_index != 0
 }
