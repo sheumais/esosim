@@ -129,13 +129,13 @@ fn agg_kind(child: &SkillData34, ty: Option<TooltipType>) -> Agg {
 // Text -> clause
 // ---------------------------------------------------------------------------
 
-static MARKUP: LazyLock<Regex> =
+pub(crate) static MARKUP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\|c[0-9a-fA-F]{6}|\|r|\^[A-Za-z]+").unwrap());
 static PLACEHOLDER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<<(?:[A-Za-z]+:)?(\d+)>>").unwrap());
 /// Clause boundaries: line breaks, `|`, `;`, `:`, bullets, a literal `\n`, and sentence
 /// full stops (a `.` inside a number is not one).
-static BOUNDARY: LazyLock<Regex> =
+pub(crate) static BOUNDARY: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[\n|;:\u{2022}\u{b7}]|\\n|\.(?:\s|$)").unwrap());
 
 /// The clause of `text` that contains placeholder `<<n>>`, lower-cased, with that
@@ -320,9 +320,12 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
     vec![
         // ---- critical ---------------------------------------------------
         noun("crit_dmg_taken", r"critical (?:strike |hit )?damage taken", |_| vec![C::CriticalDamageTaken]),
-        noun("crit_dmg", r"critical (?:strike |hit )?damage(?: done)?(?: and (?:critical )?healing(?: done)?)?", |_| vec![C::CriticalDamage]),
-        // No engine channel for critical healing (it rides on CriticalDamage); consume it.
-        noun("crit_heal", r"critical healing(?: done| chance)?", |_| vec![]),
+        // "critical damage and critical healing" is one bonus that feeds both channels
+        noun("crit_dmg_and_heal", r"critical (?:strike |hit )?damage(?: done)? and (?:critical )?healing(?: done)?", |_| vec![C::CriticalDamage, C::CriticalHealing]),
+        noun("crit_dmg", r"critical (?:strike |hit )?damage(?: done)?", |_| vec![C::CriticalDamage]),
+        // The chance to crit a heal is the spell critical chance: no channel of its own; consume it.
+        noun("crit_heal_chance", r"critical healing chance", |_| vec![]),
+        noun("crit_heal", r"critical healing(?: done)?", |_| vec![C::CriticalHealing]),
         noun("crit_resistance", r"critical resistance", |_| vec![C::CriticalResistance]),
         noun("crit_chance_both", r"(?:weapon|spell) critical(?: strike)?(?: rating| chance)?(?: and (?:weapon|spell) critical(?: strike)?(?: rating| chance)?)|(?:weapon and spell|spell and weapon) critical(?: strike)?(?: rating| chance)?", |_| vec![C::CriticalChance]),
         noun("spell_crit", r"spell critical(?: strike)?(?: rating| chance)?", |_| vec![C::SpellCriticalChance]),
@@ -364,6 +367,7 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("done_direct", r"damage done with direct damage(?: and channeled)?(?: attacks| effects| abilities)?", |_| vec![C::DamageDone(DoneCtx::Direct, Multiplicative)]),
         noun("done_single", r"damage done with single target(?: attacks| abilities| damage)?", |_| vec![C::DamageDone(DoneCtx::SingleTarget, Multiplicative)]),
         noun("done_class", r"damage done with class abilities", |_| vec![C::DamageDone(DoneCtx::ClassAbilities, Multiplicative)]),
+        noun("done_bash", r"damage (?:done )?(?:by|with) bash(?: attacks| abilities)?|bash(?: attack| ability)? damage", |_| vec![C::DamageDone(DoneCtx::Bash, Multiplicative)]),
         noun("done_monsters", r"damage (?:done )?(?:against|to) (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageDone(DoneCtx::Monsters, Multiplicative)]),
         noun("done_noncrit", r"non-critical damage(?: done)?", |_| vec![C::DamageDone(DoneCtx::NonCritical, Multiplicative)]),
         noun("done_and_healing", r"damage and healing done|damage done and healing done|healing and damage done|damage and healing", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative), C::HealingDone]),
@@ -412,6 +416,8 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("dodge_chance", r"dodge chance", |_| vec![C::DodgeChance]),
         noun("miss_chance", r"miss chance", |_| vec![C::MissChance]),
         noun("detection_radius", r"(?:radius|area) (?:where |in which )?you can be detected(?: while sneaking)?|detection radius(?: in stealth)?|stealth detection radius", |_| vec![C::DetectionRadius]),
+        // The Apprentice mundus and the Training traits say "experience" for kill experience.
+        noun("kill_experience", r"(?:kill |all )?experience(?: points)?(?: gains?| gained)?(?: from kills)?", |_| vec![C::KillExperience]),
         noun("status_effect_chance", r"chance to apply status effects?|status effect chance", |_| vec![C::StatusEffectChance(StatusEffectContext::All)]),
         noun("stealth_detection", r"stealth detection", |_| vec![C::StealthDetection]),
         // ---- power (last: "spell damage" is a suffix of several phrases above) --
@@ -611,6 +617,7 @@ pub fn classify_one_with(
                     Some(c) => {
                         let agg = agg_kind(child, r.ty);
                         let channels: Vec<Channel> = c.channels.iter().map(|ch| with_agg(*ch, agg)).collect();
+                        let (cues, condition, events) = crate::triggers::records(&clause);
                         evidence.push((
                             ResolvedEvidence {
                                 parent: r.parent,
@@ -620,6 +627,9 @@ pub fn classify_one_with(
                                 channels: channels.clone(),
                                 direction: c.direction,
                                 indirect: r.hops > 0,
+                                cues,
+                                condition,
+                                events,
                             },
                             channels,
                         ));
@@ -752,6 +762,23 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
             chans("increases your light and heavy attack damage by @"),
             ["DamageDone(LightAttack, Multiplicative)", "DamageDone(HeavyAttack, Multiplicative)"]
         );
+    }
+
+    #[test]
+    fn critical_healing_has_a_channel_and_rides_along_with_critical_damage() {
+        assert_eq!(chans("increases your critical damage and critical healing by @"), ["CriticalDamage", "CriticalHealing"]);
+        assert_eq!(chans("increases your critical damage and healing by @"), ["CriticalDamage", "CriticalHealing"]);
+        assert_eq!(chans("critical healing done increased by @"), ["CriticalHealing"]);
+        // the chance to crit a heal has no channel of its own
+        assert!(chans("critical healing chance increased by @").is_empty());
+    }
+
+    #[test]
+    fn bash_damage_and_experience() {
+        assert_eq!(chans("increases your damage done with bash attacks by @"), ["DamageDone(Bash, Multiplicative)"]);
+        assert_eq!(chans("all experience gains increased by @"), ["KillExperience"]);
+        // a skill line's experience is not the kill-experience channel
+        assert!(classify_clause("increases your experience gain with the dual wield skill line by @").is_none_or(|c| c.partial));
     }
 
     #[test]

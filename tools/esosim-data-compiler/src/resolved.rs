@@ -7,7 +7,7 @@
 //!  * Both `Serialize` and `Deserialize`, so this file can move unchanged into a
 //!    shared `esosim-bundle` crate that the engine also depends on.
 
-use esosim_types::Channel;
+use esosim_types::{Channel, Condition, TriggerEvent};
 use serde::{Deserialize, Serialize};
 
 fn is_zero<T: Default + PartialEq>(v: &T) -> bool {
@@ -88,6 +88,32 @@ pub struct ResolvedTrigger {
     pub u2: Vec<u32>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub list3: Vec<u32>,
+    /// What `u2[0]` means as a combat event (`TriggerEvent::from_list26_kind`). Absent for kind 0
+    /// (always-on) and for the kinds that modify a pool, range or cost instead of reacting.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event: Option<TriggerEvent>,
+}
+
+/// One phrase the trigger lexicon (`triggers.rs`) found in a tooltip clause: *when* or *while* or
+/// *against what* a value applies. Format 2 of `bundle.jsonl` carries these on every evidence clause.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CueRecord {
+    /// The cue as the lexicon names it (`On(DrinkPotion)`, `While(InCombat)`, `Per(Stack)` ...).
+    pub cue: String,
+    /// The lexicon rule that matched.
+    pub rule: String,
+    /// The words that matched (lower-case, placeholders as `#`).
+    pub text: String,
+    /// For `On(..)` cues: the event the simulator would raise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event: Option<TriggerEvent>,
+    /// For `While(..)` and `Against(..)` cues `Condition` can express.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition: Option<Condition>,
+}
+
+fn is_always(c: &Condition) -> bool {
+    *c == Condition::Always
 }
 
 /// What the tooltip's verb does to the stat it names ("reduces damage taken" -> `Lowers`).
@@ -128,6 +154,16 @@ pub struct ResolvedEvidence {
     /// followed links to this ability. Only used when no direct evidence exists.
     #[serde(default, skip_serializing_if = "is_false")]
     pub indirect: bool,
+    /// Every when/while/per/against phrase in the clause, in text order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cues: Vec<CueRecord>,
+    /// All the clause's expressible `While`/`Against` cues together (`Always` = none). This is the
+    /// `EffectDef.condition` a reviewer would start from.
+    #[serde(default, skip_serializing_if = "is_always")]
+    pub condition: Condition,
+    /// The clause's `On(..)` events (the proc triggers), in text order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub events: Vec<TriggerEvent>,
 }
 
 fn is_false(b: &bool) -> bool {

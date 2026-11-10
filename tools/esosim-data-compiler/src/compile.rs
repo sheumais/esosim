@@ -62,7 +62,11 @@ pub fn resolve(s: &SkillData34, corpus: &Corpus, graph: &Graph) -> ResolvedAbili
         triggers: s
             .list26
             .iter()
-            .map(|l| ResolvedTrigger { u2: l.u2.clone(), list3: l.list3.clone() })
+            .map(|l| ResolvedTrigger {
+                u2: l.u2.clone(),
+                list3: l.list3.clone(),
+                event: l.u2.first().and_then(|k| esosim_types::TriggerEvent::from_list26_kind(*k)),
+            })
             .collect(),
         tooltips: s
             .tooltip_data

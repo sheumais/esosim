@@ -229,7 +229,10 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
 
         let mut problems: Vec<String> = Vec::new();
         walk(&o.def.condition, &mut |c| match c {
-            Condition::SelfBuffActive(id) | Condition::TargetDebuffActive(id) => {
+            Condition::SelfBuffActive(id)
+            | Condition::TargetDebuffActive(id)
+            | Condition::SelfBuffStacks { ability_id: id, .. }
+            | Condition::TargetDebuffStacks { ability_id: id, .. } => {
                 let known = by_id.contains_key(id) || override_ids.contains(id) || hand_written.contains_key(id);
                 if !known {
                     problems.push(format!("its condition asks about buff {id}, which is not in the bundle or any effect file"));

@@ -16,7 +16,8 @@ pub enum ItemType {
     Light,
     Medium,
     Heavy,
-    Mara,
+    Ring,
+    Necklace,
     Unknown,
 }
 

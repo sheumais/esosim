@@ -40,7 +40,6 @@ pub fn calculate_item_type(str: &str) -> ItemType {
         "LIGHT" => ItemType::Light,
         "MEDIUM" => ItemType::Medium,
         "HEAVY" => ItemType::Heavy,
-        "MARA" => ItemType::Mara,
         _ => ItemType::Unknown,
     }
 }

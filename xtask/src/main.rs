@@ -85,8 +85,7 @@ pub fn compiler(args: &[&str], data: &DataArgs) -> Command {
     let mut c = cargo();
     c.args(["run", "--quiet", "--package", "esosim-data-compiler", "--"])
         .args(args)
-        .args(data.as_slice())
-        .args(layout::hand_written_args(&root()));
+        .args(data.as_slice());
     c
 }
 

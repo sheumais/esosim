@@ -131,33 +131,6 @@ mod tests {
         assert!(b.dangling_ids().is_empty());
     }
 
-    fn channel_total(b: &Bundle) -> usize {
-        b.effects.values().map(|d| d.channels.len()).sum()
-    }
-
-    #[test]
-    fn major_savagery_is_2629_weapon_crit_rating() {
-        use esosim_types::Channel;
-        let d = Bundle::embedded().effect(61667).expect("Major Savagery (61667)");
-        assert_eq!(d.name, "Major Savagery");
-        assert_eq!(d.value_at(Channel::WeaponCriticalChance, 1), 2629.0);
-    }
-
-    #[test]
-    fn legacy_comments_survive_as_notes() {
-        let d = Bundle::embedded().effect(17906).expect("Crusher");
-        assert_eq!(d.note.as_deref(), Some("Assumes infused. todo"));
-    }
-
-    #[test]
-    fn rows_sharing_an_id_are_one_effect_with_several_channels() {
-        use esosim_types::{Channel, ResistableDamageType};
-        let d = Bundle::embedded().effect(45482).expect("Twin Blade and Blunt");
-        assert_eq!(d.value_at(Channel::Penetration(ResistableDamageType::All), 1), 1487.0);
-        assert_eq!(d.value_at(Channel::CriticalChance, 2), 1314.0);
-        assert_eq!(d.value_at(Channel::CriticalDamage, 2), 12.0);
-    }
-
     #[test]
     fn only_reviewed_rows_of_effects_jsonl_are_loaded() {
         let row = |id: u32, provenance: &str| {

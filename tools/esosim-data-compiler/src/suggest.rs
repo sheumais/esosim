@@ -10,6 +10,7 @@
 //! `channels` list, which `overrides::parse` rejects.
 
 use crate::resolved::{ClassStatus, ResolvedAbility, RootCategory};
+use crate::triggers;
 use esosim_types::Channel;
 use std::collections::BTreeSet;
 
@@ -129,6 +130,19 @@ pub fn skeleton(a: &ResolvedAbility, category: RootCategory) -> String {
         }
     }
 
+    // what the tooltip says about *when* (see `triggers.rs`); only ever comments
+    if let Some(text) = &a.tooltip_text {
+        let cues = triggers::cues_in(text);
+        if !cues.is_empty() {
+            out.push_str(&format!("# condition cues: {}\n", triggers::summary(&cues)));
+            let candidates: Vec<String> =
+                cues.iter().filter_map(|m| m.cue.to_condition()).map(|c| format!("{c:?}")).collect();
+            if !candidates.is_empty() {
+                out.push_str(&format!("# condition candidates (build a `condition` from these): {}\n", candidates.join(", ")));
+            }
+        }
+    }
+
     // --- the table
     out.push_str("[[effect]]\n");
     out.push_str(&format!("id = {}\n", a.id));
@@ -196,8 +210,9 @@ mod tests {
         serde_json::from_str(json).unwrap()
     }
 
-    const CLASSIFIED: &str = r#"{"id":76617,"name":"Minor Slayer","value1":5,"duration_ms":4000,"tooltip_text":"Increases damage done to Dungeon, Trial and Arena monsters by <<1>>%.","classification":{"status":"classified","channels":[{"DamageDone":["Monsters", "Multiplicative"]}],"direction":"raises","evidence":[]}}"#;
-    const UNCLASSIFIED: &str = r#"{"id":50,"name":"Mystery \"X\"","triggers":[{"u2":[78,0,0,0]},{"u2":[0,0,0,0]}],"classification":{"status":"unclassified","reason":"no_rule_matched","unmatched_clauses":["does a thing"]}}"#;
+    const CLASSIFIED: &str = r#"{"id":76617,"name":"Minor Slayer","value1":5,"duration_ms":4000,"tooltip_text":"Increases damage done to Dungeon, Trial and Arena monsters by <<1>>%.","classification":{"status":"classified","channels":[{"DamageDone":["Monsters", "Multiplicative"]}],"direction":"raises","evidence":[{"parent":76617,"placeholder":1,"clause":"increases damage done to dungeon, trial and arena monsters by @%","rule":"damage_done_monsters","channels":[{"DamageDone":["Monsters","Multiplicative"]}],"direction":"raises","cues":[{"cue":"Against(Monsters)","rule":"against_monsters","text":"done to dungeon, trial and arena monsters","condition":{"TargetIs":"Monster"}}],"condition":{"TargetIs":"Monster"}}]}}"#;
+
+    const UNCLASSIFIED: &str = r#"{"id":50,"name":"Mystery \"X\"","triggers":[{"u2":[78,0,0,0],"event":"Bash"},{"u2":[0,0,0,0]}],"classification":{"status":"unclassified","reason":"no_rule_matched","unmatched_clauses":["does a thing"]}}"#;
 
     #[test]
     fn a_classified_ability_gives_a_skeleton_that_loads() {
@@ -228,6 +243,22 @@ mod tests {
         assert!(text.contains("TODO"), "{text}");
         // unfinished skeletons do not load
         assert!(overrides::parse(&text).unwrap_err().contains("has no channels"));
+    }
+
+    #[test]
+    fn the_tooltip_says_when_as_comments_and_the_skeleton_still_loads() {
+        let json = r#"{"id":61,"name":"Proc","tooltip_text":"When you deal critical damage while in combat, gain <<1>>. Only while you are under 50% health.","classification":{"status":"unclassified","reason":"no_rule_matched"}}"#;
+        let text = skeleton(&ability(json), RootCategory::Sets);
+        assert!(text.contains("# condition cues: On(DealCritical), While(InCombat), While(ResourceBelow(Health, Some(50)))"), "{text}");
+        assert!(text.contains("# condition candidates (build a `condition` from these): InCombat, SelfHealthBelowPct(50)"), "{text}");
+        // comments only: finishing the TODOs is still a person's job
+        assert!(overrides::parse(&text).unwrap_err().contains("has no channels"));
+        // "against monsters" is a condition now: TargetIs(Monster)
+        let slayer = skeleton(&ability(CLASSIFIED), RootCategory::Buffs);
+        assert!(slayer.contains("# condition candidates (build a `condition` from these): TargetIs(Monster)"), "{slayer}");
+        // a tooltip with no circumstance adds no line
+        let plain = r#"{"id":62,"name":"Plain","tooltip_text":"Increases your maximum health by <<1>>.","classification":{"status":"unclassified","reason":"no_rule_matched"}}"#;
+        assert!(!skeleton(&ability(plain), RootCategory::Buffs).contains("condition candidates"));
     }
 
     #[test]

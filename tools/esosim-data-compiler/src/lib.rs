@@ -25,6 +25,7 @@ pub mod resolved;
 pub mod roots;
 mod setdata;
 pub mod suggest;
+pub mod triggers;
 pub mod verify;
 
 /// Compile just `set_items.csv` from a raw set table file (the `.EsoFileData` extract of manifest id 0x16).

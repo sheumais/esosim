@@ -10,14 +10,6 @@ pub const DATA_DIR: &str = "crates/esosim-data/data";
 /// The generated set-id constants file (`esosim_data::set_ids`).
 pub const IDS_FILE: &str = "crates/esosim-data/src/set_ids.rs";
 
-/// `--hand-written <file>` for each of [`HAND_WRITTEN_EFFECTS`].
-pub fn hand_written_args(root: &Path) -> Vec<String> {
-    HAND_WRITTEN_EFFECTS
-        .iter()
-        .flat_map(|f| ["--hand-written".to_string(), root.join(f).to_string_lossy().into_owned()])
-        .collect()
-}
-
 /// What the compiler produces, and where each file goes.
 pub struct Output {
     pub name: &'static str,

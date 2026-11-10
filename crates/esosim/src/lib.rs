@@ -5,8 +5,6 @@ pub mod data {
         pub mod cca;
     }
     pub mod bundle;
-    pub mod effects {
-    }
     pub mod skill_data {
         pub mod major_minor;
     }
@@ -27,7 +25,6 @@ pub mod engine {
     pub mod active_effects;
     pub mod aggregator;
     pub mod champion;
-    pub mod conditional;
     pub mod effect;
     pub mod grant_rule;
     pub mod mundus;
