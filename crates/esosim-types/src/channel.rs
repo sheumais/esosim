@@ -32,6 +32,9 @@ pub enum DamageDoneContext {
     Monsters,
     NonCritical,
     Bash,
+    /// Abilities of one skill line ("your Two Handed abilities", "your Bow abilities"). Written as the
+    /// line's name, like the skill-line channels below.
+    SkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
     Type(ResistableDamageType),
 }
 
@@ -89,7 +92,12 @@ pub enum Channel {
     MovementSpeed,
     CostReductionCCA(CoreCombatAbility, AggKind),
     CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
+    /// A *fraction* of the cost (0.10 = "reduces the cost of your Magicka abilities by 10%"), where
+    /// `CostReduction` is flat cost points (a glyph's 203). Multiplicative bucket.
+    CostReductionPct(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
     CostReductionSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
+    /// As [`Channel::CostReductionPct`], for the abilities of one skill line (Hawk's Eye: Bow).
+    CostReductionSkillLinePct(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
     MundusBoost,
     /// Raises the cap of a derived stat (armour cap, critical damage cap), in that stat's unit: see
     /// [`CappedStat`].
@@ -104,10 +112,6 @@ pub enum Channel {
     DamageShieldStrength,
     BlockMitigation,
     CriticalDamageTaken,
-    SpellCriticalChance,
-    WeaponCriticalChance,
-    WeaponPower,
-    SpellPower,
 
     HealingDoneSingleTarget,
     HealingDoneOverTime,

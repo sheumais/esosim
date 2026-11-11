@@ -2,7 +2,7 @@ use eso_skill_data::enums::skill_line::SkillLine;
 
 use std::sync::LazyLock;
 
-use esosim_types::SetBehaviour;
+use esosim_types::{EffectDef, EffectSource, SetBehaviour};
 
 use crate::{data::enums::gear::ItemType, entity::player::Player};
 
@@ -69,8 +69,38 @@ pub fn set_grant_rules_from(jsonl: &str) -> Result<Vec<GrantRule>, String> {
 }
 
 /// Every grant rule the calculator uses: the hand-written ones plus the generated set grants.
+/// (The rules for hand-written *set effects* depend on the effect data in use: see
+/// [`set_effect_rules`].)
 pub fn all_grant_rules() -> Vec<&'static GrantRule> {
     GRANT_RULES.iter().chain(SET_GRANT_RULES.iter()).collect()
+}
+
+/// One rule per effect whose source is `EffectSource::Set { set_id, pieces_required }`: switch the
+/// effect on (its own id, one stack) when at least `pieces_required` pieces of the set are worn
+/// (roadmap 2.2). This is how a class 3 set bonus written in `overrides.toml` reaches the sheet: the
+/// effect carries the set and the piece count, so nothing else has to say when it applies. Any
+/// further condition (a weapon, a health threshold) is the effect's own `condition`, decided when the
+/// effects are aggregated.
+///
+/// Perfected sets need no rule of their own: their pieces already count towards the regular set
+/// (`Player::get_active_sets_counts`), so write the effect against the regular set. Rules come out in
+/// effect id order.
+pub fn set_effect_rules<'a>(effects: impl IntoIterator<Item = &'a EffectDef>) -> Vec<GrantRule> {
+    let mut found: Vec<(u32, u16, u8)> = effects
+        .into_iter()
+        .filter_map(|def| match def.source {
+            EffectSource::Set { set_id, pieces_required } => Some((def.id, set_id, pieces_required)),
+            _ => None,
+        })
+        .collect();
+    found.sort_unstable();
+    found
+        .into_iter()
+        .map(|(effect_id, set_id, threshold)| GrantRule {
+            effect_id,
+            condition: GrantCondition::EquippedSetCount { set_id, threshold },
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -177,6 +207,39 @@ mod tests {
         assert!(!evaluates(SLAYER_MINOR_ID, &player_with(ANSUULS_TORMENT_SET_ID, 2)));
         assert!(evaluates(SLAYER_MINOR_ID, &player_with(ANSUULS_TORMENT_SET_ID, 3)));
         assert!(evaluates(SLAYER_MINOR_ID, &player_with(PERFECTED_ANSUULS_TORMENT_SET_ID, 3)));
+    }
+
+    fn set_effect(id: u32, set_id: u16, pieces_required: u8) -> EffectDef {
+        EffectDef {
+            id,
+            name: format!("set effect {id}"),
+            source: EffectSource::Set { set_id, pieces_required },
+            channels: vec![],
+            condition: esosim_types::Condition::Always,
+            stacking: esosim_types::Stacking::Unique,
+            buff_code: None,
+            duration_ms: None,
+            cooldown_ms: None,
+            note: None,
+        }
+    }
+
+    /// Only effects with a set source become rules, and the rule fires at exactly the piece count the
+    /// effect names; perfected pieces count towards the regular set's effect.
+    #[test]
+    fn a_set_effect_is_granted_at_its_piece_count() {
+        let mut food = set_effect(9, 0, 0);
+        food.source = EffectSource::Food;
+        let defs = [set_effect(20, ANSUULS_TORMENT_SET_ID, 3), food, set_effect(10, MOONDANCER_SET_ID, 5)];
+        let rules = set_effect_rules(&defs);
+        assert_eq!(rules.iter().map(|r| r.effect_id).collect::<Vec<_>>(), [10, 20]);
+
+        let at = |set, n| player_with(set, n);
+        let fires = |effect: u32, player: &Player| rules.iter().any(|r| r.effect_id == effect && r.evaluate(player).is_some());
+        assert!(!fires(20, &at(ANSUULS_TORMENT_SET_ID, 2)));
+        assert!(fires(20, &at(ANSUULS_TORMENT_SET_ID, 3)));
+        assert!(fires(20, &at(PERFECTED_ANSUULS_TORMENT_SET_ID, 3)));
+        assert!(!fires(10, &at(MOONDANCER_SET_ID, 4)));
     }
 
     #[test]

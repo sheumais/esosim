@@ -24,6 +24,11 @@ pub struct ValueCheck {
     /// Index into `channels`. Default 0.
     #[serde(default)]
     pub channel: usize,
+    /// Another ability whose same field is subtracted first: `(this - that) x scale`. For a tier that
+    /// holds only the increase over the tier below (True-Sworn Fury's 75 % tier is record 150704 minus
+    /// the base record 150703).
+    #[serde(default)]
+    pub minus: Option<u32>,
 }
 
 fn one() -> f64 {
@@ -176,7 +181,7 @@ note = "Red CP"
         assert_eq!(thief.def.source, EffectSource::Mundus { ability_id: 13975 });
         assert_eq!(thief.def.channels[0].channel, Channel::CriticalChance);
         assert_eq!(thief.def.channels[0].value, 1212.0, "an integer is fine for a float field");
-        assert_eq!(thief.check, Some(ValueCheck { field: "value1".into(), scale: 1.0, channel: 0 }));
+        assert_eq!(thief.check, Some(ValueCheck { field: "value1".into(), scale: 1.0, channel: 0, minus: None }));
 
         let fort = &v[1];
         assert_eq!(fort.game_name, "Fortified", "defaults to name");
@@ -201,6 +206,12 @@ note = "Red CP"
         assert!(parse(&one("check = { field = \"value1\", channel = 1 }\n")).unwrap_err().contains("past the end"));
         let none = "[[effect]]\nid = 6\nname = \"Y\"\nsource = \"Food\"\nchannels = []\n";
         assert!(parse(none).unwrap_err().contains("effect 6 (`Y`): has no channels"));
+    }
+
+    #[test]
+    fn a_check_can_subtract_another_record() {
+        let one = "[[effect]]\nid = 5\nname = \"X\"\nsource = \"Food\"\nchannels = [{ channel = \"CriticalChance\", value = 823 }]\ncheck = { field = \"value1\", minus = 150703 }\n";
+        assert_eq!(parse(one).unwrap()[0].check.as_ref().unwrap().minus, Some(150703));
     }
 
     #[test]

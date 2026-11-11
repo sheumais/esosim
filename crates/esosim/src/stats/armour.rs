@@ -39,9 +39,10 @@ pub fn penetration(c: &ChannelSet, kind: Dmg) -> u32 {
     layered(c, kind, Channel::Penetration)
 }
 
-/// Resistance left after penetration. Can be negative (which increases damage taken).
-pub fn effective_resistance(target_resistance: u32, attacker_penetration: u32) -> i64 {
-    target_resistance as i64 - attacker_penetration as i64
+/// Resistance left after penetration. There is no over-penetration: 0 resistance is 0 whether the
+/// attacker has 1000 penetration or 2000.
+pub fn effective_resistance(target_resistance: u32, attacker_penetration: u32) -> u32 {
+    target_resistance.saturating_sub(attacker_penetration)
 }
 
 /// What effects add to the upper limit of `stat` (`Channel::CapRaise`).
@@ -51,10 +52,10 @@ pub fn cap_raise(c: &ChannelSet, stat: CappedStat) -> i64 {
 
 /// Fraction of damage mitigated by `effective_resistance`: resistance / 66,000, with the resistance
 /// held to `CappedStat::Resistance` (33,000, i.e. 50 %, plus whatever `c`, the defender's channels,
-/// raises it by). Negative resistance gives negative mitigation (extra damage), uncapped.
+/// raises it by).
 /// Formula and cap are the commonly quoted effective-level-66 values; not yet checked against
 /// this repo's own data.
-pub fn resistance_to_mitigation(c: &ChannelSet, effective_resistance: i64) -> f32 {
+pub fn resistance_to_mitigation(c: &ChannelSet, effective_resistance: u32) -> f32 {
     let counted = CappedStat::Resistance.apply(effective_resistance as f64, cap_raise(c, CappedStat::Resistance));
     counted as f32 / RESISTANCE_PER_UNIT
 }
@@ -103,13 +104,13 @@ mod tests {
     #[test]
     fn mitigation_and_cap() {
         assert_eq!(effective_resistance(18200, 18200), 0);
-        assert_eq!(effective_resistance(18200, 20000), -1800);
+        assert_eq!(effective_resistance(18200, 20000), 0); // no over-penetration
+        assert_eq!(effective_resistance(0, 2000), 0);
         let c = ChannelSet::new();
         assert_eq!(resistance_to_mitigation(&c, 0), 0.0);
         assert!((resistance_to_mitigation(&c, 16500) - 0.25).abs() < 1e-6);
         assert_eq!(resistance_to_mitigation(&c, 33_000), 0.5);
         assert_eq!(resistance_to_mitigation(&c, 60_000), 0.5);
-        assert!(resistance_to_mitigation(&c, -1800) < 0.0);
     }
 
     #[test]

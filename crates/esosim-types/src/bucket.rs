@@ -42,6 +42,8 @@ impl Channel {
             | CostReductionCCA(_, kind) => (*kind).into(),
             // a fraction (0.091 = 9.1 %), summed over Divines pieces and scaling every mundus stone
             MundusBoost => Bucket::Multiplicative,
+            // a fraction of the cost (0.10 = 10 %), where `CostReduction` is flat cost points
+            CostReductionPct(_) | CostReductionSkillLinePct(_) => Bucket::Multiplicative,
             CapRaise(_)
             | Armour(_)
             | CriticalChance
@@ -61,10 +63,6 @@ impl Channel {
             | DamageShieldStrength
             | BlockMitigation
             | CriticalDamageTaken
-            | SpellCriticalChance
-            | WeaponCriticalChance
-            | WeaponPower
-            | SpellPower
             | HealingDoneSingleTarget
             | HealingDoneOverTime
             | HealingDoneSkillLine(_)
@@ -112,8 +110,9 @@ impl Cap {
 pub enum CappedStat {
     /// Critical chance in percent (100 = 100 %).
     CriticalChance,
-    /// Critical <> in percent, the 50 % base included.
+    /// Critical damage in percent, the 50 % base included.
     CriticalDamage,
+    /// Critical healing in percent, the 50 % base included.
     CriticalHealing,
     /// Resistance, in resistance points: the most that counts towards mitigation.
     Resistance,
@@ -121,7 +120,7 @@ pub enum CappedStat {
 
 impl CappedStat {
     /// The cap before any effect raises it, in the stat's own unit. Only the upper limit is ever
-    /// raised; a negative resistance (extra damage taken) is not limited.
+    /// raised; none of these stats goes below 0 (there is no over-penetration).
     pub const fn base_cap(self) -> Cap {
         match self {
             CappedStat::CriticalChance => Cap::new(0.0, 100.0),

@@ -9,8 +9,10 @@ use crate::entity::enemy::Enemy;
 use serde::{Deserialize, Serialize};
 
 pub use super::armour::{effective_resistance, penetration, resistance, resistance_to_mitigation};
-pub use super::critical::{crit_chance, crit_damage_pct, crit_rating, crit_rating_to_chance, effective_level};
-pub use super::power::{spell_damage, weapon_damage};
+pub use super::critical::{
+    crit_chance, crit_damage_pct, crit_healing_pct, crit_rating, crit_rating_to_chance, effective_level,
+};
+pub use super::power::power;
 pub use super::resource::{max_resource, recovery};
 
 /// Attribute points spent on each pool.
@@ -33,13 +35,13 @@ pub struct StatSheet {
     pub max_health: u32,
     pub max_magicka: u32,
     pub max_stamina: u32,
-    pub weapon_damage: u32,
-    pub spell_damage: u32,
-    pub weapon_crit_rating: u32,
-    pub spell_crit_rating: u32,
-    pub weapon_crit_chance: f32,
-    pub spell_crit_chance: f32,
+    /// Weapon damage and spell damage: one number, since every bonus to one is a bonus to the other.
+    pub power: u32,
+    /// Weapon and spell critical rating, likewise one number.
+    pub crit_rating: u32,
+    pub crit_chance: f32,
     pub crit_damage_pct: f32,
+    pub crit_healing_pct: f32,
     pub physical_resistance: u32,
     pub spell_resistance: u32,
     pub physical_penetration: u32,
@@ -64,13 +66,11 @@ pub fn derive_sheet(c: &ChannelSet, ctx: &StatContext) -> StatSheet {
         max_health: pool(ResourceKind::Health, ctx.attributes.health),
         max_magicka: pool(ResourceKind::Magicka, ctx.attributes.magicka),
         max_stamina: pool(ResourceKind::Stamina, ctx.attributes.stamina),
-        weapon_damage: weapon_damage(c, ctx.level),
-        spell_damage: spell_damage(c, ctx.level),
-        weapon_crit_rating: crit_rating(c, false),
-        spell_crit_rating: crit_rating(c, true),
-        weapon_crit_chance: crit_chance(c, false, eff),
-        spell_crit_chance: crit_chance(c, true, eff),
+        power: power(c, ctx.level),
+        crit_rating: crit_rating(c),
+        crit_chance: crit_chance(c, eff),
         crit_damage_pct: crit_damage_pct(c),
+        crit_healing_pct: crit_healing_pct(c),
         physical_resistance: resistance(c, Dmg::Martial),
         spell_resistance: resistance(c, Dmg::Spell),
         physical_penetration: penetration(c, Dmg::Martial),
@@ -107,10 +107,36 @@ use super::*;
         let s = derive_sheet(&c, &ctx);
         assert_eq!(s.max_health, 33456);
         assert_eq!(s.max_magicka, 12000);
-        assert_eq!(s.weapon_damage, 5179);
-        assert_eq!(s.weapon_crit_rating, 8421);
-        assert!((s.weapon_crit_chance - 0.4843).abs() < 1e-4);
+        assert_eq!(s.power, 5179);
+        assert_eq!(s.crit_rating, 8421);
+        assert!((s.crit_chance - 0.4843).abs() < 1e-4);
         assert_eq!(s.crit_damage_pct, 50.0);
+    }
+
+    #[test]
+    fn every_sheet_field_has_a_channel_behind_it() {
+        let ctx = StatContext { level: 50, attributes: Attributes::default(), target: None };
+        let base = derive_sheet(&ChannelSet::new(), &ctx);
+        let with = |channel: Channel| {
+            let mut c = ChannelSet::new();
+            c.add_additive(channel, 100);
+            derive_sheet(&c, &ctx)
+        };
+        assert!(with(Channel::Resource(ResourceKind::Health, Additive)).max_health > base.max_health);
+        assert!(with(Channel::Resource(ResourceKind::Magicka, Additive)).max_magicka > base.max_magicka);
+        assert!(with(Channel::Resource(ResourceKind::Stamina, Additive)).max_stamina > base.max_stamina);
+        assert!(with(Channel::Power(esosim_types::DamageDoneContext::All, Additive)).power > base.power);
+        assert!(with(Channel::CriticalChance).crit_rating > base.crit_rating);
+        assert!(with(Channel::CriticalChance).crit_chance > base.crit_chance);
+        assert!(with(Channel::CriticalDamage).crit_damage_pct > base.crit_damage_pct);
+        assert!(with(Channel::CriticalHealing).crit_healing_pct > base.crit_healing_pct);
+        assert!(with(Channel::Armour(Dmg::Martial)).physical_resistance > base.physical_resistance);
+        assert!(with(Channel::Armour(Dmg::Spell)).spell_resistance > base.spell_resistance);
+        assert!(with(Channel::Penetration(Dmg::Martial)).physical_penetration > base.physical_penetration);
+        assert!(with(Channel::Penetration(Dmg::Spell)).spell_penetration > base.spell_penetration);
+        assert!(with(Channel::Recovery(ResourceKind::Health, Additive)).health_recovery > base.health_recovery);
+        assert!(with(Channel::Recovery(ResourceKind::Magicka, Additive)).magicka_recovery > base.magicka_recovery);
+        assert!(with(Channel::Recovery(ResourceKind::Stamina, Additive)).stamina_recovery > base.stamina_recovery);
     }
 
     #[test]

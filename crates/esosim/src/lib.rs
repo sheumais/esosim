@@ -44,7 +44,6 @@ pub mod entity {
 
 pub mod stats {
     pub mod armour;
-    pub mod coef;
     pub mod critical;
     pub mod power;
     pub mod resource;

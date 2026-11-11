@@ -131,6 +131,9 @@ pub enum Condition {
     OnBar(Bar),
     WeaponEquipped(WeaponKind),
     ClassIs(PlayerClass),
+    /// "while you have a food buff active": the build names a food (Back-Alley Gourmand, Steadfast's
+    /// Mettle, Full Belly Barricade).
+    FoodActive,
 
     SelfBuffActive(u32),
     TargetDebuffActive(u32),
@@ -168,6 +171,8 @@ pub trait ConditionContext {
     fn on_bar(&self, _bar: Bar) -> Option<bool> { None }
     fn weapon_equipped(&self, _kind: WeaponKind) -> Option<bool> { None }
     fn class(&self) -> Option<PlayerClass> { None }
+    /// Whether the build has a food or drink buff on.
+    fn food_active(&self) -> Option<bool> { None }
 
     // --- combat-time ---
     fn self_buff_active(&self, _id: u32) -> Option<bool> { None }
@@ -250,7 +255,8 @@ impl Condition {
             | Condition::AbilitySlotted { .. }
             | Condition::OnBar(_)
             | Condition::WeaponEquipped(_)
-            | Condition::ClassIs(_) => true,
+            | Condition::ClassIs(_)
+            | Condition::FoodActive => true,
             Condition::All(v) | Condition::Any(v) => v.iter().all(Condition::is_build_time),
             Condition::Not(c) => c.is_build_time(),
             Condition::SelfBuffActive(_)
@@ -315,6 +321,7 @@ impl Condition {
             Condition::OnBar(bar) => ctx.on_bar(*bar),
             Condition::WeaponEquipped(kind) => ctx.weapon_equipped(*kind),
             Condition::ClassIs(class) => ctx.class().map(|c| c == *class),
+            Condition::FoodActive => ctx.food_active(),
             Condition::SelfBuffActive(id) => ctx.self_buff_active(*id),
             Condition::TargetDebuffActive(id) => ctx.target_debuff_active(*id),
             Condition::TargetHealthBelowPct(p) => ctx.target_health_pct().map(|h| h < *p),
@@ -401,6 +408,7 @@ impl fmt::Display for Condition {
             Condition::OnBar(Bar::Backup) => f.write_str("on the backup bar"),
             Condition::WeaponEquipped(kind) => write!(f, "wielding {kind:?}"),
             Condition::ClassIs(class) => write!(f, "as a {class:?}"),
+            Condition::FoodActive => f.write_str("you have a food buff active"),
             Condition::SelfBuffActive(id) => write!(f, "buff {id} on you"),
             Condition::TargetDebuffActive(id) => write!(f, "debuff {id} on the target"),
             Condition::TargetHealthBelowPct(p) => write!(f, "target below {p}% health"),
@@ -507,6 +515,7 @@ mod tests {
             Condition::OnBar(Bar::Front),
             Condition::WeaponEquipped(WeaponKind::DualWield),
             Condition::ClassIs(PlayerClass::Necromancer),
+            Condition::FoodActive,
             Condition::SelfBuffActive(1),
             Condition::TargetDebuffActive(2),
             Condition::TargetHealthBelowPct(25),
@@ -555,8 +564,8 @@ mod tests {
         let build: Vec<bool> = every_variant().iter().map(Condition::is_build_time).collect();
         // Always, All([]), Any([]), Not(InCombat), then the build-time block, then combat-time
         assert_eq!(&build[..4], &[true, true, true, false]);
-        assert!(build[4..11].iter().all(|b| *b), "set, armour, line slotted, ability slotted, bar, weapon, class");
-        assert!(build[11..].iter().all(|b| !*b), "everything after the class is combat-time");
+        assert!(build[4..12].iter().all(|b| *b), "set, armour, line slotted, ability slotted, bar, weapon, class, food");
+        assert!(build[12..].iter().all(|b| !*b), "everything after the food is combat-time");
         assert!(Condition::All(vec![Condition::WeaponEquipped(WeaponKind::Bow), Condition::OnBar(Bar::Front)]).is_build_time());
         assert!(!Condition::All(vec![Condition::WeaponEquipped(WeaponKind::Bow), Condition::InCombat]).is_build_time());
     }
@@ -566,6 +575,7 @@ mod tests {
     impl ConditionContext for Fight {
         fn weapon_equipped(&self, k: WeaponKind) -> Option<bool> { Some(k == WeaponKind::DualWield) }
         fn class(&self) -> Option<PlayerClass> { Some(PlayerClass::Necromancer) }
+        fn food_active(&self) -> Option<bool> { Some(true) }
         fn self_buff_active(&self, id: u32) -> Option<bool> { Some(id == 3) }
         fn self_buff_stacks(&self, id: u32) -> Option<u32> { Some(if id == 3 { 5 } else { 0 }) }
         fn target_health_pct(&self) -> Option<u8> { Some(20) }
@@ -599,6 +609,7 @@ mod tests {
         no(Condition::WeaponEquipped(WeaponKind::Bow));
         yes(Condition::ClassIs(PlayerClass::Necromancer));
         no(Condition::ClassIs(PlayerClass::Templar));
+        yes(Condition::FoodActive);
         yes(Condition::SelfBuffStacks { ability_id: 3, at_least: 5 });
         no(Condition::SelfBuffStacks { ability_id: 3, at_least: 6 });
         no(Condition::SelfBuffStacks { ability_id: 4, at_least: 1 });

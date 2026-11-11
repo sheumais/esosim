@@ -40,6 +40,10 @@ pub struct Player {
     /// The character's class. `None` = not set, which leaves `Condition::ClassIs` undecided
     /// (`ConditionContext for Player`, roadmap 1.2); `Build::to_player` sets it (1.3).
     pub class: Option<PlayerClass>,
+    /// The food or drink the build names (`Build::food`), which `Condition::FoodActive` asks about.
+    /// `None` = no food. The food's own effect is switched on in `active_effects`; this only records
+    /// that there is one.
+    pub food: Option<u32>,
     /// Where `channels` came from: one entry per source (a gear category, a set bonus row, an
     /// effect), written by `recompute`. `channels` is the merge of all of them; `explain` reads it.
     pub sources: Vec<(EffectSource, ChannelSet)>,
@@ -59,6 +63,7 @@ impl Player {
             attributes: Attributes::default(),
             mundus_pick: esosim_types::MundusLoadout::default(),
             class: None,
+            food: None,
             sources: Vec::new(),
         }
     }

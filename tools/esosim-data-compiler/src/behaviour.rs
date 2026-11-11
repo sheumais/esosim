@@ -40,6 +40,10 @@ pub struct SetInput {
     pub partner: Option<u32>,
     /// From `set_kinds.txt`: a kind the shape of the table row cannot tell. Beats [`kind_of`].
     pub kind_override: Option<SetKind>,
+    /// The set table marks it craftable (`craftable` in `sets.jsonl`): [`SetKind::Crafted`].
+    pub craftable: bool,
+    /// The class a class set belongs to (`class_id` in `sets.jsonl`): [`SetKind::Class`].
+    pub class_id: Option<u8>,
 }
 
 /// `set_kinds.txt`: the sets whose [`SetKind`] is listed by hand rather than inferred.
@@ -88,6 +92,8 @@ pub fn inputs_from_records(
             blocks: r.abilities.iter().map(|a| a.ability_id).collect(),
             partner: perfected.get(&r.id).copied(),
             kind_override: kind_overrides.get(&r.id).copied(),
+            craftable: r.craftable(),
+            class_id: r.class_id,
         })
         .collect()
 }
@@ -124,10 +130,12 @@ impl Report {
         s.push_str(&format!(" ({} sets have an automatic buff-grant block)", self.sets_with_grant_blocks));
         let k = |k| self.by_kind.get(&k).copied().unwrap_or(0);
         s.push_str(&format!(
-            "\n  set kinds: {} monster, {} mythic, {} arena weapon (perfected included), {} other",
+            "\n  set kinds: {} monster, {} mythic, {} arena weapon (perfected included), {} crafted, {} class, {} other",
             k(SetKind::Monster),
             k(SetKind::Mythic),
             k(SetKind::ArenaWeapon),
+            k(SetKind::Crafted),
+            k(SetKind::Class),
             k(SetKind::Regular),
         ));
         for (set, ability) in &self.unclassified {
@@ -272,6 +280,13 @@ fn kind_of(set: &SetInput, blocks: &[BlockBehaviour], has_perfected: bool) -> Se
     if let Some(kind) = set.kind_override {
         return kind;
     }
+    // the table says so: a class set (the longer tail), a craftable one (the item-list flag)
+    if set.class_id.is_some() {
+        return SetKind::Class;
+    }
+    if set.craftable {
+        return SetKind::Crafted;
+    }
     let [block] = blocks else { return SetKind::Regular };
     let filled = &set.filled_slots;
     if filled.is_empty() {
@@ -394,6 +409,8 @@ mod tests {
             blocks: blocks.to_vec(),
             partner,
             kind_override: None,
+            craftable: false,
+            class_id: None,
         }
     }
 
@@ -573,6 +590,22 @@ mod tests {
         assert_eq!(r.by_kind[&Regular], 4);
     }
 
+    /// The table's own signals decide crafted and class sets, ahead of the shape; a perfected set takes
+    /// its partner's kind as always, and a listed kind still beats both.
+    #[test]
+    fn the_tables_craftable_flag_and_class_id_make_crafted_and_class_sets() {
+        use SetKind::*;
+        let crafted = SetInput { craftable: true, ..set(1, &[2, 3, 4], &[10], None) };
+        let class = SetInput { class_id: Some(117), ..set(2, &[2, 3, 4], &[13], None) };
+        // a one-block set with a stat row at 1 and a proc has the monster shape, but the flag wins
+        let flagged = SetInput { craftable: true, ..set(3, &[1], &[12], None) };
+        let listed = SetInput { craftable: true, kind_override: Some(Regular), ..set(4, &[1, 2, 3, 4, 5], &[13], None) };
+        let (b, r) = run(&[crafted, class, flagged, listed]);
+        assert_eq!(b.iter().map(|x| x.kind).collect::<Vec<_>>(), [Crafted, Class, Crafted, Regular]);
+        assert_eq!((r.by_kind[&Crafted], r.by_kind[&Class], r.by_kind[&Regular]), (2, 1, 1));
+        assert!(r.summary().contains("2 crafted, 1 class"));
+    }
+
     #[test]
     fn a_listed_kind_beats_the_shape_and_a_listed_mythic_is_one_piece() {
         // Stormweaver's Cavort looks like a monster set (a stat row at 1, a proc), but is a mythic
@@ -667,6 +700,8 @@ mod tests {
                         .unwrap_or_default(),
                     partner: v["perfected_of"].as_u64().map(|p| p as u32),
                     kind_override: overrides.get(&(v["id"].as_u64().unwrap() as u32)).copied(),
+                    craftable: v["craftable"].as_bool().unwrap_or(false),
+                    class_id: v["class_id"].as_u64().map(|c| c as u8),
                 }
             })
             .collect();

@@ -1,4 +1,4 @@
-//! Critical chance and critical damage as pure functions of a `ChannelSet`.
+//! Critical chance, critical damage and critical healing as pure functions of a `ChannelSet`.
 
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::Channel;
@@ -8,6 +8,7 @@ use super::armour::cap_raise;
 
 pub const CRIT_DAMAGE_SCALE: u16 = 66;
 const CRITICAL_DAMAGE_DEFAULT: f32 = 50.0;
+const CRITICAL_HEALING_DEFAULT: f32 = 50.0;
 const CRITICAL_CHANCE_DEFAULT: f32 = 0.1;
 /// The level crit ratings are converted at: 50 + CP160 = effective level 66.
 pub const EFFECTIVE_LEVEL: u8 = 66;
@@ -23,15 +24,14 @@ pub fn crit_rating_to_chance(rating: u32, level: u8) -> f32 {
     rating as f32 / level_const as f32
 }
 
-/// Total crit rating: the "both" channel plus the weapon or spell one, never below 0.
-pub fn crit_rating(c: &ChannelSet, spell: bool) -> u32 {
-    let single = if spell { Channel::SpellCriticalChance } else { Channel::WeaponCriticalChance };
-    (c.get(Channel::CriticalChance) + c.get(single)).max(0) as u32
+/// Total crit rating, never below 0. Weapon and spell critical are one stat.
+pub fn crit_rating(c: &ChannelSet) -> u32 {
+    c.get(Channel::CriticalChance).max(0) as u32
 }
 
 /// Crit chance (0.0..=1.0) at an effective `level`: 10 % base + rating, capped at 100 %.
-pub fn crit_chance(c: &ChannelSet, spell: bool, level: u8) -> f32 {
-    let percent = (crit_rating_to_chance(crit_rating(c, spell), level) + CRITICAL_CHANCE_DEFAULT) as f64 * 100.0;
+pub fn crit_chance(c: &ChannelSet, level: u8) -> f32 {
+    let percent = (crit_rating_to_chance(crit_rating(c), level) + CRITICAL_CHANCE_DEFAULT) as f64 * 100.0;
     (CappedStat::CriticalChance.apply(percent, cap_raise(c, CappedStat::CriticalChance)) / 100.0) as f32
 }
 
@@ -44,6 +44,14 @@ pub fn crit_damage_pct(c: &ChannelSet) -> f32 {
     ) as f32
 }
 
+/// Crit healing in percent (50 base + bonuses), capped, in percentage points like crit damage.
+pub fn crit_healing_pct(c: &ChannelSet) -> f32 {
+    CappedStat::CriticalHealing.apply(
+        (CRITICAL_HEALING_DEFAULT + c.get(Channel::CriticalHealing) as f32) as f64,
+        cap_raise(c, CappedStat::CriticalHealing),
+    ) as f32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -52,8 +60,8 @@ mod tests {
     fn test_calculate_defaults() {
         let c = ChannelSet::new();
         assert_eq!(crit_damage_pct(&c), CRITICAL_DAMAGE_DEFAULT);
-        assert_eq!(crit_chance(&c, false, EFFECTIVE_LEVEL), CRITICAL_CHANCE_DEFAULT);
-        assert_eq!(crit_chance(&c, true, EFFECTIVE_LEVEL), CRITICAL_CHANCE_DEFAULT);
+        assert_eq!(crit_healing_pct(&c), CRITICAL_HEALING_DEFAULT);
+        assert_eq!(crit_chance(&c, EFFECTIVE_LEVEL), CRITICAL_CHANCE_DEFAULT);
     }
 
     #[test]
@@ -68,9 +76,9 @@ mod tests {
                 + 657 // slimecraw 1pc
                 + 1579, // precise weapon
         );
-        assert_eq!(crit_rating(&c, false), 8421);
+        assert_eq!(crit_rating(&c), 8421);
         // read from /script d(GetCriticalStrikeChance(8421))
-        assert!((crit_chance(&c, false, EFFECTIVE_LEVEL) - (CRITICAL_CHANCE_DEFAULT + 0.384309959)).abs() < 1e-6);
+        assert!((crit_chance(&c, EFFECTIVE_LEVEL) - (CRITICAL_CHANCE_DEFAULT + 0.384309959)).abs() < 1e-6);
     }
 
     #[test]
@@ -88,16 +96,6 @@ mod tests {
     }
 
     #[test]
-    fn weapon_and_spell_chance_use_their_own_channel() {
-        let mut c = ChannelSet::new();
-        c.add_additive(Channel::CriticalChance, 1000);
-        c.add_additive(Channel::WeaponCriticalChance, 2629);
-        c.add_additive(Channel::SpellCriticalChance, 1314);
-        assert_eq!(crit_rating(&c, false), 3629);
-        assert_eq!(crit_rating(&c, true), 2314);
-    }
-
-    #[test]
     fn an_effect_can_raise_the_crit_damage_cap() {
         let mut c = ChannelSet::new();
         c.add_additive(Channel::CriticalDamage, 500);
@@ -110,7 +108,9 @@ mod tests {
         let mut c = ChannelSet::new();
         c.add_additive(Channel::CriticalChance, 100_000);
         c.add_additive(Channel::CriticalDamage, 500);
-        assert_eq!(crit_chance(&c, false, EFFECTIVE_LEVEL), 1.0);
+        c.add_additive(Channel::CriticalHealing, 500);
+        assert_eq!(crit_chance(&c, EFFECTIVE_LEVEL), 1.0);
         assert_eq!(crit_damage_pct(&c), 125.0);
+        assert_eq!(crit_healing_pct(&c), 125.0);
     }
 }

@@ -195,8 +195,18 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
                     }
                     if let Some(check) = &o.check {
                         // `overrides::parse` already made sure the field name and channel index are valid
+                        let minus = match check.minus {
+                            None => Some(0.0),
+                            Some(other) => {
+                                let v = by_id.get(&other).and_then(|m| record_value(m, &check.field));
+                                if v.is_none() {
+                                    r.errors.push(format!("{who}: check.minus names ability {other}, which is not in the bundle"));
+                                }
+                                v
+                            }
+                        };
                         if let (Some(expected), Some(cv)) = (
-                            record_value(a, &check.field).map(|v| v * check.scale),
+                            record_value(a, &check.field).zip(minus).map(|(v, m)| (v - m) * check.scale),
                             o.def.channels.get(check.channel),
                         ) {
                             if (cv.value - expected).abs() > 1e-6 * expected.abs().max(1.0) {

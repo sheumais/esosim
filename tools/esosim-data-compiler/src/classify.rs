@@ -328,8 +328,8 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("crit_heal", r"critical healing(?: done)?", |_| vec![C::CriticalHealing]),
         noun("crit_resistance", r"critical resistance", |_| vec![C::CriticalResistance]),
         noun("crit_chance_both", r"(?:weapon|spell) critical(?: strike)?(?: rating| chance)?(?: and (?:weapon|spell) critical(?: strike)?(?: rating| chance)?)|(?:weapon and spell|spell and weapon) critical(?: strike)?(?: rating| chance)?", |_| vec![C::CriticalChance]),
-        noun("spell_crit", r"spell critical(?: strike)?(?: rating| chance)?", |_| vec![C::SpellCriticalChance]),
-        noun("weapon_crit", r"weapon critical(?: strike)?(?: rating| chance)?", |_| vec![C::WeaponCriticalChance]),
+        noun("spell_crit", r"spell critical(?: strike)?(?: rating| chance)?", |_| vec![C::CriticalChance]),
+        noun("weapon_crit", r"weapon critical(?: strike)?(?: rating| chance)?", |_| vec![C::CriticalChance]),
         noun("crit_chance", r"critical(?: strike)? (?:chance|rating)(?: rating)?", |_| vec![C::CriticalChance]),
         // ---- damage taken ----------------------------------------------
         noun("taken_aoe", r"damage (?:you )?(?:take|taken) from (?:area|aoe)(?: of effect)?(?: attacks| damage| abilities| effects)?|area(?: of effect)? damage taken|damage from area(?: of effect)?(?: attacks| damage| abilities)?", |_| vec![C::DamageTaken(TakenCtx::AreaOfEffect, Multiplicative)]),
@@ -422,8 +422,9 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("stealth_detection", r"stealth detection", |_| vec![C::StealthDetection]),
         // ---- power (last: "spell damage" is a suffix of several phrases above) --
         noun("power_both", r"weapon and spell (?:damage|power)|spell and weapon (?:damage|power)|weapon damage and spell damage|spell damage and weapon damage|weapon power and spell power|spell power and weapon power", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
-        noun("power_weapon", r"weapon (?:damage|power)", |_| vec![C::WeaponPower]),
-        noun("power_spell", r"spell (?:damage|power)", |_| vec![C::SpellPower]),
+        // weapon and spell damage are one stat (the game hybridises them), so each alone is the same channel
+        noun("power_weapon", r"weapon (?:damage|power)", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
+        noun("power_spell", r"spell (?:damage|power)", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
     ]
 });
 
@@ -718,8 +719,8 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
         assert_eq!(chans("reduces damage taken from area attacks by @"), ["DamageTaken(AreaOfEffect, Multiplicative)"]);
         assert_eq!(dir("reduces damage taken from area attacks by @"), Direction::Lowers);
         assert_eq!(chans("increases your weapon and spell damage by @"), ["Power(All, Additive)"]);
-        assert_eq!(chans("increases your weapon damage by @"), ["WeaponPower"]);
-        assert_eq!(chans("increases your spell damage by @"), ["SpellPower"]);
+        assert_eq!(chans("increases your weapon damage by @"), ["Power(All, Additive)"]);
+        assert_eq!(chans("increases your spell damage by @"), ["Power(All, Additive)"]);
     }
 
     #[test]
@@ -785,7 +786,7 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
     fn specific_phrases_beat_the_generic_ones_they_contain() {
         assert_eq!(chans("increases critical damage taken by @"), ["CriticalDamageTaken"]);
         assert_eq!(chans("increases your critical damage done by @"), ["CriticalDamage"]);
-        assert_eq!(chans("increases your spell critical rating by @"), ["SpellCriticalChance"]);
+        assert_eq!(chans("increases your spell critical rating by @"), ["CriticalChance"]);
         assert_eq!(chans("increases your weapon and spell critical rating by @"), ["CriticalChance"]);
         assert_eq!(chans("increases your physical and spell resistance by @"), ["Armour(All)"]);
         assert_eq!(chans("increases your physical resistance by @"), ["Armour(Martial)"]);

@@ -96,6 +96,11 @@ impl ConditionContext for Player {
     fn class(&self) -> Option<PlayerClass> {
         self.class
     }
+
+    /// The build either names a food or it does not, so this is never unknown.
+    fn food_active(&self) -> Option<bool> {
+        Some(self.food.is_some())
+    }
 }
 
 /// The second pass of the calculator: the player's build-time answers plus a target.
@@ -123,6 +128,7 @@ impl ConditionContext for TargetContext<'_> {
     fn on_bar(&self, bar: Bar) -> Option<bool> { self.player.on_bar(bar) }
     fn weapon_equipped(&self, kind: WeaponKind) -> Option<bool> { self.player.weapon_equipped(kind) }
     fn class(&self) -> Option<PlayerClass> { self.player.class() }
+    fn food_active(&self) -> Option<bool> { self.player.food_active() }
 
     fn target_debuff_active(&self, id: u32) -> Option<bool> {
         Some(self.enemy.active_effects.has(id))
@@ -204,6 +210,19 @@ mod tests {
         assert_eq!(holds(Condition::WeaponEquipped(WeaponKind::Bow), &p), Some(false));
         assert_eq!(holds(Condition::ClassIs(PlayerClass::Necromancer), &p), Some(true));
         assert_eq!(holds(Condition::ClassIs(PlayerClass::Templar), &p), Some(false));
+    }
+
+    #[test]
+    fn food_is_decided_by_whether_the_build_names_one() {
+        let mut p = player();
+        assert_eq!(holds(Condition::FoodActive, &p), Some(false));
+        assert!(Condition::FoodActive.is_build_time());
+        p.food = Some(61259);
+        assert_eq!(holds(Condition::FoodActive, &p), Some(true));
+        assert_eq!(holds(Condition::not(Condition::FoodActive), &p), Some(false));
+        // the target pass keeps the player's answer
+        let enemy = dummy(0.0, 0.0, None);
+        assert_eq!(Condition::FoodActive.evaluate(&TargetContext::new(&p, &enemy, &[])), Some(true));
     }
 
     #[test]

@@ -40,8 +40,8 @@ pub enum BehaviourClass {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SetKind {
-    /// Everything else: dungeon, trial, overland, craftable, PvP ... (crafted sets need the trait
-    /// counts of 2.1e, class sets have no signal in the table; both are still `Regular`).
+    /// Everything else: dungeon, trial, overland, PvP ... Crafted and class sets are kinds of their own
+    /// (below); until `sets.jsonl` carries the table's flags for them they read as `Regular`.
     #[default]
     Regular,
     /// Head and shoulders only, so at most 2 pieces: a stat row at 1 piece (or 1 and 2) and the
@@ -54,6 +54,13 @@ pub enum SetKind {
     /// ability at 1 piece, and a perfected version whose only bonus is at 2 pieces. A two-handed
     /// weapon counts as two pieces, so one is enough for the perfected 2-piece row.
     ArenaWeapon,
+    /// Made at a crafting station: the table flags it (`craftable` in `sets.jsonl`, the second byte of the
+    /// item-list header, on exactly the 83 craftable sets). Not inferred from the shape. A full set needs
+    /// its trait count (2.1e), which this kind lets the engine ask for.
+    Crafted,
+    /// One class's set (`class_id` in `sets.jsonl`: the class sets are the only ones with the longer
+    /// tail in the table). Worth wearing only as that class.
+    Class,
 }
 
 impl SetKind {
@@ -161,6 +168,15 @@ mod tests {
     }
 
     #[test]
+    fn crafted_and_class_are_written_as_snake_case_names() {
+        for (kind, name) in [(SetKind::Crafted, "crafted"), (SetKind::Class, "class")] {
+            let line = format!(r#"{{"id":1,"class":"stat_only","kind":"{name}"}}"#);
+            assert_eq!(serde_json::from_str::<SetBehaviour>(&line).unwrap().kind, kind);
+            assert!(!kind.is_regular());
+        }
+    }
+
+    #[test]
     fn a_non_regular_kind_is_written_and_read_back_and_regular_is_the_default() {
         let line = r#"{"id":256,"name":"Mighty Chudan","class":"grants_buff","kind":"monster"}"#;
         let b: SetBehaviour = serde_json::from_str(line).unwrap();
@@ -170,7 +186,7 @@ mod tests {
         let old: SetBehaviour = serde_json::from_str(r#"{"id":1,"class":"stat_only"}"#).unwrap();
         assert_eq!(old.kind, SetKind::Regular);
         assert!(!serde_json::to_string(&old).unwrap().contains("kind"));
-        for kind in [SetKind::Mythic, SetKind::ArenaWeapon] {
+        for kind in [SetKind::Mythic, SetKind::ArenaWeapon, SetKind::Crafted, SetKind::Class] {
             assert_eq!(serde_json::from_str::<SetKind>(&serde_json::to_string(&kind).unwrap()).unwrap(), kind);
         }
     }

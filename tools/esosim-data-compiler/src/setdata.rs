@@ -337,6 +337,10 @@ pub fn parse_aliases(text: &str) -> Result<BTreeMap<u32, String>, String> {
 fn is_zero_u32(v: &u32) -> bool {
     *v == 0
 }
+fn is_false(v: &bool) -> bool {
+    !*v
+}
+
 fn is_zero_f32(v: &f32) -> bool {
     *v == 0.0
 }
@@ -374,6 +378,15 @@ pub struct SetOut {
     /// The last ability block: the set's 5-piece ability, for looking up its tooltip.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keystone: Option<u32>,
+    /// A craftable set (`SetRecord::craftable`): a full set needs its trait count. Left out when false.
+    /// Read by `behaviour::kind_of` (`SetKind::Crafted`); written here so that the kind can be
+    /// rebuilt from `sets.jsonl` alone, without the game.
+    #[serde(skip_serializing_if = "is_false")]
+    pub craftable: bool,
+    /// The class a class set belongs to (`SetRecord::class_id`). Read by `behaviour::kind_of`
+    /// (`SetKind::Class`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub class_id: Option<u8>,
 }
 
 #[derive(Default)]
@@ -494,6 +507,8 @@ pub fn generate_with(
             bonuses: rows_for(rec, &mut report),
             abilities: rec.abilities.clone(),
             keystone: rec.abilities.last().map(|a| a.ability_id),
+            craftable: rec.craftable(),
+            class_id: rec.class_id,
         };
         report.abilities += rec.abilities.len();
         jsonl.push_str(&serde_json::to_string(&out).expect("SetOut serialises"));
