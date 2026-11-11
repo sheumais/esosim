@@ -206,10 +206,11 @@ pub enum RootCategory {
     Consumables,
     Racial,
     Buffs,
+    Class,
 }
 
 impl RootCategory {
-    pub const ALL: [RootCategory; 7] = [
+    pub const ALL: [RootCategory; 8] = [
         RootCategory::Skills,
         RootCategory::Sets,
         RootCategory::Cp,
@@ -217,6 +218,7 @@ impl RootCategory {
         RootCategory::Consumables,
         RootCategory::Racial,
         RootCategory::Buffs,
+        RootCategory::Class,
     ];
 
     /// The name used in `roots.toml` and in `categories`.
@@ -229,6 +231,7 @@ impl RootCategory {
             RootCategory::Consumables => "consumables",
             RootCategory::Racial => "racial",
             RootCategory::Buffs => "buffs",
+            RootCategory::Class => "class",
         }
     }
 

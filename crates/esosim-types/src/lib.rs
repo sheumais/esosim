@@ -4,6 +4,7 @@
 //! engine logic, no data tables and no file IO, so the data compiler can depend on this
 //! crate alone and keep building while the engine is mid-refactor.
 
+pub mod bucket;
 pub mod cca;
 pub mod channel;
 pub mod condition;
@@ -16,6 +17,7 @@ pub mod set_behaviour;
 pub mod skill_serde;
 pub mod trigger;
 
+pub use bucket::{Bucket, Cap, CappedStat};
 pub use cca::CoreCombatAbility;
 pub use channel::{AggKind, Channel, DamageDoneContext, DamageTakenContext, ResourceKind};
 pub use condition::{
@@ -44,6 +46,7 @@ mod tests {
     #[test]
     fn plain_channels_round_trip() {
         round_trip(Channel::Armour(ResistableDamageType::Spell));
+        round_trip(Channel::CapRaise(CappedStat::CriticalDamage));
         round_trip(Channel::Resource(ResourceKind::Health, AggKind::Multiplicative));
     }
 
@@ -63,30 +66,46 @@ mod tests {
     }
 
     #[test]
-    fn agg_kind_follows_the_channel_payload() {
-        assert_eq!(Channel::CriticalChance.agg_kind(), AggKind::Additive);
+    fn bucket_follows_the_channel_payload() {
+        assert_eq!(Channel::CriticalChance.bucket(), Bucket::Additive);
         assert_eq!(
-            Channel::Resource(ResourceKind::Stamina, AggKind::Multiplicative).agg_kind(),
-            AggKind::Multiplicative
+            Channel::Resource(ResourceKind::Stamina, AggKind::Multiplicative).bucket(),
+            Bucket::Multiplicative
         );
     }
 
     #[test]
-    fn agg_kind_follows_the_payload_of_every_channel_that_has_one() {
+    fn bucket_follows_the_payload_of_every_channel_that_has_one() {
         use crate::{CoreCombatAbility, DamageDoneContext, DamageTakenContext};
-        let kinds = [AggKind::Additive, AggKind::Multiplicative];
-        for kind in kinds {
-            assert_eq!(Channel::Power(DamageDoneContext::All, kind).agg_kind(), kind);
-            assert_eq!(Channel::DamageDone(DamageDoneContext::Bash, kind).agg_kind(), kind);
-            assert_eq!(Channel::DamageTaken(DamageTakenContext::Monsters, kind).agg_kind(), kind);
-            assert_eq!(Channel::CostReductionCCA(CoreCombatAbility::Sneak, kind).agg_kind(), kind);
-            assert_eq!(Channel::Recovery(ResourceKind::Health, kind).agg_kind(), kind);
+        for (kind, bucket) in [(AggKind::Additive, Bucket::Additive), (AggKind::Multiplicative, Bucket::Multiplicative)] {
+            assert_eq!(Channel::Power(DamageDoneContext::All, kind).bucket(), bucket);
+            assert_eq!(Channel::DamageDone(DamageDoneContext::Bash, kind).bucket(), bucket);
+            assert_eq!(Channel::DamageTaken(DamageTakenContext::Monsters, kind).bucket(), bucket);
+            assert_eq!(Channel::CostReductionCCA(CoreCombatAbility::Sneak, kind).bucket(), bucket);
+            assert_eq!(Channel::Recovery(ResourceKind::Health, kind).bucket(), bucket);
+            assert_eq!(Channel::SynergyRestore(ResourceKind::Magicka, kind).bucket(), bucket);
         }
-        assert_eq!(Channel::SynergyRestore(ResourceKind::Magicka, AggKind::Multiplicative).agg_kind(), AggKind::Multiplicative);
         // the one payload-less channel that is a fraction: Divines pieces sum, every mundus stone scales by it
-        assert_eq!(Channel::MundusBoost.agg_kind(), AggKind::Multiplicative);
+        assert_eq!(Channel::MundusBoost.bucket(), Bucket::Multiplicative);
         // no payload: always additive
-        assert_eq!(Channel::MovementSpeed.agg_kind(), AggKind::Additive);
-        assert_eq!(Channel::HealingDone.agg_kind(), AggKind::Additive);
+        assert_eq!(Channel::MovementSpeed.bucket(), Bucket::Additive);
+        assert_eq!(Channel::HealingDone.bucket(), Bucket::Additive);
+    }
+
+    #[test]
+    fn caps_hold_a_stat_to_its_limit() {
+        assert_eq!(CappedStat::CriticalChance.apply(170.0, 0), 100.0);
+        assert_eq!(CappedStat::CriticalDamage.apply(500.0, 0), 125.0);
+        assert_eq!(CappedStat::CriticalDamage.apply(-20.0, 0), 0.0);
+        assert_eq!(CappedStat::Resistance.apply(60_000.0, 0), 33_000.0);
+        assert_eq!(CappedStat::Resistance.apply(-1800.0, 0), -1800.0); // extra damage taken is not limited
+    }
+
+    #[test]
+    fn an_effect_can_raise_a_cap() {
+        assert_eq!(CappedStat::CriticalDamage.apply(500.0, 10), 135.0);
+        assert_eq!(CappedStat::Resistance.apply(60_000.0, 2_000), 35_000.0);
+        assert_eq!(CappedStat::Resistance.apply(34_000.0, 2_000), 34_000.0);
+        assert_eq!(Channel::CapRaise(CappedStat::Resistance).bucket(), Bucket::Additive);
     }
 }

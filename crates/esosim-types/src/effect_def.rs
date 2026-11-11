@@ -60,6 +60,11 @@ pub struct EffectDef {
     pub condition: Condition,
     #[serde(default)]
     pub stacking: Stacking,
+    /// The game's Major/Minor buff code (`major_minor_id`): different abilities that give the same
+    /// buff share it (Minor Force `61746` and its set copy `193448`), and the buff counts once however
+    /// many of them are active. `None` for everything that is not such a buff.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub buff_code: Option<u8>,
     /// `None` = permanent while the condition holds.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub duration_ms: Option<u32>,
@@ -118,6 +123,7 @@ mod tests {
             channels: vec![ChannelValue { channel: Channel::CriticalChance, value, value_per_stack: per }],
             condition: Condition::Always,
             stacking,
+            buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
             note: None,

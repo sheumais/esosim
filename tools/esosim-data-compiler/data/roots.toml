@@ -15,10 +15,6 @@
 # The bundle is the closure of all roots over the ability graph, and every ability carries the
 # categories whose closure it belongs to (`categories` in bundle.jsonl).
 # `cargo xtask check` / `verify` fail when a listed id disappears in a patch.
-#
-# TODO (roadmap 2.3 / 2.4 / 2.7): the lists below hold only what the hand-written legacy
-# tables already identify: `racial` and `consumables` are the ids found in `legacy.jsonl` so far. Prodigy (45561) is deliberately not listed: nothing in
-# the data says which category it belongs to.
 
 # Every id of `crates/esosim/src/data/skill_data/major_minor.rs`: Major/Minor buffs and debuffs
 # are always present, whether or not a skill or set reaches them (Minor Slayer 76617, Major Force 61747).
@@ -50,3 +46,6 @@ tags = [357]
 
 [consumables]
 tags = [156, 474, 97, 298]
+
+[class]
+tags = [324, 335]

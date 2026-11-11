@@ -14,6 +14,8 @@
 #                 (a channel is "CriticalChance" or externally tagged: { Armour = "All" })
 #   condition     default "Always"; see esosim_types::Condition
 #   stacking      default "Unique"; "Additive" or { PerStack = { max = 10 } }
+#   buff_code     the ability's `major_minor_id` for a Major/Minor buff: every ability with the same code
+#                 gives the same buff, which counts once however many are active (default: none)
 #   duration_ms, cooldown_ms, note
 #   source_url    where the numbers come from (compiler only, not written to effects.jsonl)
 #   check         { field = "value1", scale = 1.0, channel = 0 }: `verify` fails when the channel's

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
-use esosim_types::{AggKind::{self, Multiplicative}, Channel, DamageDoneContext, MundusLoadout, PlayerClass, channel::StatusEffectContext};
+use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, DamageDoneContext, MundusLoadout, PlayerClass, channel::StatusEffectContext};
 
 use crate::{data::{enums::{cca::CoreCombatAbility::{Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::*, DamageDoneContext::Bash as BashDamage, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
 
@@ -173,9 +173,9 @@ impl Player {
         self.sources
             .iter()
             .filter_map(|(source, part)| {
-                let value = match channel.agg_kind() {
-                    Additive => part.get(channel) as f64,
-                    Multiplicative => part.get_multiplicative_bps(channel) as f64 / 10_000.0,
+                let value = match channel.bucket() {
+                    Bucket::Additive => part.get(channel) as f64,
+                    Bucket::Multiplicative => part.get_multiplicative_bps(channel) as f64 / 10_000.0,
                 };
                 (value != 0.0).then(|| (source.clone(), value))
             })

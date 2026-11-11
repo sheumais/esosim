@@ -2,11 +2,12 @@
 
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::Channel;
+use esosim_types::CappedStat;
+
+use super::armour::cap_raise;
 
 pub const CRIT_DAMAGE_SCALE: u16 = 66;
 const CRITICAL_DAMAGE_DEFAULT: f32 = 50.0;
-/// Crit damage cap, percent. (The old `critical.rs` declared it but never applied it.)
-const CRITICAL_DAMAGE_MAXIMUM_DEFAULT: f32 = 125.0;
 const CRITICAL_CHANCE_DEFAULT: f32 = 0.1;
 /// The level crit ratings are converted at: 50 + CP160 = effective level 66.
 pub const EFFECTIVE_LEVEL: u8 = 66;
@@ -30,13 +31,17 @@ pub fn crit_rating(c: &ChannelSet, spell: bool) -> u32 {
 
 /// Crit chance (0.0..=1.0) at an effective `level`: 10 % base + rating, capped at 100 %.
 pub fn crit_chance(c: &ChannelSet, spell: bool, level: u8) -> f32 {
-    (crit_rating_to_chance(crit_rating(c, spell), level) + CRITICAL_CHANCE_DEFAULT).min(1.0)
+    let percent = (crit_rating_to_chance(crit_rating(c, spell), level) + CRITICAL_CHANCE_DEFAULT) as f64 * 100.0;
+    (CappedStat::CriticalChance.apply(percent, cap_raise(c, CappedStat::CriticalChance)) / 100.0) as f32
 }
 
 /// Crit damage in percent (50 base + bonuses), capped. `Channel::CriticalDamage` is in
 /// percentage points.
 pub fn crit_damage_pct(c: &ChannelSet) -> f32 {
-    (CRITICAL_DAMAGE_DEFAULT + c.get(Channel::CriticalDamage) as f32).clamp(0.0, CRITICAL_DAMAGE_MAXIMUM_DEFAULT)
+    CappedStat::CriticalDamage.apply(
+        (CRITICAL_DAMAGE_DEFAULT + c.get(Channel::CriticalDamage) as f32) as f64,
+        cap_raise(c, CappedStat::CriticalDamage),
+    ) as f32
 }
 
 #[cfg(test)]
@@ -90,6 +95,14 @@ mod tests {
         c.add_additive(Channel::SpellCriticalChance, 1314);
         assert_eq!(crit_rating(&c, false), 3629);
         assert_eq!(crit_rating(&c, true), 2314);
+    }
+
+    #[test]
+    fn an_effect_can_raise_the_crit_damage_cap() {
+        let mut c = ChannelSet::new();
+        c.add_additive(Channel::CriticalDamage, 500);
+        c.add_additive(Channel::CapRaise(CappedStat::CriticalDamage), 10);
+        assert_eq!(crit_damage_pct(&c), 135.0);
     }
 
     #[test]

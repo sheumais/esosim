@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::aggregator::ChannelSet;
-use super::effect::{AggKind, Channel, Condition, ConditionContext, EffectDef, EffectSource, NoContext};
+use super::effect::{Bucket, Channel, Condition, ConditionContext, EffectDef, EffectSource, NoContext};
 use super::registry::EffectRegistry;
 
 /// Which effects are on, and with how many stacks. What a stack count means depends on the
@@ -48,7 +48,7 @@ impl ActiveEffects {
     }
 
     /// Aggregate, applying an effect only when its condition evaluates to `Some(true)`.
-    /// Undecidable (`None`) conditions are left out.
+    /// Undecidable (`None`) conditions are left out. Effects with the same `buff_code` count once.
     pub fn aggregate_with(&self, registry: &EffectRegistry, ctx: &dyn ConditionContext) -> ChannelSet {
         self.aggregate_with_boost(registry, ctx, 0)
     }
@@ -88,11 +88,18 @@ impl ActiveEffects {
         let mut parts: Vec<(&'r EffectDef, ChannelSet)> = Vec::new();
         let mut stones: Vec<(&'r EffectDef, u32)> = Vec::new();
         let mut boost_bps = extra_mundus_boost_bps;
+        // Major/Minor buffs already counted: several abilities give the same buff, which counts once
+        let mut buff_codes: HashSet<u8> = HashSet::new();
         for id in ids {
             let stacks = self.stacks[&id];
             let Some(fx) = registry.get(id) else { continue };
             if fx.condition != Condition::Always && fx.condition.evaluate(ctx) != Some(true) {
                 continue;
+            }
+            if let Some(code) = fx.buff_code {
+                if !buff_codes.insert(code) {
+                    continue; // the lowest id with this code is the one that counts
+                }
             }
             if matches!(fx.source, EffectSource::Mundus { .. }) {
                 stones.push((fx, stacks));
@@ -122,9 +129,9 @@ fn add_effect(out: &mut ChannelSet, fx: &EffectDef, stacks: u32, scale: f64, tru
         if truncate {
             value = (value + 1e-6).floor(); // the epsilon keeps 1212 * 1.5 style products from landing just under
         }
-        match cv.channel.agg_kind() {
-            AggKind::Additive => out.add_additive(cv.channel, value.round() as i64),
-            AggKind::Multiplicative => out.add_multiplicative_bps(cv.channel, (value * 10_000.0).round() as i64),
+        match cv.channel.bucket() {
+            Bucket::Additive => out.add_additive(cv.channel, value.round() as i64),
+            Bucket::Multiplicative => out.add_multiplicative_bps(cv.channel, (value * 10_000.0).round() as i64),
         }
     }
 }
@@ -173,6 +180,7 @@ mod tests {
             channels: vec![ChannelValue { channel: Channel::CriticalChance, value: 100.0, value_per_stack: 0.0 }],
             condition,
             stacking,
+            buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
             note: None,
@@ -186,6 +194,20 @@ mod tests {
         active.add(1);
         active.add(1);
         assert_eq!(active.aggregate(&registry).get(Channel::CriticalChance), 100);
+    }
+
+    #[test]
+    fn two_sources_of_one_major_or_minor_buff_count_once() {
+        // Minor Force and its set copy are two abilities with one code (44); Minor Brutality is another buff (code 1)
+        let force = |id| EffectDef { buff_code: Some(44), ..test_def(id, Stacking::Unique, Condition::Always) };
+        let brutality = EffectDef { buff_code: Some(1), ..test_def(3, Stacking::Unique, Condition::Always) };
+        let registry = EffectRegistry::from_defs([force(1), force(2), brutality]);
+        let mut active = ActiveEffects::new();
+        active.set(1, 1);
+        active.set(2, 1);
+        assert_eq!(active.aggregate(&registry).get(Channel::CriticalChance), 100);
+        active.set(3, 1);
+        assert_eq!(active.aggregate(&registry).get(Channel::CriticalChance), 200);
     }
 
     #[test]

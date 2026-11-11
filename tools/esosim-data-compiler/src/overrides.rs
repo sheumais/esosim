@@ -45,6 +45,8 @@ struct RawOverride {
     #[serde(default)]
     stacking: Stacking,
     #[serde(default)]
+    buff_code: Option<u8>,
+    #[serde(default)]
     duration_ms: Option<u32>,
     #[serde(default)]
     cooldown_ms: Option<u32>,
@@ -113,6 +115,7 @@ pub fn parse(text: &str) -> Result<Vec<Override>, String> {
                 channels: r.channels,
                 condition: r.condition,
                 stacking: r.stacking,
+                buff_code: r.buff_code,
                 duration_ms: r.duration_ms,
                 cooldown_ms: r.cooldown_ms,
                 note: r.note,

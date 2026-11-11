@@ -5,7 +5,7 @@
 //! file only carries what the CP table adds: stages, cost per stage and value per stage.
 
 use eso_skill_data::champion_points::ChampionPointData;
-use esosim_types::{AggKind, Channel, ChannelValue, Condition, CpPerk, CpStar, EffectDef, EffectSource, Stacking};
+use esosim_types::{Bucket, Channel, ChannelValue, Condition, CpPerk, CpStar, EffectDef, EffectSource, Stacking};
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -180,7 +180,7 @@ fn tidy(v: f64) -> f64 {
 /// mapping was written against another table.
 ///
 /// Units: the game stores a percentage as `3` for 3 %. A channel that aggregates multiplicatively
-/// ([`Channel::agg_kind`]) holds a *fraction* (`0.03`), so its entry needs `scale = 0.01`; the
+/// ([`Channel::bucket`]) holds a *fraction* (`0.03`), so its entry needs `scale = 0.01`; the
 /// compiler refuses a multiplicative channel that would reach more than 100 % at the star's last
 /// stage, which is what forgetting the scale looks like.
 pub fn effects(stars: &[CpStar], map: &[StarEffect]) -> Result<Vec<EffectDef>, String> {
@@ -201,7 +201,7 @@ pub fn effects(stars: &[CpStar], map: &[StarEffect]) -> Result<Vec<EffectDef>, S
         let mut channels = Vec::with_capacity(m.channels.len());
         for (channel, scale) in &m.channels {
             let value_per_stack = tidy(per_stage * scale);
-            if channel.agg_kind() == AggKind::Multiplicative && (value_per_stack * star.max_stages as f64).abs() > 1.0 {
+            if channel.bucket() == Bucket::Multiplicative && (value_per_stack * star.max_stages as f64).abs() > 1.0 {
                 return Err(at(format!(
                     "{channel:?} is multiplicative, so its value is a fraction, but {} stage(s) of {value_per_stack} reach {}: \
                      a percentage needs `scale = 0.01`",
@@ -218,6 +218,7 @@ pub fn effects(stars: &[CpStar], map: &[StarEffect]) -> Result<Vec<EffectDef>, S
             channels,
             condition: m.condition.clone(),
             stacking: Stacking::PerStack { max: star.max_stages },
+            buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
             note: m.note.clone(),

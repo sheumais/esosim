@@ -2,11 +2,8 @@
 
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::{Channel, ResistableDamageType as Dmg};
+use esosim_types::CappedStat;
 
-/// Resistance needed for the mitigation cap.
-const MITIGATION_CAP_RESISTANCE: f32 = 33_000.0;
-/// Mitigation at the cap.
-const MITIGATION_CAP: f32 = 0.5;
 /// Resistance per 100 % mitigation at the effective level 66 (66 * 1000).
 const RESISTANCE_PER_UNIT: f32 = 66_000.0;
 
@@ -47,13 +44,19 @@ pub fn effective_resistance(target_resistance: u32, attacker_penetration: u32) -
     target_resistance as i64 - attacker_penetration as i64
 }
 
-/// Fraction of damage mitigated by `effective_resistance`: resistance / 66,000, capped at 50 %
-/// (33,000 resistance). Negative resistance gives negative mitigation (extra damage), uncapped.
+/// What effects add to the upper limit of `stat` (`Channel::CapRaise`).
+pub fn cap_raise(c: &ChannelSet, stat: CappedStat) -> i64 {
+    c.get(Channel::CapRaise(stat))
+}
+
+/// Fraction of damage mitigated by `effective_resistance`: resistance / 66,000, with the resistance
+/// held to `CappedStat::Resistance` (33,000, i.e. 50 %, plus whatever `c`, the defender's channels,
+/// raises it by). Negative resistance gives negative mitigation (extra damage), uncapped.
 /// Formula and cap are the commonly quoted effective-level-66 values; not yet checked against
 /// this repo's own data.
-pub fn resistance_to_mitigation(effective_resistance: i64) -> f32 {
-    let r = effective_resistance as f32;
-    if r >= MITIGATION_CAP_RESISTANCE { MITIGATION_CAP } else { r / RESISTANCE_PER_UNIT }
+pub fn resistance_to_mitigation(c: &ChannelSet, effective_resistance: i64) -> f32 {
+    let counted = CappedStat::Resistance.apply(effective_resistance as f64, cap_raise(c, CappedStat::Resistance));
+    counted as f32 / RESISTANCE_PER_UNIT
 }
 
 #[cfg(test)]
@@ -101,10 +104,19 @@ mod tests {
     fn mitigation_and_cap() {
         assert_eq!(effective_resistance(18200, 18200), 0);
         assert_eq!(effective_resistance(18200, 20000), -1800);
-        assert_eq!(resistance_to_mitigation(0), 0.0);
-        assert!((resistance_to_mitigation(16500) - 0.25).abs() < 1e-6);
-        assert_eq!(resistance_to_mitigation(33_000), 0.5);
-        assert_eq!(resistance_to_mitigation(60_000), 0.5);
-        assert!(resistance_to_mitigation(-1800) < 0.0);
+        let c = ChannelSet::new();
+        assert_eq!(resistance_to_mitigation(&c, 0), 0.0);
+        assert!((resistance_to_mitigation(&c, 16500) - 0.25).abs() < 1e-6);
+        assert_eq!(resistance_to_mitigation(&c, 33_000), 0.5);
+        assert_eq!(resistance_to_mitigation(&c, 60_000), 0.5);
+        assert!(resistance_to_mitigation(&c, -1800) < 0.0);
+    }
+
+    #[test]
+    fn an_effect_can_raise_the_armour_cap() {
+        let mut c = ChannelSet::new();
+        c.add_additive(Channel::CapRaise(CappedStat::Resistance), 6_600);
+        assert_eq!(resistance_to_mitigation(&c, 60_000), 0.6); // 39,600 / 66,000
+        assert_eq!(resistance_to_mitigation(&c, 33_000), 0.5);
     }
 }

@@ -1,3 +1,4 @@
+use crate::bucket::CappedStat;
 use crate::cca::CoreCombatAbility;
 use crate::damage::ResistableDamageType;
 use eso_skill_data::enums::{mechanic::Mechanic, skill_line::SkillLine};
@@ -90,6 +91,9 @@ pub enum Channel {
     CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
     CostReductionSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
     MundusBoost,
+    /// Raises the cap of a derived stat (armour cap, critical damage cap), in that stat's unit: see
+    /// [`CappedStat`].
+    CapRaise(CappedStat),
     StatusEffectChance(StatusEffectContext),
     DecisiveUltimateChance,
     KillExperience,
@@ -123,27 +127,4 @@ pub enum Channel {
     MountSpeed,
     ResurrectionSpeed,
     StatusEffectDuration,
-}
-
-impl Channel {
-    /// Which bucket of the aggregator a value of this channel goes into. Channels that carry an
-    /// [`AggKind`] say so themselves; every other channel is additive.
-    ///
-    /// Units follow the bucket: an additive value is a flat amount (or percentage points for
-    /// channels such as `CriticalDamage`), a multiplicative value is a *fraction* (0.03 = 3 %) that
-    /// the aggregator turns into basis points.
-    pub fn agg_kind(&self) -> AggKind {
-        match self {
-            Channel::Resource(_, kind)
-            | Channel::Recovery(_, kind)
-            | Channel::SynergyRestore(_, kind)
-            | Channel::Power(_, kind)
-            | Channel::DamageDone(_, kind)
-            | Channel::DamageTaken(_, kind)
-            | Channel::CostReductionCCA(_, kind) => *kind,
-            // a fraction (0.091 = 9.1 %), summed over Divines pieces and scaling every mundus stone
-            Channel::MundusBoost => AggKind::Multiplicative,
-            _ => AggKind::Additive,
-        }
-    }
 }

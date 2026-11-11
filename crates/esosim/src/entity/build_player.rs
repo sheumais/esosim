@@ -169,6 +169,7 @@ mod tests {
             channels: vec![ChannelValue { channel: Channel::CriticalChance, value: crit, value_per_stack: 0.0 }],
             condition,
             stacking: Stacking::Unique,
+            buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
             note: None,

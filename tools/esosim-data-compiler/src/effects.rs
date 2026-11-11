@@ -70,6 +70,7 @@ pub fn auto_effects(abilities: &[ResolvedAbility], config: &RootConfig, taken: &
             channels: vec![ChannelValue { channel: class.channels[0], value: a.value1 as f64, value_per_stack: 0.0 }],
             condition: Condition::Always,
             stacking: Stacking::Unique,
+            buff_code: (a.major_minor_id != 0).then_some(a.major_minor_id),
             duration_ms: None,
             cooldown_ms: None,
             note: Some(format!("auto: value1 = {} as stored by the game; unit and sign not checked against the engine", a.value1)),

@@ -273,6 +273,7 @@ mod tests {
             channels: vec![ChannelValue { channel: Channel::MundusBoost, value: 0.1, value_per_stack: 0.0 }],
             condition: Condition::Always,
             stacking: Stacking::Unique,
+            buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
             note: None,
