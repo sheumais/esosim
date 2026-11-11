@@ -91,13 +91,11 @@ pub enum Channel {
     CriticalHealing,
     MovementSpeed,
     CostReductionCCA(CoreCombatAbility, AggKind),
-    CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
-    /// A *fraction* of the cost (0.10 = "reduces the cost of your Magicka abilities by 10%"), where
-    /// `CostReduction` is flat cost points (a glyph's 203). Multiplicative bucket.
-    CostReductionPct(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
-    CostReductionSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
-    /// As [`Channel::CostReductionPct`], for the abilities of one skill line (Hawk's Eye: Bow).
-    CostReductionSkillLinePct(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
+    /// Cost reduction of one resource: additive is flat cost points (a glyph's 203), multiplicative a
+    /// *fraction* of the cost (0.10 = "reduces the cost of your Magicka abilities by 10%").
+    CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic, AggKind),
+    /// As [`Channel::CostReduction`], for the abilities of one skill line (Hawk's Eye: Bow).
+    CostReductionSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine, AggKind),
     MundusBoost,
     /// Raises the cap of a derived stat (armour cap, critical damage cap), in that stat's unit: see
     /// [`CappedStat`].

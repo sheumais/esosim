@@ -402,7 +402,7 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("cost_bash", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?bash|bash cost", |_| vec![C::CostReductionCCA(Cca::Bash, Agg::Additive)]),
         noun("cost_sneak", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?sneak(?:ing)?|sneak(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Sneak, Agg::Additive)]),
         noun("cost_break_free", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?break free|break free cost", |_| vec![C::CostReductionCCA(Cca::BreakFree, Agg::Additive)]),
-        noun("cost_mechanic", r"(?P<m>magicka|stamina|health|ultimate) costs?|cost of (?:your )?(?P<m2>magicka|stamina|health|ultimate) abilities", |c| vec![C::CostReduction(mech_of(cap(c, "m").or(cap(c, "m2")).unwrap_or("")))]),
+        noun("cost_mechanic", r"(?P<m>magicka|stamina|health|ultimate) costs?|cost of (?:your )?(?P<m2>magicka|stamina|health|ultimate) abilities", |c| vec![C::CostReduction(mech_of(cap(c, "m").or(cap(c, "m2")).unwrap_or("")), Agg::Additive)]),
         // ---- everything else -----------------------------------------------
         noun("block_mitigation", r"block mitigation|amount of damage you (?:can )?block", |_| vec![C::BlockMitigation]),
         noun("mount_speed", r"mount(?:ed)? speed", |_| vec![C::MountSpeed]),
@@ -822,7 +822,7 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
     fn costs_and_misc() {
         assert_eq!(chans("reduces the cost of sprint by @"), ["CostReductionCCA(Sprint, Additive)"]);
         assert_eq!(chans("reduces the cost of roll dodge by @"), ["CostReductionCCA(DodgeRoll, Additive)"]);
-        assert_eq!(chans("reduces your magicka cost by @"), ["CostReduction(Magicka)"]);
+        assert_eq!(chans("reduces your magicka cost by @"), ["CostReduction(Magicka, Additive)"]);
         assert_eq!(chans("increases your movement speed by @"), ["MovementSpeed"]);
         assert_eq!(chans("increases potion effectiveness by @"), ["PotionEffectiveness"]);
         assert_eq!(

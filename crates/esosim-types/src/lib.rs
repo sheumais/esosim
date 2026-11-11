@@ -54,14 +54,16 @@ mod tests {
     fn every_known_mechanic_and_skill_line_round_trips_inside_a_channel() {
         for id in 0u8..=u8::MAX {
             if let Some(m) = Mechanic::from_id(&id) {
-                round_trip(Channel::CostReduction(m));
-                round_trip(Channel::CostReductionPct(m));
+                for kind in [AggKind::Additive, AggKind::Multiplicative] {
+                    round_trip(Channel::CostReduction(m, kind));
+                }
             }
         }
         for id in 0u32..4096 {
             if let Some(l) = SkillLine::from_id(&id) {
-                round_trip(Channel::CostReductionSkillLine(l));
-                round_trip(Channel::CostReductionSkillLinePct(l));
+                for kind in [AggKind::Additive, AggKind::Multiplicative] {
+                    round_trip(Channel::CostReductionSkillLine(l, kind));
+                }
                 round_trip(Channel::Power(DamageDoneContext::SkillLine(l), AggKind::Additive));
                 round_trip(Channel::DamageDone(DamageDoneContext::SkillLine(l), AggKind::Multiplicative));
                 round_trip(Channel::HealingDoneSkillLine(l));
@@ -88,11 +90,10 @@ mod tests {
             assert_eq!(Channel::CostReductionCCA(CoreCombatAbility::Sneak, kind).bucket(), bucket);
             assert_eq!(Channel::Recovery(ResourceKind::Health, kind).bucket(), bucket);
             assert_eq!(Channel::SynergyRestore(ResourceKind::Magicka, kind).bucket(), bucket);
+            // a percent cost reduction is a fraction of the cost, a flat one is cost points
+            assert_eq!(Channel::CostReduction(Mechanic::Magicka, kind).bucket(), bucket);
+            assert_eq!(Channel::CostReductionSkillLine(SkillLine::Support, kind).bucket(), bucket);
         }
-        // a percent cost reduction is a fraction of the cost, a flat one is cost points
-        assert_eq!(Channel::CostReductionPct(Mechanic::Magicka).bucket(), Bucket::Multiplicative);
-        assert_eq!(Channel::CostReductionSkillLinePct(SkillLine::Support).bucket(), Bucket::Multiplicative);
-        assert_eq!(Channel::CostReduction(Mechanic::Magicka).bucket(), Bucket::Additive);
         // the one payload-less channel that is a fraction: Divines pieces sum, every mundus stone scales by it
         assert_eq!(Channel::MundusBoost.bucket(), Bucket::Multiplicative);
         // no payload: always additive

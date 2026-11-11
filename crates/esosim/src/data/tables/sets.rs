@@ -233,7 +233,7 @@ use crate::{
         let t = SetTable::from_jsonl(concat!(
             r#"{"id":1,"bonuses":[[],[{"channel":{"Resource":["Health","Additive"]},"value":1206.0}],[{"channel":null,"stat":21,"value":3.0}]]}"#, "\n",
             "\n",
-            r#"{"id":2,"perfected_of":1,"name":"Perfected X","bonuses":[[{"channel":{"CostReduction":"Ultimate"},"value":5.0}]]}"#, "\n",
+            r#"{"id":2,"perfected_of":1,"name":"Perfected X","bonuses":[[{"channel":{"CostReduction":["Ultimate","Additive"]},"value":5.0}]]}"#, "\n",
         ))
         .unwrap();
         assert_eq!(t.len(), 2);
@@ -243,7 +243,7 @@ use crate::{
         assert_eq!(t.unperfected_of(1), None);
         assert_eq!(
             t.get(2).unwrap().bonuses[0][0].channel,
-            Some(Channel::CostReduction(eso_skill_data::enums::mechanic::Mechanic::Ultimate))
+            Some(Channel::CostReduction(eso_skill_data::enums::mechanic::Mechanic::Ultimate, esosim_types::AggKind::Additive))
         );
     }
 

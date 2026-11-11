@@ -132,8 +132,8 @@ game_name = "Twlight's Embrace"
 source = { Set = { set_id = 38, pieces_required = 5 } }
 channels = [{ channel = "HealingTaken", value = 10.0 }]
 check = { field = "value1" }
-note = "Healing received, percentage points (10 = +10 %). The game's record spells the name `Twlight's Embrace`. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
-
+note = "Healing received, percentage points (10 = +10 %). The game's record spells the name `Twlight's Embrace`."
+
 [[effect]]
 id = 32806
 name = "Robes of Destruction Mastery (5 pieces)"
@@ -142,8 +142,8 @@ source = { Set = { set_id = 88, pieces_required = 5 } }
 channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 3303.0 }]
 condition = { WeaponEquipped = "DestructionStaff" }
 check = { field = "value1" }
-note = "Flat Max Magicka while a Destruction Staff is equipped. Decided from the weapons on the active bar, so a bar swap changes it. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
-
+note = "Flat Max Magicka while a Destruction Staff is equipped. Decided from the weapons on the active bar, so a bar swap changes it."
+
 [[effect]]
 id = 32834
 name = "Sanctuary (5 pieces)"
@@ -151,8 +151,8 @@ game_name = "Sanctuary"
 source = { Set = { set_id = 110, pieces_required = 5 } }
 channels = [{ channel = "HealingTaken", value = 10.0 }]
 check = { field = "value1" }
-note = "Your own healing received, percentage points. The same bonus for up to 11 group members within 10 m is not modelled (group effects, 2.6). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
-
+note = "Your own healing received, percentage points. The same bonus for up to 11 group members within 10 m is not modelled (group effects, 2.6)."
+
 [[effect]]
 id = 47354
 name = "Relics of the Physician, Ansur (3 pieces)"
@@ -160,8 +160,8 @@ game_name = "Relics of the Physician, Ansur"
 source = { Set = { set_id = 117, pieces_required = 3 } }
 channels = [{ channel = "HealingDone", value = 5.0 }]
 check = { field = "value1" }
-note = "Healing done, percentage points (5 = +5 %), like the Ritual mundus stone. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
-
+note = "Healing done, percentage points (5 = +5 %), like the Ritual mundus stone."
+
 [[effect]]
 id = 71101
 name = "Permafrost (5 pieces)"
@@ -170,8 +170,8 @@ source = { Set = { set_id = 211, pieces_required = 5 } }
 channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 1287.0 }]
 condition = { SelfState = "DamageShielded" }
 check = { field = "value1" }
-note = "Needs a damage shield on you, which only the simulator can answer, so the calculator lists it as conditional. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
-
+note = "Needs a damage shield on you, which only the simulator can answer, so the calculator lists it as conditional."
+
 [[effect]]
 id = 171974
 name = "Order's Wrath (5 pieces)"
@@ -179,28 +179,23 @@ game_name = "Order's Wrath"
 source = { Set = { set_id = 640, pieces_required = 5 } }
 channels = [{ channel = "CriticalDamage", value = 8.0 }, { channel = "CriticalHealing", value = 8.0 }]
 check = { field = "value1" }
-note = "Critical Damage and Critical Healing, percentage points (8 = +8 %), like the Shadow mundus stone. The set also has a stat row at 5 pieces (943 critical chance, from sets.jsonl) next to this ability: check both in game. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
-
-# ---- Sets, class 3, second slice (roadmap 2.2): the answers on percent cost reductions, per-ability damage, food,
-# two-number tooltips (each number is its own record), percent recovery and the low-health tiers. Written against the regular
-# set; `check` ties every value to its ability record. Tiered effects (True-Sworn Fury, Titanborn Strength) hold the increase
-# over the tier below, and their check subtracts that record (`minus`).
+note = "Critical Damage and Critical Healing, percentage points (8 = +8 %), like the Shadow mundus stone. The set also has a stat row at 5 pieces (943 critical chance, from sets.jsonl) next to this ability: check both in game."
 
 [[effect]]
 id = 29119
 name = "Armor of the Seducer (5 pieces)"
 game_name = "Armor of the Seducer"
 source = { Set = { set_id = 43, pieces_required = 5 } }
-channels = [{ channel = { CostReductionPct = "Magicka" }, value = 0.1 }]
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.1 }]
 check = { field = "value1", scale = -0.01 }
-note = "Reduces the cost of Magicka abilities by 10 %: a fraction of the cost, so it has its own multiplicative channel (CostReductionPct); CostReduction is flat cost points (a glyph's 203). The record stores -10. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Reduces the cost of Magicka abilities by 10 %: a fraction of the cost, so it is the multiplicative side of CostReduction; the additive side is flat cost points (a glyph's 203). The record stores -10. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
 
 [[effect]]
 id = 32823
 name = "Hawk's Eye (cost, 5 pieces)"
 game_name = "Hawk's Eye"
 source = { Set = { set_id = 100, pieces_required = 5 } }
-channels = [{ channel = { CostReductionSkillLinePct = "Bow" }, value = 0.06 }]
+channels = [{ channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.06 }]
 check = { field = "value1", scale = -0.01 }
 note = "Reduces the cost of Bow abilities by 6 % (the record stores -6). The damage half is the linked record 34770. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
 

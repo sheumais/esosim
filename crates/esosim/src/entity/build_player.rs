@@ -285,9 +285,11 @@ mod tests {
         use crate::engine::effect::ResourceKind::{Health, Magicka, Stamina};
         use eso_skill_data::enums::mechanic::Mechanic;
         let seducer = wearing(ARMOR_OF_THE_SEDUCER_SET_ID, 5, None);
-        assert_eq!(seducer.channels.get_multiplicative_bps(Channel::CostReductionPct(Mechanic::Magicka)), 1000);
-        assert_eq!(seducer.channels.get(Channel::CostReduction(Mechanic::Magicka)), 0, "the flat channel is untouched");
-        assert_eq!(wearing(ARMOR_OF_THE_SEDUCER_SET_ID, 4, None).channels.get_multiplicative_bps(Channel::CostReductionPct(Mechanic::Magicka)), 0);
+        use crate::engine::effect::AggKind::{Additive, Multiplicative};
+        let percent = Channel::CostReduction(Mechanic::Magicka, Multiplicative);
+        assert_eq!(seducer.channels.get_multiplicative_bps(percent), 1000);
+        assert_eq!(seducer.channels.get(Channel::CostReduction(Mechanic::Magicka, Additive)), 0, "the flat bucket is untouched");
+        assert_eq!(wearing(ARMOR_OF_THE_SEDUCER_SET_ID, 4, None).channels.get_multiplicative_bps(percent), 0);
         let willow = wearing(WILLOWS_PATH_SET_ID, 5, None);
         for r in [Health, Magicka, Stamina] {
             let ch = Channel::Recovery(r, crate::engine::effect::AggKind::Multiplicative);

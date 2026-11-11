@@ -310,9 +310,9 @@ impl Player {
                             EnchantType::PrismaticDefense => {}, // handle below
                             EnchantType::PrismaticRecovery => {}, // handle below
                             EnchantType::ReduceBlockCost => {enchants.add_additive(CostReductionCCA(Block, Additive), v);},
-                            EnchantType::ReduceFeatCost => {enchants.add_additive(CostReduction(Stamina), v);},
+                            EnchantType::ReduceFeatCost => {enchants.add_additive(CostReduction(Stamina, Additive), v);},
                             EnchantType::ReducePotionCooldown => {enchants.add_additive(PotionCooldown, v);},
-                            EnchantType::ReduceSpellCost => {enchants.add_additive(CostReduction(Magicka), v);},
+                            EnchantType::ReduceSpellCost => {enchants.add_additive(CostReduction(Magicka, Additive), v);},
                             EnchantType::ShockResistance => {enchants.add_additive(Armour(Shock), v)},
                             EnchantType::SpellResistance => {enchants.add_additive(Armour(Spell), v)},
                             EnchantType::Stamina => {enchants.add_additive(Resource(Stam, Additive), v)},
@@ -465,9 +465,9 @@ mod tests {
     fn feat_cost_spell_cost_and_potion_enchants_are_mapped() {
         // 203 is the CP160 Legendary row of the shared jewellery "reduce" table
         let feat = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::ReduceFeatCost));
-        assert_eq!(feat.get(Channel::CostReduction(Mechanic::Stamina)), 203);
+        assert_eq!(feat.get(Channel::CostReduction(Mechanic::Stamina, Additive)), 203);
         let spell = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::ReduceSpellCost));
-        assert_eq!(spell.get(Channel::CostReduction(Mechanic::Magicka)), 203);
+        assert_eq!(spell.get(Channel::CostReduction(Mechanic::Magicka, Additive)), 203);
         // only checks the mapping, not the value: the table says 3.6 (%) but `add_additive` rounds an
         // f32 to a whole number (roadmap 2.8 asks which unit this channel uses)
         let potion = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::IncreasePotionEffectiveness));

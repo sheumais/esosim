@@ -16,22 +16,22 @@
 {"id":34,"name":"Night Mother's Embrace","class":"static_conditional","blocks":[{"ability_id":29107,"class":"static_conditional","pieces":5}]}
 {"id":35,"name":"Knightmare","class":"combat_triggered","blocks":[{"ability_id":29117,"class":"combat_triggered","pieces":5,"buffs":[33512],"trigger":2}]}
 {"id":36,"name":"Armor of the Veiled Heritance","class":"combat_triggered","blocks":[{"ability_id":29118,"class":"combat_triggered","pieces":5,"trigger":78}]}
-{"id":37,"name":"Death's Wind","class":"combat_triggered","blocks":[{"ability_id":29097,"class":"combat_triggered","pieces":5,"trigger":1}]}
-{"id":38,"name":"Twilight's Embrace","class":"static_conditional","blocks":[{"ability_id":29098,"class":"static_conditional","pieces":5}]}
+{"id":37,"name":"Death's Wind","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29097,"class":"combat_triggered","pieces":5,"trigger":1}]}
+{"id":38,"name":"Twilight's Embrace","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":29098,"class":"static_conditional","pieces":5}]}
 {"id":39,"name":"Alessian Order","class":"combat_triggered","blocks":[{"ability_id":29121,"class":"combat_triggered","pieces":5,"trigger":8}]}
-{"id":40,"name":"Night's Silence","class":"combat_triggered","blocks":[{"ability_id":29108,"class":"combat_triggered","pieces":5,"trigger":28}]}
-{"id":41,"name":"Whitestrake's Retribution","class":"combat_triggered","blocks":[{"ability_id":29109,"class":"combat_triggered","pieces":5,"trigger":1}]}
-{"id":43,"name":"Armor of the Seducer","class":"static_conditional","blocks":[{"ability_id":29119,"class":"static_conditional","pieces":5}]}
-{"id":44,"name":"Vampire's Kiss","class":"combat_triggered","blocks":[{"ability_id":29120,"class":"combat_triggered","pieces":5,"trigger":4}]}
+{"id":40,"name":"Night's Silence","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29108,"class":"combat_triggered","pieces":5,"trigger":28}]}
+{"id":41,"name":"Whitestrake's Retribution","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29109,"class":"combat_triggered","pieces":5,"trigger":1}]}
+{"id":43,"name":"Armor of the Seducer","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":29119,"class":"static_conditional","pieces":5}]}
+{"id":44,"name":"Vampire's Kiss","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29120,"class":"combat_triggered","pieces":5,"trigger":4}]}
 {"id":46,"name":"Noble Duelist's Silks","class":"combat_triggered","blocks":[{"ability_id":29100,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":47,"name":"Robes of the Withered Hand","class":"combat_triggered","blocks":[{"ability_id":29101,"class":"combat_triggered","pieces":5,"trigger":191}]}
-{"id":48,"name":"Magnus' Gift","class":"combat_triggered","blocks":[{"ability_id":29102,"class":"combat_triggered","pieces":5,"trigger":39}]}
+{"id":48,"name":"Magnus' Gift","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29102,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":49,"name":"Shadow of the Red Mountain","class":"combat_triggered","blocks":[{"ability_id":29111,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":50,"name":"The Morag Tong","class":"combat_triggered","blocks":[{"ability_id":29112,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":51,"name":"Night Mother's Gaze","class":"combat_triggered","blocks":[{"ability_id":29113,"class":"combat_triggered","pieces":5,"buffs":[34386],"trigger":49}]}
+{"id":51,"name":"Night Mother's Gaze","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29113,"class":"combat_triggered","pieces":5,"buffs":[34386],"trigger":49}]}
 {"id":52,"name":"Beckoning Steel","class":"static_conditional","blocks":[{"ability_id":29122,"class":"static_conditional","pieces":5}]}
 {"id":53,"name":"The Ice Furnace","class":"combat_triggered","blocks":[{"ability_id":29123,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":54,"name":"Ashen Grip","class":"combat_triggered","blocks":[{"ability_id":29124,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":54,"name":"Ashen Grip","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":29124,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":55,"name":"Prayer Shawl","class":"combat_triggered","blocks":[{"ability_id":29099,"class":"combat_triggered","pieces":5,"trigger":172}]}
 {"id":56,"name":"Stendarr's Embrace","class":"combat_triggered","blocks":[{"ability_id":32725,"class":"combat_triggered","pieces":5,"trigger":9}]}
 {"id":57,"name":"Syrabane's Grip","class":"combat_triggered","blocks":[{"ability_id":32728,"class":"combat_triggered","pieces":5,"trigger":18}]}
@@ -50,29 +50,29 @@
 {"id":70,"name":"Seventh Legion Brute","class":"combat_triggered","blocks":[{"ability_id":32752,"class":"combat_triggered","pieces":5,"trigger":190}]}
 {"id":71,"name":"Durok's Bane","class":"combat_triggered","blocks":[{"ability_id":32754,"class":"combat_triggered","pieces":5,"buffs":[34527],"trigger":1}]}
 {"id":72,"name":"Nikulas' Heavy Armor","class":"combat_triggered","blocks":[{"ability_id":32755,"class":"combat_triggered","pieces":5,"trigger":18}]}
-{"id":73,"name":"Oblivion's Foe","class":"combat_triggered","blocks":[{"ability_id":32756,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":74,"name":"Spectre's Eye","class":"combat_triggered","blocks":[{"ability_id":32757,"class":"combat_triggered","pieces":5,"buffs":[69685],"trigger":39}]}
-{"id":75,"name":"Torug's Pact","class":"static_conditional","blocks":[{"ability_id":32759,"class":"static_conditional","pieces":5}]}
+{"id":73,"name":"Oblivion's Foe","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":32756,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":74,"name":"Spectre's Eye","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":32757,"class":"combat_triggered","pieces":5,"buffs":[69685],"trigger":39}]}
+{"id":75,"name":"Torug's Pact","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":32759,"class":"static_conditional","pieces":5}]}
 {"id":76,"name":"Robes of Alteration Mastery","class":"static_conditional","blocks":[{"ability_id":32779,"class":"static_conditional","pieces":5}]}
 {"id":77,"name":"Crusader","class":"combat_triggered","blocks":[{"ability_id":32780,"class":"combat_triggered","pieces":5,"buffs":[160394],"trigger":2}]}
-{"id":78,"name":"Hist Bark","class":"combat_triggered","blocks":[{"ability_id":32781,"class":"combat_triggered","pieces":5,"buffs":[86555],"trigger":207}]}
-{"id":79,"name":"Willow's Path","class":"static_conditional","blocks":[{"ability_id":32782,"class":"static_conditional","pieces":5}]}
-{"id":80,"name":"Hunding's Rage","class":"stat_only"}
-{"id":81,"name":"Song of Lamae","class":"combat_triggered","blocks":[{"ability_id":32784,"class":"combat_triggered","pieces":5,"trigger":1}]}
-{"id":82,"name":"Alessia's Bulwark","class":"combat_triggered","blocks":[{"ability_id":32799,"class":"combat_triggered","pieces":5,"trigger":1}]}
+{"id":78,"name":"Hist Bark","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":32781,"class":"combat_triggered","pieces":5,"buffs":[86555],"trigger":207}]}
+{"id":79,"name":"Willow's Path","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":32782,"class":"static_conditional","pieces":5}]}
+{"id":80,"name":"Hunding's Rage","class":"stat_only","kind":"crafted"}
+{"id":81,"name":"Song of Lamae","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":32784,"class":"combat_triggered","pieces":5,"trigger":1}]}
+{"id":82,"name":"Alessia's Bulwark","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":32799,"class":"combat_triggered","pieces":5,"trigger":1}]}
 {"id":83,"name":"Elf Bane","class":"static_conditional","blocks":[{"ability_id":32800,"class":"static_conditional","pieces":5}]}
-{"id":84,"name":"Orgnum's Scales","class":"static_conditional","blocks":[{"ability_id":32801,"class":"static_conditional","pieces":5}]}
+{"id":84,"name":"Orgnum's Scales","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":32801,"class":"static_conditional","pieces":5}]}
 {"id":85,"name":"Almalexia's Mercy","class":"combat_triggered","blocks":[{"ability_id":32802,"class":"combat_triggered","pieces":5,"trigger":1}]}
 {"id":86,"name":"Queen's Elegance","class":"combat_triggered","blocks":[{"ability_id":32803,"class":"combat_triggered","pieces":5,"buffs":[61737],"trigger":10}]}
-{"id":87,"name":"Eyes of Mara","class":"static_conditional","blocks":[{"ability_id":32804,"class":"static_conditional","pieces":5}]}
+{"id":87,"name":"Eyes of Mara","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":32804,"class":"static_conditional","pieces":5}]}
 {"id":88,"name":"Robes of Destruction Mastery","class":"static_conditional","blocks":[{"ability_id":32806,"class":"static_conditional","pieces":5}]}
 {"id":89,"name":"Sentry","class":"combat_triggered","blocks":[{"ability_id":32807,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":90,"name":"Senche's Bite","class":"combat_triggered","blocks":[{"ability_id":32808,"class":"combat_triggered","pieces":5,"trigger":16}]}
 {"id":91,"name":"Oblivion's Edge","class":"combat_triggered","blocks":[{"ability_id":32809,"class":"combat_triggered","pieces":5,"trigger":4}]}
-{"id":92,"name":"Kagrenac's Hope","class":"static_conditional","blocks":[{"ability_id":32810,"class":"static_conditional","pieces":5}]}
+{"id":92,"name":"Kagrenac's Hope","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":32810,"class":"static_conditional","pieces":5}]}
 {"id":93,"name":"Storm Knight's Plate","class":"combat_triggered","blocks":[{"ability_id":32814,"class":"combat_triggered","pieces":5,"trigger":1}]}
 {"id":94,"name":"Meridia's Blessed Armor","class":"combat_triggered","blocks":[{"ability_id":32815,"class":"combat_triggered","pieces":5,"trigger":18}]}
-{"id":95,"name":"Shalidor's Curse","class":"combat_triggered","blocks":[{"ability_id":32816,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":95,"name":"Shalidor's Curse","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":32816,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":96,"name":"Armor of Truth","class":"combat_triggered","blocks":[{"ability_id":32818,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":97,"name":"The Arch-Mage","class":"combat_triggered","blocks":[{"ability_id":32819,"class":"combat_triggered","pieces":5,"trigger":210}]}
 {"id":98,"name":"Necropotence","class":"combat_triggered","blocks":[{"ability_id":32820,"class":"combat_triggered","pieces":5,"trigger":3}]}
@@ -124,14 +124,14 @@
 {"id":145,"name":"Way of Fire","class":"combat_triggered","blocks":[{"ability_id":52710,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":146,"name":"Way of Air","class":"combat_triggered","blocks":[{"ability_id":52708,"class":"combat_triggered","pieces":4,"trigger":39},{"ability_id":51504,"class":"static_conditional","pieces":5}]}
 {"id":147,"name":"Way of Martial Knowledge","class":"combat_triggered","blocks":[{"ability_id":52704,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":148,"name":"Way of the Arena","class":"combat_triggered","blocks":[{"ability_id":52712,"class":"combat_triggered","pieces":5,"trigger":16}]}
+{"id":148,"name":"Way of the Arena","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":52712,"class":"combat_triggered","pieces":5,"trigger":16}]}
 {"id":155,"name":"Undaunted Bastion","class":"combat_triggered","blocks":[{"ability_id":59663,"class":"combat_triggered","pieces":5,"trigger":10}]}
 {"id":156,"name":"Undaunted Infiltrator","class":"combat_triggered","blocks":[{"ability_id":59666,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":157,"name":"Undaunted Unweaver","class":"combat_triggered","blocks":[{"ability_id":59675,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":158,"name":"Embershield","class":"combat_triggered","blocks":[{"ability_id":59694,"class":"combat_triggered","pieces":5,"trigger":210}]}
 {"id":159,"name":"Sunderflame","class":"combat_triggered","blocks":[{"ability_id":60059,"class":"combat_triggered","pieces":5,"buffs":[61742],"trigger":2}]}
 {"id":160,"name":"Burning Spellweave","class":"combat_triggered","blocks":[{"ability_id":60418,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":161,"name":"Twice-Born Star","class":"static_conditional","blocks":[{"ability_id":60457,"class":"static_conditional","pieces":5}]}
+{"id":161,"name":"Twice-Born Star","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":60457,"class":"static_conditional","pieces":5}]}
 {"id":162,"name":"Spawn of Mephala","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":59489,"class":"combat_triggered","pieces":2,"trigger":2}]}
 {"id":163,"name":"Bloodspawn","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":59516,"class":"combat_triggered","pieces":2,"trigger":1}]}
 {"id":164,"name":"Lord Warden","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":59585,"class":"combat_triggered","pieces":2,"trigger":1}]}
@@ -144,9 +144,9 @@
 {"id":171,"name":"Eternal Warrior","class":"combat_triggered","blocks":[{"ability_id":61436,"class":"combat_triggered","pieces":5,"trigger":1},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
 {"id":172,"name":"Infallible Mage","class":"grants_buff","blocks":[{"ability_id":61438,"class":"grants_buff","pieces":5,"buffs":[79717]},{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]}]}
 {"id":173,"name":"Vicious Serpent","class":"combat_triggered","blocks":[{"ability_id":61440,"class":"combat_triggered","pieces":5,"buffs":[50997],"trigger":194},{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]}]}
-{"id":176,"name":"Noble's Conquest","class":"combat_triggered","blocks":[{"ability_id":61780,"class":"combat_triggered","pieces":5,"buffs":[61782],"trigger":2}]}
-{"id":177,"name":"Redistributor","class":"combat_triggered","blocks":[{"ability_id":61783,"class":"combat_triggered","pieces":5,"trigger":172}]}
-{"id":178,"name":"Armor Master","class":"combat_triggered","blocks":[{"ability_id":61851,"class":"combat_triggered","pieces":5,"trigger":3}]}
+{"id":176,"name":"Noble's Conquest","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":61780,"class":"combat_triggered","pieces":5,"buffs":[61782],"trigger":2}]}
+{"id":177,"name":"Redistributor","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":61783,"class":"combat_triggered","pieces":5,"trigger":172}]}
+{"id":178,"name":"Armor Master","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":61851,"class":"combat_triggered","pieces":5,"trigger":3}]}
 {"id":179,"name":"Black Rose","class":"static_conditional","blocks":[{"ability_id":61761,"class":"static_conditional","pieces":5}]}
 {"id":180,"name":"Powerful Assault","class":"combat_triggered","blocks":[{"ability_id":61763,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":181,"name":"Meritorious Service","class":"combat_triggered","blocks":[{"ability_id":61775,"class":"combat_triggered","pieces":5,"trigger":39}]}
@@ -169,8 +169,8 @@
 {"id":204,"name":"Endurance","class":"stat_only"}
 {"id":205,"name":"Willpower","class":"stat_only"}
 {"id":206,"name":"Agility","class":"stat_only"}
-{"id":207,"name":"Law of Julianos","class":"stat_only"}
-{"id":208,"name":"Trial by Fire","class":"static_conditional","blocks":[{"ability_id":71018,"class":"static_conditional","pieces":5}]}
+{"id":207,"name":"Law of Julianos","class":"stat_only","kind":"crafted"}
+{"id":208,"name":"Trial by Fire","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":71018,"class":"static_conditional","pieces":5}]}
 {"id":209,"name":"Armor of the Code","class":"static_conditional","blocks":[{"ability_id":71073,"class":"static_conditional","pieces":5}]}
 {"id":210,"name":"Mark of the Pariah","class":"static_conditional","blocks":[{"ability_id":71077,"class":"static_conditional","pieces":5}]}
 {"id":211,"name":"Permafrost","class":"static_conditional","blocks":[{"ability_id":71101,"class":"static_conditional","pieces":5}]}
@@ -181,10 +181,10 @@
 {"id":216,"name":"Hunt Leader","class":"combat_triggered","blocks":[{"ability_id":71603,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":217,"name":"Winterborn","class":"combat_triggered","blocks":[{"ability_id":71644,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":218,"name":"Trinimac's Valor","class":"combat_triggered","blocks":[{"ability_id":71656,"class":"combat_triggered","pieces":5,"trigger":10}]}
-{"id":219,"name":"Morkuldin","class":"combat_triggered","blocks":[{"ability_id":71670,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":224,"name":"Tava's Favor","class":"combat_triggered","blocks":[{"ability_id":75724,"class":"combat_triggered","pieces":5,"trigger":16}]}
-{"id":225,"name":"Clever Alchemist","class":"combat_triggered","blocks":[{"ability_id":75745,"class":"combat_triggered","pieces":5,"trigger":241}]}
-{"id":226,"name":"Eternal Hunt","class":"combat_triggered","blocks":[{"ability_id":75927,"class":"combat_triggered","pieces":5,"trigger":10}]}
+{"id":219,"name":"Morkuldin","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":71670,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":224,"name":"Tava's Favor","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":75724,"class":"combat_triggered","pieces":5,"trigger":16}]}
+{"id":225,"name":"Clever Alchemist","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":75745,"class":"combat_triggered","pieces":5,"trigger":241}]}
+{"id":226,"name":"Eternal Hunt","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":75927,"class":"combat_triggered","pieces":5,"trigger":10}]}
 {"id":227,"name":"Bahraha's Curse","class":"combat_triggered","blocks":[{"ability_id":75673,"class":"combat_triggered","pieces":5,"trigger":2},{"ability_id":77888,"class":"static_conditional","pieces":5}]}
 {"id":228,"name":"Syvarra's Scales","class":"combat_triggered","blocks":[{"ability_id":75717,"class":"combat_triggered","pieces":5,"trigger":2},{"ability_id":76573,"class":"static_conditional","pieces":5}]}
 {"id":229,"name":"Twilight Remedy","class":"combat_triggered","blocks":[{"ability_id":75766,"class":"combat_triggered","pieces":5,"buffs":[76564],"trigger":115},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
@@ -197,9 +197,9 @@
 {"id":237,"name":"Leki's Focus","class":"grants_buff","blocks":[{"ability_id":76940,"class":"grants_buff","pieces":5,"buffs":[61716]}]}
 {"id":238,"name":"Fasalla's Guile","class":"combat_triggered","blocks":[{"ability_id":76946,"class":"combat_triggered","pieces":5,"buffs":[76947],"trigger":86}]}
 {"id":239,"name":"Warrior's Fury","class":"combat_triggered","blocks":[{"ability_id":76949,"class":"combat_triggered","pieces":5,"trigger":1}]}
-{"id":240,"name":"Kvatch Gladiator","class":"static_conditional","blocks":[{"ability_id":79008,"class":"static_conditional","pieces":5}]}
-{"id":241,"name":"Varen's Legacy","class":"combat_triggered","blocks":[{"ability_id":79029,"class":"combat_triggered","pieces":5,"trigger":18}]}
-{"id":242,"name":"Pelinal's Wrath","class":"combat_triggered","blocks":[{"ability_id":79103,"class":"combat_triggered","pieces":5,"trigger":4}]}
+{"id":240,"name":"Kvatch Gladiator","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":79008,"class":"static_conditional","pieces":5}]}
+{"id":241,"name":"Varen's Legacy","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":79029,"class":"combat_triggered","pieces":5,"trigger":18}]}
+{"id":242,"name":"Pelinal's Wrath","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":79103,"class":"combat_triggered","pieces":5,"trigger":4}]}
 {"id":243,"name":"Hide of Morihaus","class":"combat_triggered","blocks":[{"ability_id":79110,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":244,"name":"Flanking Strategist","class":"static_conditional","blocks":[{"ability_id":79181,"class":"static_conditional","pieces":5}]}
 {"id":245,"name":"Sithis' Touch","class":"combat_triggered","blocks":[{"ability_id":79192,"class":"combat_triggered","pieces":5,"trigger":4}]}
@@ -271,9 +271,9 @@
 {"id":320,"name":"War Maiden","class":"static_conditional","blocks":[{"ability_id":92761,"class":"static_conditional","pieces":5}]}
 {"id":321,"name":"Defiler","class":"combat_triggered","blocks":[{"ability_id":93300,"class":"combat_triggered","pieces":5,"trigger":49}]}
 {"id":322,"name":"Warrior-Poet","class":"grants_buff","blocks":[{"ability_id":92762,"class":"grants_buff","pieces":5,"buffs":[88490]}]}
-{"id":323,"name":"Assassin's Guile","class":"static_conditional","blocks":[{"ability_id":92768,"class":"static_conditional","pieces":5}]}
-{"id":324,"name":"Daedric Trickery","class":"combat_triggered","blocks":[{"ability_id":92769,"class":"combat_triggered","pieces":5,"buffs":[92771],"trigger":2}]}
-{"id":325,"name":"Shacklebreaker","class":"stat_only"}
+{"id":323,"name":"Assassin's Guile","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":92768,"class":"static_conditional","pieces":5}]}
+{"id":324,"name":"Daedric Trickery","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":92769,"class":"combat_triggered","pieces":5,"buffs":[92771],"trigger":2}]}
+{"id":325,"name":"Shacklebreaker","class":"stat_only","kind":"crafted"}
 {"id":326,"name":"Vanguard's Challenge","class":"combat_triggered","blocks":[{"ability_id":92914,"class":"combat_triggered","pieces":5,"trigger":115}]}
 {"id":327,"name":"Coward's Gear","class":"combat_triggered","blocks":[{"ability_id":92908,"class":"combat_triggered","pieces":5,"buffs":[92909,144708],"trigger":203}]}
 {"id":328,"name":"Knight Slayer","class":"combat_triggered","blocks":[{"ability_id":93099,"class":"combat_triggered","pieces":5,"trigger":210}]}
@@ -299,9 +299,9 @@
 {"id":348,"name":"Curse of Doylemish","class":"combat_triggered","blocks":[{"ability_id":102008,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":349,"name":"Thurvokun","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":102089,"class":"combat_triggered","pieces":2,"buffs":[21927,102097],"trigger":1}]}
 {"id":350,"name":"Zaan","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":102125,"class":"combat_triggered","pieces":2,"trigger":49}]}
-{"id":351,"name":"Innate Axiom","class":"static_conditional","blocks":[{"ability_id":99199,"class":"static_conditional","pieces":5}]}
-{"id":352,"name":"Fortified Brass","class":"stat_only"}
-{"id":353,"name":"Mechanical Acuity","class":"combat_triggered","blocks":[{"ability_id":99202,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":351,"name":"Innate Axiom","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":99199,"class":"static_conditional","pieces":5}]}
+{"id":352,"name":"Fortified Brass","class":"stat_only","kind":"crafted"}
+{"id":353,"name":"Mechanical Acuity","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":99202,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":354,"name":"Mad Tinkerer","class":"combat_triggered","blocks":[{"ability_id":243305,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":355,"name":"Unfathomable Darkness","class":"combat_triggered","blocks":[{"ability_id":99266,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":356,"name":"Livewire","class":"combat_triggered","blocks":[{"ability_id":99281,"class":"combat_triggered","pieces":5,"trigger":1}]}
@@ -328,9 +328,9 @@
 {"id":382,"name":"Grace of Gloom","class":"combat_triggered","blocks":[{"ability_id":106865,"class":"combat_triggered","pieces":5,"buffs":[61716],"trigger":1}]}
 {"id":383,"name":"Gryphon's Ferocity","class":"combat_triggered","blocks":[{"ability_id":106858,"class":"combat_triggered","pieces":5,"buffs":[68595,85602],"trigger":2}]}
 {"id":384,"name":"Wisdom of Vanus","class":"combat_triggered","blocks":[{"ability_id":106805,"class":"combat_triggered","pieces":5,"buffs":[61711],"trigger":210}]}
-{"id":385,"name":"Adept Rider","class":"grants_buff","blocks":[{"ability_id":106775,"class":"grants_buff","pieces":5,"buffs":[63569]}]}
-{"id":386,"name":"Sload's Semblance","class":"combat_triggered","blocks":[{"ability_id":106797,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":387,"name":"Nocturnal's Favor","class":"combat_triggered","blocks":[{"ability_id":106803,"class":"combat_triggered","pieces":5,"trigger":16}]}
+{"id":385,"name":"Adept Rider","class":"grants_buff","kind":"crafted","blocks":[{"ability_id":106775,"class":"grants_buff","pieces":5,"buffs":[63569]}]}
+{"id":386,"name":"Sload's Semblance","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":106797,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":387,"name":"Nocturnal's Favor","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":106803,"class":"combat_triggered","pieces":5,"trigger":16}]}
 {"id":388,"name":"Aegis of Galenwe","class":"combat_triggered","blocks":[{"ability_id":107268,"class":"combat_triggered","pieces":5,"buffs":[61737],"trigger":18},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
 {"id":389,"name":"Arms of Relequen","class":"combat_triggered","blocks":[{"ability_id":107202,"class":"combat_triggered","pieces":5,"trigger":2},{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]}]}
 {"id":390,"name":"Mantle of Siroria","class":"combat_triggered","blocks":[{"ability_id":107093,"class":"combat_triggered","pieces":5,"trigger":2},{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]}]}
@@ -350,9 +350,9 @@
 {"id":405,"name":"Bright-Throat's Boast","class":"combat_triggered","blocks":[{"ability_id":113139,"class":"combat_triggered","pieces":5,"trigger":3}]}
 {"id":406,"name":"Dead-Water's Guile","class":"combat_triggered","blocks":[{"ability_id":113165,"class":"combat_triggered","pieces":5,"trigger":4}]}
 {"id":407,"name":"Champion of the Hist","class":"grants_buff","blocks":[{"ability_id":113284,"class":"grants_buff","pieces":5,"buffs":[61708]}]}
-{"id":408,"name":"Grave-Stake Collector","class":"combat_triggered","blocks":[{"ability_id":113180,"class":"combat_triggered","pieces":5,"trigger":194}]}
-{"id":409,"name":"Naga Shaman","class":"combat_triggered","blocks":[{"ability_id":113287,"class":"combat_triggered","pieces":5,"buffs":[113306,113307],"trigger":10}]}
-{"id":410,"name":"Might of the Lost Legion","class":"combat_triggered","blocks":[{"ability_id":113311,"class":"combat_triggered","pieces":5,"buffs":[61737],"trigger":18}]}
+{"id":408,"name":"Grave-Stake Collector","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":113180,"class":"combat_triggered","pieces":5,"trigger":194}]}
+{"id":409,"name":"Naga Shaman","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":113287,"class":"combat_triggered","pieces":5,"buffs":[113306,113307],"trigger":10}]}
+{"id":410,"name":"Might of the Lost Legion","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":113311,"class":"combat_triggered","pieces":5,"buffs":[61737],"trigger":18}]}
 {"id":411,"name":"Gallant Charge","class":"static_conditional","kind":"arena_weapon","blocks":[{"ability_id":113574,"class":"static_conditional","pieces":1}]}
 {"id":412,"name":"Radial Uppercut","class":"combat_triggered","kind":"arena_weapon","blocks":[{"ability_id":113551,"class":"combat_triggered","pieces":1,"trigger":2}]}
 {"id":413,"name":"Spectral Cloak","class":"combat_triggered","kind":"arena_weapon","blocks":[{"ability_id":113616,"class":"combat_triggered","pieces":1,"trigger":39}]}
@@ -379,9 +379,9 @@
 {"id":434,"name":"Scavenging Demise","class":"combat_triggered","blocks":[{"ability_id":116947,"class":"combat_triggered","pieces":5,"buffs":[117025],"trigger":49}]}
 {"id":435,"name":"Auroran's Thunder","class":"combat_triggered","blocks":[{"ability_id":116882,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":436,"name":"Symphony of Blades","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":117110,"class":"combat_triggered","pieces":2,"trigger":9}]}
-{"id":437,"name":"Coldharbour's Favorite","class":"combat_triggered","blocks":[{"ability_id":121911,"class":"combat_triggered","pieces":5,"trigger":9}]}
-{"id":438,"name":"Senche-raht's Grit","class":"combat_triggered","blocks":[{"ability_id":121638,"class":"combat_triggered","pieces":5,"trigger":1}]}
-{"id":439,"name":"Vastarie's Tutelage","class":"combat_triggered","blocks":[{"ability_id":121729,"class":"combat_triggered","pieces":5,"trigger":154}]}
+{"id":437,"name":"Coldharbour's Favorite","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":121911,"class":"combat_triggered","pieces":5,"trigger":9}]}
+{"id":438,"name":"Senche-raht's Grit","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":121638,"class":"combat_triggered","pieces":5,"trigger":1}]}
+{"id":439,"name":"Vastarie's Tutelage","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":121729,"class":"combat_triggered","pieces":5,"trigger":154}]}
 {"id":440,"name":"Crafty Alfiq","class":"stat_only"}
 {"id":441,"name":"Vesture of Darloc Brae","class":"static_conditional","blocks":[{"ability_id":185255,"class":"static_conditional","pieces":4},{"ability_id":121596,"class":"static_conditional","pieces":5}]}
 {"id":442,"name":"Call of the Undertaker","class":"combat_triggered","blocks":[{"ability_id":121633,"class":"combat_triggered","pieces":5,"buffs":[121634],"trigger":2}]}
@@ -404,9 +404,9 @@
 {"id":465,"name":"Senchal Defender","class":"combat_triggered","blocks":[{"ability_id":129438,"class":"combat_triggered","pieces":5,"trigger":210}]}
 {"id":466,"name":"Marauder's Haste","class":"combat_triggered","blocks":[{"ability_id":129388,"class":"combat_triggered","pieces":5,"trigger":10}]}
 {"id":467,"name":"Dragonguard Elite","class":"combat_triggered","blocks":[{"ability_id":129405,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":468,"name":"Daring Corsair","class":"combat_triggered","blocks":[{"ability_id":129534,"class":"combat_triggered","pieces":5,"buffs":[129536],"trigger":39}]}
-{"id":469,"name":"Ancient Dragonguard","class":"static_conditional","blocks":[{"ability_id":129508,"class":"static_conditional","pieces":5}]}
-{"id":470,"name":"New Moon Acolyte","class":"static_conditional","blocks":[{"ability_id":129582,"class":"static_conditional","pieces":5}]}
+{"id":468,"name":"Daring Corsair","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":129534,"class":"combat_triggered","pieces":5,"buffs":[129536],"trigger":39}]}
+{"id":469,"name":"Ancient Dragonguard","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":129508,"class":"static_conditional","pieces":5}]}
+{"id":470,"name":"New Moon Acolyte","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":129582,"class":"static_conditional","pieces":5}]}
 {"id":471,"name":"Hiti's Hearth","class":"combat_triggered","blocks":[{"ability_id":133209,"class":"combat_triggered","pieces":5,"trigger":9}]}
 {"id":472,"name":"Titanborn Strength","class":"static_conditional","blocks":[{"ability_id":133281,"class":"static_conditional","pieces":5}]}
 {"id":473,"name":"Bani's Torment","class":"combat_triggered","blocks":[{"ability_id":133290,"class":"combat_triggered","pieces":5,"buffs":[133292,133318],"trigger":115}]}
@@ -415,14 +415,14 @@
 {"id":476,"name":"Grave Guardian","class":"combat_triggered","blocks":[{"ability_id":133430,"class":"combat_triggered","pieces":5,"trigger":207}]}
 {"id":478,"name":"Mother Ciannait","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":133378,"class":"combat_triggered","pieces":2,"trigger":39}]}
 {"id":479,"name":"Kjalnar's Nightmare","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":133499,"class":"combat_triggered","pieces":2,"trigger":2}]}
-{"id":480,"name":"Critical Riposte","class":"combat_triggered","blocks":[{"ability_id":134017,"class":"combat_triggered","pieces":5,"buffs":[134034],"trigger":50}]}
-{"id":481,"name":"Unchained Aggressor","class":"combat_triggered","blocks":[{"ability_id":134090,"class":"combat_triggered","pieces":5,"buffs":[134094],"trigger":77}]}
-{"id":482,"name":"Dauntless Combatant","class":"combat_triggered","blocks":[{"ability_id":134103,"class":"combat_triggered","pieces":5,"trigger":77}]}
+{"id":480,"name":"Critical Riposte","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":134017,"class":"combat_triggered","pieces":5,"buffs":[134034],"trigger":50}]}
+{"id":481,"name":"Unchained Aggressor","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":134090,"class":"combat_triggered","pieces":5,"buffs":[134094],"trigger":77}]}
+{"id":482,"name":"Dauntless Combatant","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":134103,"class":"combat_triggered","pieces":5,"trigger":77}]}
 {"id":487,"name":"Winter's Respite","class":"combat_triggered","blocks":[{"ability_id":135652,"class":"combat_triggered","pieces":5,"trigger":10}]}
 {"id":488,"name":"Venomous Smite","class":"combat_triggered","blocks":[{"ability_id":135687,"class":"combat_triggered","pieces":5,"trigger":49}]}
 {"id":489,"name":"Eternal Vigor","class":"static_conditional","blocks":[{"ability_id":135736,"class":"static_conditional","pieces":5}]}
-{"id":490,"name":"Stuhn's Favor","class":"combat_triggered","blocks":[{"ability_id":135874,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":491,"name":"Dragon's Appetite","class":"static_conditional","blocks":[{"ability_id":135876,"class":"static_conditional","pieces":5}]}
+{"id":490,"name":"Stuhn's Favor","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":135874,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":491,"name":"Dragon's Appetite","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":135876,"class":"static_conditional","pieces":5}]}
 {"id":492,"name":"Kyne's Wind","class":"combat_triggered","blocks":[{"ability_id":136045,"class":"combat_triggered","pieces":5,"trigger":172},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
 {"id":493,"name":"Perfected Kyne's Wind","class":"combat_triggered","inherits":492,"blocks":[{"ability_id":136045,"class":"combat_triggered","pieces":5,"trigger":172},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
 {"id":494,"name":"Vrol's Command","class":"combat_triggered","blocks":[{"ability_id":135925,"class":"combat_triggered","pieces":5,"buffs":[93123],"trigger":210},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
@@ -434,7 +434,7 @@
 {"id":501,"name":"Thrassian Stranglers","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":136116,"class":"combat_triggered","pieces":1,"trigger":4}]}
 {"id":503,"name":"Ring of the Wild Hunt","class":"static_conditional","kind":"mythic","blocks":[{"ability_id":136316,"class":"static_conditional","pieces":1}]}
 {"id":505,"name":"Torc of Tonal Constancy","class":"static_conditional","kind":"mythic","blocks":[{"ability_id":136353,"class":"static_conditional","pieces":1}]}
-{"id":506,"name":"Spell Parasite","class":"combat_triggered","blocks":[{"ability_id":135886,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":506,"name":"Spell Parasite","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":135886,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":513,"name":"Talfyg's Treachery","class":"static_conditional","blocks":[{"ability_id":141117,"class":"static_conditional","pieces":5}]}
 {"id":514,"name":"Unleashed Terror","class":"combat_triggered","blocks":[{"ability_id":141203,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":515,"name":"Crimson Twilight","class":"combat_triggered","blocks":[{"ability_id":141636,"class":"combat_triggered","pieces":5,"trigger":1}]}
@@ -461,9 +461,9 @@
 {"id":536,"name":"Radiant Bastion","class":"combat_triggered","blocks":[{"ability_id":147220,"class":"combat_triggered","pieces":5,"trigger":1}]}
 {"id":537,"name":"Voidcaller","class":"combat_triggered","blocks":[{"ability_id":147138,"class":"combat_triggered","pieces":5,"trigger":1}]}
 {"id":538,"name":"Witch-Knight's Defiance","class":"static_conditional","blocks":[{"ability_id":147145,"class":"static_conditional","pieces":5}]}
-{"id":539,"name":"Red Eagle's Fury","class":"static_conditional","blocks":[{"ability_id":147300,"class":"static_conditional","pieces":5}]}
-{"id":540,"name":"Legacy of Karth","class":"combat_triggered","blocks":[{"ability_id":147388,"class":"combat_triggered","pieces":5,"trigger":115}]}
-{"id":541,"name":"Aetherial Ascension","class":"static_conditional","blocks":[{"ability_id":147321,"class":"static_conditional","pieces":5}]}
+{"id":539,"name":"Red Eagle's Fury","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":147300,"class":"static_conditional","pieces":5}]}
+{"id":540,"name":"Legacy of Karth","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":147388,"class":"combat_triggered","pieces":5,"trigger":115}]}
+{"id":541,"name":"Aetherial Ascension","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":147321,"class":"static_conditional","pieces":5}]}
 {"id":542,"name":"Hex Siphon","class":"combat_triggered","blocks":[{"ability_id":147668,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":543,"name":"Pestilent Host","class":"combat_triggered","blocks":[{"ability_id":147681,"class":"combat_triggered","pieces":5,"trigger":4}]}
 {"id":544,"name":"Explosive Rebuke","class":"combat_triggered","blocks":[{"ability_id":147690,"class":"combat_triggered","pieces":5,"trigger":18}]}
@@ -492,9 +492,9 @@
 {"id":579,"name":"Frostbite","class":"static_conditional","blocks":[{"ability_id":154272,"class":"static_conditional","pieces":5}]}
 {"id":580,"name":"Deadlands Assassin","class":"combat_triggered","blocks":[{"ability_id":154334,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":581,"name":"Bog Raider","class":"combat_triggered","blocks":[{"ability_id":154471,"class":"combat_triggered","pieces":5,"trigger":194}]}
-{"id":582,"name":"Hist Whisperer","class":"combat_triggered","blocks":[{"ability_id":154526,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":583,"name":"Heartland Conqueror","class":"static_conditional","blocks":[{"ability_id":154540,"class":"static_conditional","pieces":5}]}
-{"id":584,"name":"Diamond's Victory","class":"combat_triggered","blocks":[{"ability_id":154560,"class":"combat_triggered","pieces":5,"trigger":39}]}
+{"id":582,"name":"Hist Whisperer","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":154526,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":583,"name":"Heartland Conqueror","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":154540,"class":"static_conditional","pieces":5}]}
+{"id":584,"name":"Diamond's Victory","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":154560,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":585,"name":"Saxhleel Champion","class":"combat_triggered","blocks":[{"ability_id":154820,"class":"combat_triggered","pieces":5,"buffs":[61747],"trigger":10},{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]}]}
 {"id":586,"name":"Sul-Xan's Torment","class":"combat_triggered","blocks":[{"ability_id":154716,"class":"combat_triggered","pieces":5,"trigger":194},{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]}]}
 {"id":587,"name":"Bahsei's Mania","class":"static_conditional","blocks":[{"ability_id":154691,"class":"static_conditional","pieces":5},{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]}]}
@@ -518,9 +518,9 @@
 {"id":607,"name":"Grisly Gourmet","class":"combat_triggered","blocks":[{"ability_id":159260,"class":"combat_triggered","pieces":5,"buffs":[159319,159626],"trigger":2}]}
 {"id":608,"name":"Prior Thierric","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":159475,"class":"combat_triggered","pieces":2,"trigger":2}]}
 {"id":609,"name":"Magma Incarnate","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":159304,"class":"combat_triggered","pieces":2,"buffs":[61693,147417],"trigger":9}]}
-{"id":610,"name":"Wretched Vitality","class":"combat_triggered","blocks":[{"ability_id":163098,"class":"combat_triggered","pieces":5,"trigger":115}]}
-{"id":611,"name":"Deadlands Demolisher","class":"combat_triggered","blocks":[{"ability_id":163288,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":612,"name":"Iron Flask","class":"combat_triggered","blocks":[{"ability_id":163078,"class":"combat_triggered","pieces":5,"trigger":241}]}
+{"id":610,"name":"Wretched Vitality","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":163098,"class":"combat_triggered","pieces":5,"trigger":115}]}
+{"id":611,"name":"Deadlands Demolisher","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":163288,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":612,"name":"Iron Flask","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":163078,"class":"combat_triggered","pieces":5,"trigger":241}]}
 {"id":613,"name":"Eye of the Grasp","class":"combat_triggered","blocks":[{"ability_id":163028,"class":"combat_triggered","pieces":5,"trigger":49}]}
 {"id":614,"name":"Hexos' Ward","class":"combat_triggered","blocks":[{"ability_id":163029,"class":"combat_triggered","pieces":5,"trigger":49}]}
 {"id":615,"name":"Kynmarcher's Cruelty","class":"combat_triggered","blocks":[{"ability_id":163046,"class":"combat_triggered","pieces":5,"buffs":[163065],"trigger":2}]}
@@ -544,9 +544,9 @@
 {"id":634,"name":"Nunatak","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":167678,"class":"combat_triggered","pieces":2,"buffs":[145977],"trigger":2}]}
 {"id":635,"name":"Lady Malygda","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":166775,"class":"combat_triggered","pieces":2,"buffs":[166837],"trigger":2}]}
 {"id":636,"name":"Baron Thirsk","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":167737,"class":"combat_triggered","pieces":2,"buffs":[167738],"trigger":2}]}
-{"id":640,"name":"Order's Wrath","class":"static_conditional","blocks":[{"ability_id":171974,"class":"static_conditional","pieces":5}]}
-{"id":641,"name":"Serpent's Disdain","class":"static_conditional","blocks":[{"ability_id":172069,"class":"static_conditional","pieces":5}]}
-{"id":642,"name":"Druid's Braid","class":"stat_only"}
+{"id":640,"name":"Order's Wrath","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":171974,"class":"static_conditional","pieces":5}]}
+{"id":641,"name":"Serpent's Disdain","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":172069,"class":"static_conditional","pieces":5}]}
+{"id":642,"name":"Druid's Braid","class":"stat_only","kind":"crafted"}
 {"id":643,"name":"Blessing of High Isle","class":"combat_triggered","blocks":[{"ability_id":172024,"class":"combat_triggered","pieces":5,"trigger":82}]}
 {"id":644,"name":"Steadfast's Mettle","class":"static_conditional","blocks":[{"ability_id":171586,"class":"static_conditional","pieces":5}]}
 {"id":645,"name":"Systres' Scowl","class":"combat_triggered","blocks":[{"ability_id":171660,"class":"combat_triggered","pieces":5,"trigger":2}]}
@@ -580,9 +580,9 @@
 {"id":674,"name":"Faun's Lark Cladding","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":182625,"class":"combat_triggered","pieces":1,"trigger":203}]}
 {"id":675,"name":"Stormweaver's Cavort","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":182973,"class":"combat_triggered","pieces":1,"trigger":4}]}
 {"id":676,"name":"Syrabane's Ward","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":182390,"class":"combat_triggered","pieces":1,"trigger":207}]}
-{"id":677,"name":"Chimera's Rebuke","class":"combat_triggered","blocks":[{"ability_id":180992,"class":"combat_triggered","pieces":5,"trigger":210}]}
-{"id":678,"name":"Old Growth Brewer","class":"combat_triggered","blocks":[{"ability_id":181019,"class":"combat_triggered","pieces":5,"trigger":241}]}
-{"id":679,"name":"Claw of the Forest Wraith","class":"combat_triggered","blocks":[{"ability_id":181293,"class":"combat_triggered","pieces":5,"trigger":3}]}
+{"id":677,"name":"Chimera's Rebuke","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":180992,"class":"combat_triggered","pieces":5,"trigger":210}]}
+{"id":678,"name":"Old Growth Brewer","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":181019,"class":"combat_triggered","pieces":5,"trigger":241}]}
+{"id":679,"name":"Claw of the Forest Wraith","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":181293,"class":"combat_triggered","pieces":5,"trigger":3}]}
 {"id":680,"name":"Ritemaster's Bond","class":"combat_triggered","blocks":[{"ability_id":187919,"class":"combat_triggered","pieces":5,"buffs":[187948],"trigger":9}]}
 {"id":681,"name":"Nix-Hound's Howl","class":"combat_triggered","blocks":[{"ability_id":187897,"class":"combat_triggered","pieces":5,"buffs":[187899,187904],"trigger":210}]}
 {"id":682,"name":"Telvanni Enforcer","class":"combat_triggered","blocks":[{"ability_id":187880,"class":"combat_triggered","pieces":5,"trigger":207}]}
@@ -598,9 +598,9 @@
 {"id":692,"name":"Esoteric Environment Greaves","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":193409,"class":"combat_triggered","pieces":1,"trigger":1}]}
 {"id":693,"name":"Torc of the Last Ayleid King","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":193444,"class":"combat_triggered","pieces":1,"trigger":1}]}
 {"id":694,"name":"Velothi Ur-Mage's Amulet","class":"grants_buff","kind":"mythic","blocks":[{"ability_id":193447,"class":"grants_buff","pieces":1,"buffs":[61746]}]}
-{"id":695,"name":"Shattered Fate","class":"stat_only"}
-{"id":696,"name":"Telvanni Efficiency","class":"static_conditional","blocks":[{"ability_id":193939,"class":"static_conditional","pieces":5}]}
-{"id":697,"name":"Seeker Synthesis","class":"combat_triggered","blocks":[{"ability_id":194988,"class":"combat_triggered","pieces":5,"trigger":39}]}
+{"id":695,"name":"Shattered Fate","class":"stat_only","kind":"crafted"}
+{"id":696,"name":"Telvanni Efficiency","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":193939,"class":"static_conditional","pieces":5}]}
+{"id":697,"name":"Seeker Synthesis","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":194988,"class":"combat_triggered","pieces":5,"trigger":39}]}
 {"id":698,"name":"Vivec's Duality","class":"combat_triggered","blocks":[{"ability_id":194113,"class":"combat_triggered","pieces":5,"trigger":244}]}
 {"id":699,"name":"Camonna Tong","class":"combat_triggered","blocks":[{"ability_id":196790,"class":"combat_triggered","pieces":5,"trigger":83}]}
 {"id":700,"name":"Adamant Lurker","class":"static_conditional","blocks":[{"ability_id":194110,"class":"static_conditional","pieces":5}]}
@@ -615,13 +615,13 @@
 {"id":711,"name":"Colovian Highlands General","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":202834,"class":"combat_triggered","pieces":2,"trigger":4}]}
 {"id":712,"name":"Jerall Mountains Warchief","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":202585,"class":"combat_triggered","pieces":2,"trigger":2}]}
 {"id":713,"name":"Nibenay Bay Battlereeve","class":"combat_triggered","kind":"monster","blocks":[{"ability_id":202769,"class":"combat_triggered","pieces":2,"trigger":77}]}
-{"id":722,"name":"Reawakened Hierophant","class":"combat_triggered","blocks":[{"ability_id":210751,"class":"combat_triggered","pieces":5,"buffs":[61708,61722],"trigger":39}]}
-{"id":723,"name":"Basalt-Blooded Warrior","class":"combat_triggered","blocks":[{"ability_id":206085,"class":"combat_triggered","pieces":5,"buffs":[61709],"trigger":39}]}
-{"id":724,"name":"Nobility in Decay","class":"combat_triggered","blocks":[{"ability_id":210811,"class":"combat_triggered","pieces":5,"trigger":39}]}
-{"id":726,"name":"Soulcleaver","class":"static_conditional","blocks":[{"ability_id":208047,"class":"static_conditional","pieces":5}]}
-{"id":727,"name":"Monolith of Storms","class":"combat_triggered","blocks":[{"ability_id":209779,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":728,"name":"Wrathsun","class":"combat_triggered","blocks":[{"ability_id":211546,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":729,"name":"Gardener of Seasons","class":"combat_triggered","blocks":[{"ability_id":210078,"class":"combat_triggered","pieces":5,"buffs":[210079,210081,211370],"trigger":172}]}
+{"id":722,"name":"Reawakened Hierophant","class":"combat_triggered","kind":"class","blocks":[{"ability_id":210751,"class":"combat_triggered","pieces":5,"buffs":[61708,61722],"trigger":39}]}
+{"id":723,"name":"Basalt-Blooded Warrior","class":"combat_triggered","kind":"class","blocks":[{"ability_id":206085,"class":"combat_triggered","pieces":5,"buffs":[61709],"trigger":39}]}
+{"id":724,"name":"Nobility in Decay","class":"combat_triggered","kind":"class","blocks":[{"ability_id":210811,"class":"combat_triggered","pieces":5,"trigger":39}]}
+{"id":726,"name":"Soulcleaver","class":"static_conditional","kind":"class","blocks":[{"ability_id":208047,"class":"static_conditional","pieces":5}]}
+{"id":727,"name":"Monolith of Storms","class":"combat_triggered","kind":"class","blocks":[{"ability_id":209779,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":728,"name":"Wrathsun","class":"combat_triggered","kind":"class","blocks":[{"ability_id":211546,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":729,"name":"Gardener of Seasons","class":"combat_triggered","kind":"class","blocks":[{"ability_id":210078,"class":"combat_triggered","pieces":5,"buffs":[210079,210081,211370],"trigger":172}]}
 {"id":730,"name":"Cinders of Anthelmir","class":"combat_triggered","blocks":[{"ability_id":214867,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":731,"name":"Sluthrug's Hunger","class":"combat_triggered","blocks":[{"ability_id":214914,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":732,"name":"Black-Glove Grounding","class":"combat_triggered","blocks":[{"ability_id":215000,"class":"combat_triggered","pieces":5,"trigger":1}]}
@@ -639,9 +639,9 @@
 {"id":760,"name":"Rourken Steamguards","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":220953,"class":"combat_triggered","pieces":1,"trigger":207}]}
 {"id":761,"name":"The Shadow Queen's Cowl","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":221127,"class":"combat_triggered","pieces":1,"trigger":3}]}
 {"id":762,"name":"The Saint and the Seducer","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":221492,"class":"combat_triggered","pieces":1,"trigger":86}]}
-{"id":763,"name":"Tharriker's Strike","class":"combat_triggered","blocks":[{"ability_id":219672,"class":"combat_triggered","pieces":5,"buffs":[61745],"trigger":2}]}
-{"id":764,"name":"Highland Sentinel","class":"combat_triggered","blocks":[{"ability_id":219679,"class":"combat_triggered","pieces":5,"trigger":86}]}
-{"id":765,"name":"Threads of War","class":"static_conditional","blocks":[{"ability_id":219692,"class":"static_conditional","pieces":5}]}
+{"id":763,"name":"Tharriker's Strike","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":219672,"class":"combat_triggered","pieces":5,"buffs":[61745],"trigger":2}]}
+{"id":764,"name":"Highland Sentinel","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":219679,"class":"combat_triggered","pieces":5,"trigger":86}]}
+{"id":765,"name":"Threads of War","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":219692,"class":"static_conditional","pieces":5}]}
 {"id":766,"name":"Mora Scribe's Thesis","class":"combat_triggered","blocks":[{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]},{"ability_id":220315,"class":"combat_triggered","pieces":5,"trigger":3}]}
 {"id":767,"name":"Slivers of the Null Arca","class":"combat_triggered","blocks":[{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]},{"ability_id":220787,"class":"combat_triggered","pieces":5,"trigger":49}]}
 {"id":768,"name":"Lucent Echoes","class":"static_conditional","blocks":[{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]},{"ability_id":220015,"class":"static_conditional","pieces":5}]}
@@ -650,13 +650,13 @@
 {"id":771,"name":"Perfected Lucent Echoes","class":"static_conditional","inherits":768,"blocks":[{"ability_id":147225,"class":"grants_buff","pieces":3,"buffs":[76618]},{"ability_id":220015,"class":"static_conditional","pieces":5}]}
 {"id":772,"name":"Perfected Slivers of the Null Arca","class":"combat_triggered","inherits":767,"blocks":[{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]},{"ability_id":220787,"class":"combat_triggered","pieces":5,"trigger":49}]}
 {"id":773,"name":"Perfected Mora Scribe's Thesis","class":"combat_triggered","inherits":766,"blocks":[{"ability_id":147226,"class":"grants_buff","pieces":3,"buffs":[76617]},{"ability_id":220315,"class":"combat_triggered","pieces":5,"trigger":3}]}
-{"id":775,"name":"Spattering Disjunction","class":"combat_triggered","blocks":[{"ability_id":227381,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":776,"name":"Pyrebrand","class":"combat_triggered","blocks":[{"ability_id":226393,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":777,"name":"Corpseburster","class":"combat_triggered","blocks":[{"ability_id":227068,"class":"combat_triggered","pieces":5,"buffs":[61742],"trigger":192}]}
-{"id":778,"name":"Umbral Edge","class":"combat_triggered","blocks":[{"ability_id":226383,"class":"combat_triggered","pieces":5,"buffs":[106754],"trigger":39}]}
-{"id":779,"name":"Beacon of Oblivion","class":"combat_triggered","blocks":[{"ability_id":224242,"class":"combat_triggered","pieces":5,"trigger":3}]}
-{"id":780,"name":"Aetheric Lancer","class":"combat_triggered","blocks":[{"ability_id":224084,"class":"combat_triggered","pieces":5,"trigger":2}]}
-{"id":781,"name":"Aerie's Cry","class":"combat_triggered","blocks":[{"ability_id":226885,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":775,"name":"Spattering Disjunction","class":"combat_triggered","kind":"class","blocks":[{"ability_id":227381,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":776,"name":"Pyrebrand","class":"combat_triggered","kind":"class","blocks":[{"ability_id":226393,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":777,"name":"Corpseburster","class":"combat_triggered","kind":"class","blocks":[{"ability_id":227068,"class":"combat_triggered","pieces":5,"buffs":[61742],"trigger":192}]}
+{"id":778,"name":"Umbral Edge","class":"combat_triggered","kind":"class","blocks":[{"ability_id":226383,"class":"combat_triggered","pieces":5,"buffs":[106754],"trigger":39}]}
+{"id":779,"name":"Beacon of Oblivion","class":"combat_triggered","kind":"class","blocks":[{"ability_id":224242,"class":"combat_triggered","pieces":5,"trigger":3}]}
+{"id":780,"name":"Aetheric Lancer","class":"combat_triggered","kind":"class","blocks":[{"ability_id":224084,"class":"combat_triggered","pieces":5,"trigger":2}]}
+{"id":781,"name":"Aerie's Cry","class":"combat_triggered","kind":"class","blocks":[{"ability_id":226885,"class":"combat_triggered","pieces":5,"trigger":2}]}
 {"id":782,"name":"Tracker's Lash","class":"combat_triggered","blocks":[{"ability_id":230492,"class":"combat_triggered","pieces":5,"trigger":12}]}
 {"id":783,"name":"Shared Pain","class":"combat_triggered","blocks":[{"ability_id":233040,"class":"combat_triggered","pieces":5,"trigger":1}]}
 {"id":784,"name":"Siegemaster's Focus","class":"combat_triggered","blocks":[{"ability_id":230082,"class":"combat_triggered","pieces":5,"trigger":2}]}
@@ -677,9 +677,9 @@
 {"id":805,"name":"Three Queens Wellspring","class":"combat_triggered","blocks":[{"ability_id":239734,"class":"combat_triggered","pieces":5,"trigger":8}]}
 {"id":806,"name":"Death-Dancer","class":"combat_triggered","blocks":[{"ability_id":240156,"class":"combat_triggered","pieces":5,"trigger":3}]}
 {"id":807,"name":"Full Belly Barricade","class":"static_conditional","blocks":[{"ability_id":239925,"class":"static_conditional","pieces":5}]}
-{"id":808,"name":"Shared Burden","class":"combat_triggered","blocks":[{"ability_id":241812,"class":"combat_triggered","pieces":5,"trigger":86}]}
-{"id":809,"name":"Tide-Born Wildstalker","class":"static_conditional","blocks":[{"ability_id":240281,"class":"static_conditional","pieces":5}]}
-{"id":810,"name":"Fellowship's Fortitude","class":"grants_buff","blocks":[{"ability_id":242028,"class":"grants_buff","pieces":2,"buffs":[61722]}]}
+{"id":808,"name":"Shared Burden","class":"combat_triggered","kind":"crafted","blocks":[{"ability_id":241812,"class":"combat_triggered","pieces":5,"trigger":86}]}
+{"id":809,"name":"Tide-Born Wildstalker","class":"static_conditional","kind":"crafted","blocks":[{"ability_id":240281,"class":"static_conditional","pieces":5}]}
+{"id":810,"name":"Fellowship's Fortitude","class":"grants_buff","kind":"crafted","blocks":[{"ability_id":242028,"class":"grants_buff","pieces":2,"buffs":[61722]}]}
 {"id":811,"name":"Mad God's Dancing Shoes","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":239117,"class":"combat_triggered","pieces":1,"buffs":[240159],"trigger":39}]}
 {"id":812,"name":"Rakkhat's Voidmantle","class":"static_conditional","kind":"mythic","blocks":[{"ability_id":240832,"class":"static_conditional","pieces":1}]}
 {"id":813,"name":"Monomyth Reforged","class":"combat_triggered","kind":"mythic","blocks":[{"ability_id":242709,"class":"combat_triggered","pieces":1,"buffs":[61549,61722,61744,61747,79717,140699],"trigger":86}]}

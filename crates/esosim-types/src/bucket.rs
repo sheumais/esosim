@@ -39,11 +39,11 @@ impl Channel {
             | Power(_, kind)
             | DamageDone(_, kind)
             | DamageTaken(_, kind)
+            | CostReduction(_, kind)
+            | CostReductionSkillLine(_, kind)
             | CostReductionCCA(_, kind) => (*kind).into(),
             // a fraction (0.091 = 9.1 %), summed over Divines pieces and scaling every mundus stone
             MundusBoost => Bucket::Multiplicative,
-            // a fraction of the cost (0.10 = 10 %), where `CostReduction` is flat cost points
-            CostReductionPct(_) | CostReductionSkillLinePct(_) => Bucket::Multiplicative,
             CapRaise(_)
             | Armour(_)
             | CriticalChance
@@ -54,8 +54,6 @@ impl Channel {
             | HealingTaken
             | CriticalHealing
             | MovementSpeed
-            | CostReduction(_)
-            | CostReductionSkillLine(_)
             | StatusEffectChance(_)
             | DecisiveUltimateChance
             | KillExperience
