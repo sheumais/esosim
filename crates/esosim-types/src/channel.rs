@@ -32,6 +32,7 @@ pub enum DamageDoneContext {
     Monsters,
     NonCritical,
     Bash,
+    Channeled, // Denoted by flag 4 = 1 on an ability
     /// Abilities of one skill line ("your Two Handed abilities", "your Bow abilities"). Written as the
     /// line's name, like the skill-line channels below.
     SkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),

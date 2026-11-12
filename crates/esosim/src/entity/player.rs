@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
-use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, DamageDoneContext, MundusLoadout, PlayerClass, channel::StatusEffectContext};
+use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, MundusLoadout, PlayerClass, channel::StatusEffectContext};
 
 use crate::{data::{enums::{cca::CoreCombatAbility::{Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::*, DamageDoneContext::Bash as BashDamage, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
 
@@ -133,6 +133,16 @@ impl Player {
     /// them are effects that were switched on). Effects gated on a build-time condition are decided
     /// with the player as the context (roadmap 1.2).
     pub fn recompute_with<'a>(&mut self, registry: &EffectRegistry, grant_rules: impl IntoIterator<Item = &'a GrantRule>) {
+        let rules: Vec<&GrantRule> = grant_rules.into_iter().collect();
+        let (sources, channels) = self.derive(registry, &rules, &*self);
+        self.channels = channels;
+        self.sources = sources;
+    }
+
+    /// Every effect that is on: the ones switched on in `active_effects`, minus the mundus stones the
+    /// active bar has no slot for, plus whatever the grant rules switch on. What `derive` aggregates and
+    /// what `conditional_effects` lists.
+    pub(crate) fn effective_effects(&self, registry: &EffectRegistry, grant_rules: &[&GrantRule]) -> ActiveEffects {
         let mut active = self.active_effects.clone();
         // Only as many stones as the gear on the active bar has room for, in pick order. The picks
         // themselves are never forgotten, so swapping to a bar with fewer than 5 Twice-Born Star pieces
@@ -149,6 +159,21 @@ impl Player {
                 active.set(rule.effect_id, stacks);
             }
         }
+        active
+    }
+
+    /// The aggregation behind `recompute_with`, with the effects' conditions decided by `ctx` and
+    /// nothing written: `ctx` is the player itself for the build's sheet, or a
+    /// [`TargetContext`](crate::entity::condition_context::TargetContext) for the second sheet (roadmap
+    /// 1.7). Gear and set rows do not read a condition, so they are the same either way. Returns the
+    /// per-source parts (`Player::sources`) and their merge (`Player::channels`).
+    pub fn derive(
+        &self,
+        registry: &EffectRegistry,
+        grant_rules: &[&GrantRule],
+        ctx: &dyn ConditionContext,
+    ) -> (Vec<(EffectSource, ChannelSet)>, ChannelSet) {
+        let active = self.effective_effects(registry, grant_rules);
         // Gear and sets first: their `MundusBoost` (Divines) scales the mundus stones, which are
         // worth `value * (1 + boost)` (roadmap 2.3), so the boost has to be known before the effects
         // are added. `aggregate_parts` leaves the boost out of its own `MundusBoost`, so it is
@@ -160,15 +185,14 @@ impl Player {
             so_far.merge(part);
         }
         let mundus_boost_bps = so_far.get_multiplicative_bps(MundusBoost);
-        for (fx, part) in active.aggregate_parts(registry, &*self, mundus_boost_bps) {
+        for (fx, part) in active.aggregate_parts(registry, ctx, mundus_boost_bps) {
             sources.push((fx.source.clone(), part));
         }
         let mut channels = ChannelSet::new();
         for (_, part) in &sources {
             channels.merge(part);
         }
-        self.channels = channels;
-        self.sources = sources;
+        (sources, channels)
     }
 
     /// Where the value of `channel` comes from: one entry per source that contributes, in the order

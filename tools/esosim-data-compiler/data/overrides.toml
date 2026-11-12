@@ -22,6 +22,91 @@
 #                 value stops equalling the ability record's `value1` x `scale`; `minus = <ability id>` subtracts
 #                 that record's field first (a tier that holds only the increase over the tier below)
 #
+#
+#
+#
+# /$$$$$$$$ /$$   /$$  /$$$$$$  /$$      /$$ /$$$$$$$  /$$       /$$$$$$$$ 
+# | $$_____/| $$  / $$ /$$__  $$| $$$    /$$$| $$__  $$| $$      | $$_____/
+# | $$      |  $$/ $$/| $$  \ $$| $$$$  /$$$$| $$  \ $$| $$      | $$      
+# | $$$$$    \  $$$$/ | $$$$$$$$| $$ $$/$$ $$| $$$$$$$/| $$      | $$$$$   
+# | $$__/     >$$  $$ | $$__  $$| $$  $$$| $$| $$____/ | $$      | $$__/   
+# | $$       /$$/\  $$| $$  | $$| $$\  $ | $$| $$      | $$      | $$      
+# | $$$$$$$$| $$  \ $$| $$  | $$| $$ \/  | $$| $$      | $$$$$$$$| $$$$$$$$
+# |________/|__/  |__/|__/  |__/|__/     |__/|__/      |________/|________/
+#
+# All / Any / Not nest freely. A condition the build cannot answer (combat state) makes the calculator list
+# the effect as conditional instead of adding it. `stacking = { PerStack = { max = N } }` gives
+# value + value_per_stack * min(stacks, N); "Unique" (the default) counts once; "Additive" counts every source.
+# `buff_code` is the game's major_minor_id: effects with the same code count once.
+# [[effect]]
+# id = 2147483700
+# name = "Example: Dvorak set bonus"
+# game_name = "Example"
+# source = { Set = { set_id = 19, pieces_required = 5 } }
+# channels = [
+#   { channel = { Armour = "All" }, value = 1000.0, value_per_stack = 250.0 },
+#   { channel = { Penetration = "Spell" }, value = 0.0, value_per_stack = 120.0 },
+#   { channel = { Resource = ["Health", "Multiplicative"] }, value = 0.02, value_per_stack = 0.005 },
+#   { channel = { DamageDone = ["Monsters", "Multiplicative"] }, value = 0.05 },
+#   { channel = { CapRaise = "CriticalDamage" }, value = 5.0 },
+# ]
+# condition = { All = [
+#   { SetPieces = { set_id = 19, at_least = 5 } },
+#   { ArmourPieces = { weight = "Heavy", at_least = 3 } },
+#   { Any = [{ WeaponEquipped = "DualWield" }, { WeaponEquipped = "OneHandAndShield" }] },
+#   { Not = { SelfAfflicted = "Stunned" } },
+#   { OnBar = "Front" },
+#   { ClassIs = "Necromancer" },
+#   { SkillLineSlotted = { skill_line = "Restoration Staff", at_least = 1 } },
+#   { TargetIs = "Monster" },
+#   { SelfBuffStacks = { ability_id = 61746, at_least = 1 } },
+#   { RecentlyOccurred = { event = "Kill", within_ms = 2000 } },
+# ] }
+# stacking = { PerStack = { max = 5 } }
+# buff_code = 250
+# duration_ms = 10000
+# cooldown_ms = 3000
+# source_url = "https://en.uesp.net/wiki/Online:Example"
+#
+# ---- Vocabulary -------------------------------------------------------------------------------------------
+# source     "Food" | "Potion" | "Gear" | "GearTrait" | "Enchant" | "CoreCombat"
+#            { Set = { set_id, pieces_required } } | { ChampionPoint = { cp_id } } | { Mundus = { ability_id } }
+#            { Race = { name } } | { Class = { name } } | { Passive = { ability_id } } | { ActiveSkill = { ability_id } }
+#            { Buff = { ability_id } } | { Debuff = { ability_id } }      (only Set is switched on by a piece count)
+# channel    "CriticalChance" "CriticalDamage" "CriticalHealing" "CriticalResistance" "CriticalDamageTaken"
+#            "HealingDone" "HealingTaken" "HealingDoneSingleTarget" "HealingDoneOverTime" "MovementSpeed"
+#            "BlockMitigation" "DamageShieldStrength" "KillExperience" "UltimateGain" "AttackSpeed" "MundusBoost"
+#            { Armour = T } { Penetration = T }                        T: "Flame" "Shock" "Frost" "Earth" "Magic" "Physical"
+#                                                                        "Disease" "Poison" "Bleed" "Martial" "Spell" "All"
+#            { Power = [Ctx, Agg] } { DamageDone = [Ctx, Agg] }       Ctx: see below;  Agg: "Additive" | "Multiplicative"
+#                    `{ SkillLine = "Bow" }` (the name is the game's skill line name); 
+#                    `{ Type = "Flame" }` is a damage type; the plain contexts are All, Direct,
+#                    DamageOverTime, StatusEffects, AreaOfEffect, SingleTarget, LightAttack, HeavyAttack, ClassAbilities,
+#                    Monsters, NonCritical, Bash.
+#            { DamageTaken = [Ctx, Agg] }                              Ctx: "All" "AreaOfEffect" "DamageOverTime" "Projectile"
+#                                                                        "Monsters" "Players" "Siege" "Fall" { Type = T }
+#            { Resource = [R, Agg] } { Recovery = [R, Agg] } { SynergyRestore = [R, Agg] }    R: "Health" "Magicka" "Stamina"
+#            { CostReduction = [Mechanic, Agg] }                       Mechanic: "Health" "Magicka" "Stamina" "Ultimate"
+#            { CostReductionSkillLine = [Line, Agg] }  { HealingDoneSkillLine = Line }
+#            { CostReductionCCA = [Cca, Agg] }                         Cca: "Bash" "Block" "BreakFree" "DodgeRoll" "Sprint" "Sneak"
+#            { CapRaise = "CriticalChance" | "CriticalDamage" | "CriticalHealing" | "Resistance" }
+#            { HeavyAttackRestore = R }
+# condition  "Always" "InCombat" "InPvpArea" "FoodActive"
+#            { All = [..] } { Any = [..] } { Not = C }
+#            { SetPieces = { set_id, at_least } } { ArmourPieces = { weight = "Light"|"Medium"|"Heavy", at_least } }
+#            { SkillLineSlotted = { skill_line, at_least } } { SkillLineAbilityActive = { skill_line, at_least } }
+#            { AbilitySlotted = { ability_id } } { OnBar = "Front"|"Backup" }
+#            { WeaponEquipped = "OneHandAndShield"|"TwoHanded"|"DualWield"|"Bow"|"DestructionStaff"|"RestorationStaff" }
+#            { ClassIs = "Dragonknight"|"Sorcerer"|"Nightblade"|"Warden"|"Necromancer"|"Templar"|"Arcanist" }
+#            { SelfBuffActive = id } { TargetDebuffActive = id } { SelfBuffStacks = { ability_id, at_least } }
+#            { TargetDebuffStacks = { ability_id, at_least } }
+#            { SelfHealthBelowPct = N } { TargetHealthBelowPct = N } { TargetHealthAbovePct = N } { UltimateAtLeast = N }
+#            { SelfResourceBelowPct = { resource, pct } } { SelfResourceAbovePct = { resource, pct } }
+#            { SelfState = "Blocking"|"Stealthed"|"Sprinting"|"Mounted"|"Channeling"|"SourceActive"|"DamageShielded"|"PetActive" }
+#            { SelfAfflicted = A } { TargetAfflicted = A }             A: "Stunned" "Immobilized" "Snared" "Feared"
+#                                                                        "Disoriented" "OffBalance" "Silenced" "Taunted"
+#            { InForm = "Werewolf"|"Transformed" } { TargetIs = "Monster"|"Boss"|"Player"|"Undead"|"Daedra" }
+#            { RecentlyOccurred = { event, within_ms } }
 
 [[effect]]
 id = 13940
@@ -121,10 +206,6 @@ game_name = "Boon: The Tower"
 source = { Mundus = { ability_id = 13985 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2023.0 }]
 
-# ---- Sets, class 3 (roadmap 2.2): a set bonus that is an effect of its own, switched on by the set's piece count.
-# The id is the set's ability block; `check` keeps the value tied to the record. Write it against the regular set:
-# perfected pieces already count towards it.
-
 [[effect]]
 id = 29098
 name = "Twilight's Embrace (5 pieces)"
@@ -188,7 +269,7 @@ game_name = "Armor of the Seducer"
 source = { Set = { set_id = 43, pieces_required = 5 } }
 channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.1 }]
 check = { field = "value1", scale = -0.01 }
-note = "Reduces the cost of Magicka abilities by 10 %: a fraction of the cost, so it is the multiplicative side of CostReduction; the additive side is flat cost points (a glyph's 203). The record stores -10. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Reduces the cost of Magicka abilities by 10 %: a fraction of the cost, so it is the multiplicative side of CostReduction; the additive side is flat cost points (a glyph's 203). The record stores -10."
 
 [[effect]]
 id = 32823
@@ -197,7 +278,7 @@ game_name = "Hawk's Eye"
 source = { Set = { set_id = 100, pieces_required = 5 } }
 channels = [{ channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.06 }]
 check = { field = "value1", scale = -0.01 }
-note = "Reduces the cost of Bow abilities by 6 % (the record stores -6). The damage half is the linked record 34770. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Reduces the cost of Bow abilities by 6 % (the record stores -6). The damage half is the linked record 34770."
 
 [[effect]]
 id = 34770
@@ -206,7 +287,7 @@ game_name = "Hawk's Eye"
 source = { Set = { set_id = 100, pieces_required = 5 } }
 channels = [{ channel = { DamageDone = [{ SkillLine = "Bow" }, "Multiplicative"] }, value = 0.06 }]
 check = { field = "value1", scale = 0.01 }
-note = "Increases the damage of Bow abilities by 6 %. Record 34770 is the number <<1>> of the tooltip of 32823 (a `causes` edge). Simulator input: the sheet has no per-skill-line damage. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Increases the damage of Bow abilities by 6 %. Record 34770 is the number <<1>> of the tooltip of 32823 (a `causes` edge). Simulator input: the sheet has no per-skill-line damage."
 
 [[effect]]
 id = 32782
@@ -215,7 +296,7 @@ game_name = "Willow's Path"
 source = { Set = { set_id = 79, pieces_required = 5 } }
 channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.18 }, { channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.18 }, { channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.18 }]
 check = { field = "value1", scale = 0.01 }
-note = "Increases Health, Magicka and Stamina Recovery by 18 %: a percentage (tooltip type 55, and the compiler's own classification), so the multiplicative bucket. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Increases Health, Magicka and Stamina Recovery by 18 %: a percentage (tooltip type 55, and the compiler's own classification), so the multiplicative bucket."
 
 [[effect]]
 id = 32801
@@ -225,7 +306,7 @@ source = { Set = { set_id = 84, pieces_required = 5 } }
 channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 931.0 }]
 condition = { SelfHealthBelowPct = 60 }
 check = { field = "value1" }
-note = "Tooltip number <<1>>: while under 60 % Health. Combat state, so the calculator lists it as conditional. The second number (resistance) is the linked record 137154: the record's value2 only mirrors value1. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<1>>: while under 60 % Health. Combat state, so the calculator lists it as conditional. The second number (resistance) is the linked record 137154: the record's value2 only mirrors value1."
 
 [[effect]]
 id = 137154
@@ -235,7 +316,7 @@ source = { Set = { set_id = 84, pieces_required = 5 } }
 channels = [{ channel = { Armour = "All" }, value = 7442.0 }]
 condition = { SelfHealthBelowPct = 60 }
 check = { field = "value1" }
-note = "Tooltip number <<2>> (Physical and Spell Resistance), read from the linked record 137154 (the `causes` edge of 32801), while under 60 % Health. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<2>> (Physical and Spell Resistance), read from the linked record 137154 (the `causes` edge of 32801), while under 60 % Health."
 
 [[effect]]
 id = 129532
@@ -243,9 +324,9 @@ name = "Ancient Dragonguard (damage, 5 pieces)"
 game_name = "Ancient Dragonguard"
 source = { Set = { set_id = 469, pieces_required = 5 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 349.0 }]
-condition = { Not = { SelfHealthBelowPct = 51 } }
+condition = { Not = { SelfHealthBelowPct = 50 } }
 check = { field = "value1" }
-note = "Tooltip number <<1>> is the linked record 129532: Weapon and Spell Damage while Health is above 50 % (not below 51, health being whole percent). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<1>> is the linked record 129532: Weapon and Spell Damage while Health is above 50 %."
 
 [[effect]]
 id = 129508
@@ -253,9 +334,9 @@ name = "Ancient Dragonguard (resistance, 5 pieces)"
 game_name = "Ancient Dragonguard"
 source = { Set = { set_id = 469, pieces_required = 5 } }
 channels = [{ channel = { Armour = "All" }, value = 4024.0 }]
-condition = { SelfHealthBelowPct = 51 }
+condition = { SelfHealthBelowPct = 50 }
 check = { field = "value1" }
-note = "Tooltip number <<2>> is the set's own record 129508: Physical and Spell Resistance while Health is 50 % or less (below 51). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<2>> is the set's own record 129508: Physical and Spell Resistance while Health is 50 % or less."
 
 [[effect]]
 id = 135736
@@ -265,7 +346,7 @@ source = { Set = { set_id = 489, pieces_required = 5 } }
 channels = [{ channel = { Recovery = ["Stamina", "Additive"] }, value = 392.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 392.0 }]
 condition = { Not = { SelfHealthBelowPct = 51 } }
 check = { field = "value1" }
-note = "Tooltip number <<1>>: Stamina and Magicka Recovery while Health is above 50 %. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<1>>: Stamina and Magicka Recovery while Health is above 50 %."
 
 [[effect]]
 id = 135737
@@ -275,7 +356,7 @@ source = { Set = { set_id = 489, pieces_required = 5 } }
 channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 1176.0 }]
 condition = { SelfHealthBelowPct = 51 }
 check = { field = "value1" }
-note = "Tooltip number <<2>> is the linked record 135737: Health Recovery while Health is 50 % or less. Record 135739, the other `causes` edge, carries Ancient Dragonguard's text and is not modelled. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<2>> is the linked record 135737: Health Recovery while Health is 50 % or less. Record 135739, the other `causes` edge, carries Ancient Dragonguard's text and is not modelled."
 
 [[effect]]
 id = 136353
@@ -304,7 +385,7 @@ game_name = "True-Sworn Fury"
 source = { Set = { set_id = 569, pieces_required = 5 } }
 channels = [{ channel = "CriticalChance", value = 824.0 }]
 check = { field = "value1" }
-note = "Base value, always on. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Base value, always on. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 150704
@@ -314,7 +395,7 @@ source = { Set = { set_id = 569, pieces_required = 5 } }
 channels = [{ channel = "CriticalChance", value = 823.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 75 }] }
 check = { field = "value1", minus = 150703 }
-note = "In combat and under 75 % Health the bonus doubles: record 150704 (1647) minus the base 824. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "In combat and under 75 % Health the bonus doubles: record 150704 (1647) minus the base 824. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 150705
@@ -324,7 +405,7 @@ source = { Set = { set_id = 569, pieces_required = 5 } }
 channels = [{ channel = "CriticalChance", value = 1647.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 50 }] }
 check = { field = "value1", minus = 150704 }
-note = "In combat and under 50 % Health it quadruples: record 150705 (3294) minus 150704 (1647). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "In combat and under 50 % Health it quadruples: record 150705 (3294) minus 150704 (1647). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 150706
@@ -333,7 +414,7 @@ game_name = "True-Sworn Fury"
 source = { Set = { set_id = 569, pieces_required = 5 } }
 channels = [{ channel = "CriticalDamage", value = 5.0 }]
 check = { field = "value1" }
-note = "Percentage points. Base value, always on. The records 150706-150708 are the 5 / 10 / 19 critical damage tiers; pairing 150707 and 150708 with the 75 % and 50 % tiers follows the order of the `causes` edges, so confirm it in game. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Percentage points. Base value, always on. The records 150706-150708 are the 5 / 10 / 19 critical damage tiers; pairing 150707 and 150708 with the 75 % and 50 % tiers follows the order of the `causes` edges, so confirm it in game. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 150707
@@ -343,7 +424,7 @@ source = { Set = { set_id = 569, pieces_required = 5 } }
 channels = [{ channel = "CriticalDamage", value = 5.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 75 }] }
 check = { field = "value1", minus = 150706 }
-note = "Record 150707 (10) minus the base 5, in percentage points. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Record 150707 (10) minus the base 5, in percentage points. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 150708
@@ -353,7 +434,7 @@ source = { Set = { set_id = 569, pieces_required = 5 } }
 channels = [{ channel = "CriticalDamage", value = 9.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 50 }] }
 check = { field = "value1", minus = 150707 }
-note = "Record 150708 (19) minus 150707 (10), in percentage points (the game stores 19, not 20). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Record 150708 (19) minus 150707 (10), in percentage points (the game stores 19, not 20). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 133281
@@ -362,7 +443,7 @@ game_name = "Titanborn Strength"
 source = { Set = { set_id = 472, pieces_required = 5 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 128.0 }]
 check = { field = "value1" }
-note = "Base value, always on. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Base value, always on. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 133283
@@ -372,7 +453,7 @@ source = { Set = { set_id = 472, pieces_required = 5 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 128.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 75 }] }
 check = { field = "value1", minus = 133281 }
-note = "Record 133283 (256) minus the base 128. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Record 133283 (256) minus the base 128. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 133287
@@ -382,7 +463,7 @@ source = { Set = { set_id = 472, pieces_required = 5 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 256.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 50 }] }
 check = { field = "value1", minus = 133283 }
-note = "Record 133287 (512) minus 133283 (256). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Record 133287 (512) minus 133283 (256). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 134271
@@ -391,7 +472,7 @@ game_name = "Titanborn Strength"
 source = { Set = { set_id = 472, pieces_required = 5 } }
 channels = [{ channel = { Penetration = "All" }, value = 1442.0 }]
 check = { field = "value1" }
-note = "Offensive Penetration, tooltip number <<2>> (the linked record 134271). Base value, always on. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Offensive Penetration, tooltip number <<2>> (the linked record 134271). Base value, always on. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 134273
@@ -401,7 +482,7 @@ source = { Set = { set_id = 472, pieces_required = 5 } }
 channels = [{ channel = { Penetration = "All" }, value = 1442.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 75 }] }
 check = { field = "value1", minus = 134271 }
-note = "Record 134273 (2884) minus the base 1442. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Record 134273 (2884) minus the base 1442. Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 134274
@@ -411,7 +492,7 @@ source = { Set = { set_id = 472, pieces_required = 5 } }
 channels = [{ channel = { Penetration = "All" }, value = 2884.0 }]
 condition = { All = ["InCombat", { SelfHealthBelowPct = 50 }] }
 check = { field = "value1", minus = 134273 }
-note = "Record 134274 (5768) minus 134273 (2884). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Record 134274 (5768) minus 134273 (2884). Tiers are exclusive in the game (the records hold 1x, 2x and 4x the base), so the 75 % and 50 % effects hold only the increase over the tier below; the check subtracts that record."
 
 [[effect]]
 id = 180901
@@ -421,7 +502,7 @@ source = { Set = { set_id = 671, pieces_required = 5 } }
 channels = [{ channel = "CriticalDamage", value = 13.0 }, { channel = "CriticalHealing", value = 13.0 }]
 condition = "FoodActive"
 check = { field = "value1" }
-note = "Critical Damage and Critical Healing, percentage points, while a food buff is active (Build::food). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Critical Damage and Critical Healing, percentage points, while a food buff is active (Build::food)."
 
 [[effect]]
 id = 171586
@@ -431,7 +512,7 @@ source = { Set = { set_id = 644, pieces_required = 5 } }
 channels = [{ channel = { CostReductionCCA = ["Bash", "Multiplicative"] }, value = 0.25 }, { channel = { CostReductionCCA = ["Block", "Multiplicative"] }, value = 0.25 }, { channel = { CostReductionCCA = ["BreakFree", "Multiplicative"] }, value = 0.25 }, { channel = { CostReductionCCA = ["DodgeRoll", "Multiplicative"] }, value = 0.25 }, { channel = { CostReductionCCA = ["Sprint", "Multiplicative"] }, value = 0.25 }, { channel = { CostReductionCCA = ["Sneak", "Multiplicative"] }, value = 0.25 }]
 condition = "FoodActive"
 check = { field = "value1", scale = -0.01 }
-note = "Reduces the cost of Core Combat abilities by 25 % (the record stores -25) while a food buff is active. 'Core Combat abilities' is read as all six CoreCombatAbility values: confirm which ones the game counts. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Reduces the cost of Core Combat abilities by 25 % (the record stores -25) while a food buff is active. 'Core Combat abilities' is read as all six CoreCombatAbility values: confirm which ones the game counts."
 
 [[effect]]
 id = 239925
@@ -441,7 +522,7 @@ source = { Set = { set_id = 807, pieces_required = 5 } }
 channels = [{ channel = "BlockMitigation", value = 10.0 }]
 condition = "FoodActive"
 check = { field = "value1" }
-note = "Block Mitigation, percentage points, while a food buff is active. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Block Mitigation, percentage points, while a food buff is active."
 
 [[effect]]
 id = 239943
@@ -451,7 +532,7 @@ source = { Set = { set_id = 807, pieces_required = 5 } }
 channels = [{ channel = { CostReductionCCA = ["Block", "Multiplicative"] }, value = 0.1 }]
 condition = "FoodActive"
 check = { field = "value1", scale = -0.01 }
-note = "Tooltip number <<2>>, the linked record 239943: block cost reduced by 10 % (the record stores -10), while a food buff is active. Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Tooltip number <<2>>, the linked record 239943: block cost reduced by 10 % (the record stores -10), while a food buff is active."
 
 [[effect]]
 id = 29095
@@ -460,7 +541,7 @@ game_name = "Silks of the Sun"
 source = { Set = { set_id = 31, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ Type = "Flame" }, "Additive"] }, value = 466.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 67099
@@ -469,7 +550,7 @@ game_name = "Swamp Raider"
 source = { Set = { set_id = 187, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ Type = "Poison" }, "Additive"] }, value = 698.0 }, { channel = { Power = [{ Type = "Disease" }, "Additive"] }, value = 698.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85596
@@ -478,7 +559,7 @@ game_name = "Ysgramor's Birthright"
 source = { Set = { set_id = 294, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ Type = "Frost" }, "Additive"] }, value = 466.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85606
@@ -487,7 +568,7 @@ game_name = "Netch's Touch"
 source = { Set = { set_id = 300, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ Type = "Shock" }, "Additive"] }, value = 466.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85607
@@ -496,7 +577,7 @@ game_name = "Strength of the Automaton"
 source = { Set = { set_id = 301, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ Type = "Physical" }, "Additive"] }, value = 466.0 }, { channel = { Power = [{ Type = "Bleed" }, "Additive"] }, value = 466.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 92761
@@ -505,7 +586,7 @@ game_name = "War Maiden"
 source = { Set = { set_id = 320, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ Type = "Magic" }, "Additive"] }, value = 698.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 99199
@@ -514,7 +595,7 @@ game_name = "Innate Axiom"
 source = { Set = { set_id = 351, pieces_required = 5 } }
 channels = [{ channel = { Power = ["ClassAbilities", "Additive"] }, value = 466.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 151101
@@ -523,7 +604,7 @@ game_name = "Dagon's Dominion"
 source = { Set = { set_id = 573, pieces_required = 5 } }
 channels = [{ channel = { Power = ["AreaOfEffect", "Additive"] }, value = 573.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85557
@@ -532,7 +613,7 @@ game_name = "Sword-Singer"
 source = { Set = { set_id = 283, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ SkillLine = "Two Handed" }, "Additive"] }, value = 698.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85603
@@ -541,7 +622,7 @@ game_name = "Spider Cultist Cowl"
 source = { Set = { set_id = 297, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ SkillLine = "Destruction Staff" }, "Additive"] }, value = 698.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85604
@@ -550,7 +631,7 @@ game_name = "Light Speaker"
 source = { Set = { set_id = 298, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ SkillLine = "Restoration Staff" }, "Additive"] }, value = 698.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
 [[effect]]
 id = 85622
@@ -559,5 +640,420 @@ game_name = "Sword Dancer"
 source = { Set = { set_id = 310, pieces_required = 5 } }
 channels = [{ channel = { Power = [{ SkillLine = "Dual Wield" }, "Additive"] }, value = 698.0 }]
 check = { field = "value1" }
-note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All). Piece count inferred from the gaps in the set's stat rows (set_behaviour.jsonl, 2.1b): confirm in game."
+note = "Adds weapon and spell damage to one kind of ability: a simulator input, the sheet reads only Power(All)."
 
+[[effect]]
+id = 29103
+name = "Archer's Mind (base, 5 pieces)"
+game_name = "Archer's Mind"
+source = { Set = { set_id = 23, pieces_required = 5 } }
+channels = [{ channel = "CriticalDamage", value = 8.0 }, { channel = "CriticalHealing", value = 8.0 }]
+check = { field = "value1" }
+note = "Critical Damage and Healing, percentage points."
+
+[[effect]]
+id = 57167
+name = "Archer's Mind (Sneaking or Invisible, 5 pieces)"
+game_name = "Archer's Mind"
+source = { Set = { set_id = 23, pieces_required = 5 } }
+channels = [{ channel = "CriticalDamage", value = 16.0 }, { channel = "CriticalHealing", value = 16.0 }]
+condition = { SelfState = "Stealthed" }
+check = { field = "value1" }
+note = "The additional bonus of tooltip number <<2>> (the linked record 57167) while Sneaking or Invisible, which is the Stealthed state; combat state, so conditional."
+
+[[effect]]
+id = 29114
+name = "Footman's Fortune (5 pieces)"
+game_name = "Footman's Fortune"
+source = { Set = { set_id = 24, pieces_required = 5 } }
+channels = [{ channel = "BlockMitigation", value = 14.0 }]
+check = { field = "value1" }
+note = "Increases the damage you block by 14 %: Block Mitigation in percentage points, as in Full Belly Barricade."
+
+[[effect]]
+id = 32734
+name = "Darkstride (5 pieces)"
+game_name = "Darkstride"
+source = { Set = { set_id = 60, pieces_required = 5 } }
+channels = [{ channel = { CostReductionCCA = ["Sprint", "Multiplicative"] }, value = 0.5 }, { channel = { CostReductionCCA = ["Sneak", "Multiplicative"] }, value = 0.5 }]
+check = { field = "value1", scale = -0.01 }
+note = "Reduces the cost of Sprint and Sneak by 50 % (the record stores -50)."
+
+[[effect]]
+id = 32779
+name = "Robes of Alteration Mastery (5 pieces)"
+game_name = "Robes of Alteration Mastery"
+source = { Set = { set_id = 76, pieces_required = 5 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.06 }]
+check = { field = "value1", scale = -0.01 }
+note = "Reduces the cost of all abilities by 6 % (the record stores -6)."
+
+[[effect]]
+id = 113419
+name = "Battlefield Acrobat (5 pieces)"
+game_name = "Battlefield Acrobat"
+source = { Set = { set_id = 419, pieces_required = 5 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.06 }]
+check = { field = "value1", scale = -0.01 }
+note = "Reduces the cost of all abilities by 6 % (the record stores -6). Only Magicka and Stamina are modelled: whether Health and Ultimate abilities count is not in the tooltip."
+
+[[effect]]
+id = 32804
+name = "Eyes of Mara (5 pieces)"
+game_name = "Eyes of Mara"
+source = { Set = { set_id = 87, pieces_required = 5 } }
+channels = [{ channel = { CostReductionSkillLine = ["Restoration Staff", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = -0.01 }
+note = "Reduces the cost of Restoration Staff abilities by 15 % (the record stores -15). Crafted set."
+
+[[effect]]
+id = 117402
+name = "Deadly Strike (5 pieces)"
+game_name = "Deadly Strike"
+source = { Set = { set_id = 127, pieces_required = 5 } }
+channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Damage over time +15 %. The tooltip also says channeled attacks, which have no damage context yet and are not modelled. Simulator input."
+
+[[effect]]
+id = 79008
+name = "Kvatch Gladiator (5 pieces)"
+game_name = "Kvatch Gladiator"
+source = { Set = { set_id = 240, pieces_required = 5 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 6416.0 }]
+condition = { TargetHealthBelowPct = 26 }
+check = { field = "value1" }
+note = "Weapon and Spell Damage against targets at or below 25 % Health: target health is whole percent, so `below 26`. Needs a target, so it shows as conditional and is decided in the target pass. Crafted set."
+
+[[effect]]
+id = 76932
+name = "Marksman's Crest (cost, 5 pieces)"
+game_name = "Marksman's Crest"
+source = { Set = { set_id = 234, pieces_required = 5 } }
+channels = [{ channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = -0.01 }
+note = "Reduces the cost of Stamina abilities by 5 % (the record stores -5)."
+
+[[effect]]
+id = 76933
+name = "Marksman's Crest (damage, 5 pieces)"
+game_name = "Marksman's Crest"
+source = { Set = { set_id = 234, pieces_required = 5 } }
+channels = [{ channel = { DamageDone = [{ SkillLine = "Bow" }, "Multiplicative"] }, value = 0.08 }]
+condition = { TargetIs = "Player" }
+check = { field = "value1", scale = 0.01 }
+note = "Tooltip number <<2>>, the linked record 76933: Bow ability damage +8 % against Players. Needs the target's kind, so conditional until the caller says what the target is."
+
+[[effect]]
+id = 97567
+name = "Blooddrinker (5 pieces)"
+game_name = "Blooddrinker"
+source = { Set = { set_id = 339, pieces_required = 5 } }
+channels = [{ channel = { DamageDone = [{ Type = "Bleed" }, "Multiplicative"] }, value = 0.2 }]
+check = { field = "value1", scale = 0.01 }
+note = "Increases Bleed damage by 20 %. Simulator input."
+
+[[effect]]
+id = 248174
+name = "Xanmeer Spellweaver (5 pieces)"
+game_name = "Xanmeer Spellweaver"
+source = { Set = { set_id = 825, pieces_required = 5 } }
+channels = [{ channel = { DamageDone = [{ Type = "Flame" }, "Multiplicative"] }, value = 0.05 }, { channel = { DamageDone = [{ Type = "Frost" }, "Multiplicative"] }, value = 0.05 }, { channel = { DamageDone = [{ Type = "Shock" }, "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Flame, Frost and Shock damage +5 %. The additional bonus for Burning, Chilled and Concussion (record 248175) is not modelled: it needs the status-effect damage context."
+
+[[effect]]
+id = 154272
+name = "Frostbite (Frost damage, 5 pieces)"
+game_name = "Frostbite"
+source = { Set = { set_id = 579, pieces_required = 5 } }
+channels = [{ channel = { DamageDone = [{ Type = "Frost" }, "Multiplicative"] }, value = 0.08 }]
+check = { field = "value1", scale = 0.01 }
+note = "Frost damage +8 %. The bonuses against Chilled enemies (154281) and Minor Brittle (154280) need the debuff ids and are not modelled."
+
+[[effect]]
+id = 84509
+name = "Salvation (Werewolf damage, 5 pieces)"
+game_name = "Salvation"
+source = { Set = { set_id = 99, pieces_required = 5 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 173.0 }]
+condition = { InForm = "Werewolf" }
+check = { field = "value1" }
+note = "Tooltip number <<2>>, the linked record 84509: Weapon and Spell Damage in Werewolf form. The cost reduction of the transformation (32822) is not modelled."
+
+[[effect]]
+id = 136316
+name = "Ring of the Wild Hunt (in combat, 1 piece)"
+game_name = "Ring of the Wild Hunt"
+source = { Set = { set_id = 503, pieces_required = 1 } }
+channels = [{ channel = "MovementSpeed", value = 15.0 }]
+condition = "InCombat"
+check = { field = "value1" }
+note = "Movement speed in percentage points (15 = +15 %), like the Steed mundus stone. A mythic is one item, so the piece count is 1."
+
+[[effect]]
+id = 136317
+name = "Ring of the Wild Hunt (out of combat, 1 piece)"
+game_name = "Ring of the Wild Hunt"
+source = { Set = { set_id = 503, pieces_required = 1 } }
+channels = [{ channel = "MovementSpeed", value = 45.0 }]
+condition = { Not = "InCombat" }
+check = { field = "value1" }
+note = "Tooltip number <<2>>, the linked record 136317: +45 % movement speed out of combat."
+
+# --- Major / Minor buffs the player gets (roadmap 2.6): units reviewed, each tied to its record by `check`.
+# A multiplicative channel holds a fraction (the record stores 5 for 5 %), an additive one flat points or
+# percentage points, as for the set effects above. The debuffs (Breach, Maim, Vulnerability ...) wait for the
+# enemy side, 2.9; Savagery, Prophecy, Brutality and Sorcery wait for the answers in the roadmap.
+
+[[effect]]
+id = 61693
+name = "Minor Resolve"
+source = { Buff = { ability_id = 61693 } }
+buff_code = 9
+channels = [{ channel = { Armour = "All" }, value = 4507.0 }]
+check = { field = "value1" }
+note = "Record value1 = 4507: flat points."
+
+[[effect]]
+id = 61694
+name = "Major Resolve"
+source = { Buff = { ability_id = 61694 } }
+buff_code = 10
+channels = [{ channel = { Armour = "All" }, value = 9013.0 }]
+check = { field = "value1" }
+note = "Record value1 = 9013: flat points."
+
+[[effect]]
+id = 61697
+name = "Minor Fortitude"
+source = { Buff = { ability_id = 61697 } }
+buff_code = 13
+channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 15: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61698
+name = "Major Fortitude"
+source = { Buff = { ability_id = 61698 } }
+buff_code = 14
+channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.3 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 30: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61704
+name = "Minor Endurance"
+source = { Buff = { ability_id = 61704 } }
+buff_code = 15
+channels = [{ channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 15: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61705
+name = "Major Endurance"
+source = { Buff = { ability_id = 61705 } }
+buff_code = 16
+channels = [{ channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.3 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 30: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61706
+name = "Minor Intellect"
+source = { Buff = { ability_id = 61706 } }
+buff_code = 17
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 15: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61707
+name = "Major Intellect"
+source = { Buff = { ability_id = 61707 } }
+buff_code = 18
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.3 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 30: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61710
+name = "Minor Mending"
+source = { Buff = { ability_id = 61710 } }
+buff_code = 21
+channels = [{ channel = "HealingDone", value = 8.0 }]
+check = { field = "value1" }
+note = "Record value1 = 8: percentage points."
+
+[[effect]]
+id = 61711
+name = "Major Mending"
+source = { Buff = { ability_id = 61711 } }
+buff_code = 22
+channels = [{ channel = "HealingDone", value = 16.0 }]
+check = { field = "value1" }
+note = "Record value1 = 16: percentage points."
+
+[[effect]]
+id = 61715
+name = "Minor Evasion"
+source = { Buff = { ability_id = 61715 } }
+buff_code = 25
+channels = [{ channel = { DamageTaken = ["AreaOfEffect", "Multiplicative"] }, value = -0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -10: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61716
+name = "Major Evasion"
+source = { Buff = { ability_id = 61716 } }
+buff_code = 26
+channels = [{ channel = { DamageTaken = ["AreaOfEffect", "Multiplicative"] }, value = -0.2 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -20: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61721
+name = "Minor Protection"
+source = { Buff = { ability_id = 61721 } }
+buff_code = 27
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -5: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61722
+name = "Major Protection"
+source = { Buff = { ability_id = 61722 } }
+buff_code = 28
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -10: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61735
+name = "Minor Expedition"
+source = { Buff = { ability_id = 61735 } }
+buff_code = 35
+channels = [{ channel = "MovementSpeed", value = 15.0 }]
+check = { field = "value1" }
+note = "Record value1 = 15: percentage points."
+
+[[effect]]
+id = 61736
+name = "Major Expedition"
+source = { Buff = { ability_id = 61736 } }
+buff_code = 36
+channels = [{ channel = "MovementSpeed", value = 30.0 }]
+check = { field = "value1" }
+note = "Record value1 = 30: percentage points."
+
+[[effect]]
+id = 61744
+name = "Minor Berserk"
+source = { Buff = { ability_id = 61744 } }
+buff_code = 42
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 5: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61745
+name = "Major Berserk"
+source = { Buff = { ability_id = 61745 } }
+buff_code = 43
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 10: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 61746
+name = "Minor Force"
+source = { Buff = { ability_id = 61746 } }
+buff_code = 44
+channels = [{ channel = "CriticalDamage", value = 10.0 }]
+check = { field = "value1" }
+note = "Record value1 = 10: percentage points."
+
+[[effect]]
+id = 61747
+name = "Major Force"
+source = { Buff = { ability_id = 61747 } }
+buff_code = 45
+channels = [{ channel = "CriticalDamage", value = 20.0 }]
+check = { field = "value1" }
+note = "Record value1 = 20: percentage points."
+
+[[effect]]
+id = 63569
+name = "Gallop"
+source = { Buff = { ability_id = 63569 } }
+buff_code = 54
+channels = [{ channel = "MountSpeed", value = 15.0 }]
+check = { field = "value1" }
+note = "Record value1 = 15: percentage points."
+
+[[effect]]
+id = 76617
+name = "Minor Slayer"
+source = { Buff = { ability_id = 76617 } }
+buff_code = 46
+channels = [{ channel = { DamageDone = ["Monsters", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 5: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 76618
+name = "Minor Aegis"
+source = { Buff = { ability_id = 76618 } }
+buff_code = 51
+channels = [{ channel = { DamageTaken = ["Monsters", "Multiplicative"] }, value = -0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -5: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 88490
+name = "Minor Toughness"
+source = { Buff = { ability_id = 88490 } }
+buff_code = 50
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 10: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 93109
+name = "Major Slayer"
+source = { Buff = { ability_id = 93109 } }
+buff_code = 47
+channels = [{ channel = { DamageDone = ["Monsters", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 10: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 93123
+name = "Major Aegis"
+source = { Buff = { ability_id = 93123 } }
+buff_code = 52
+channels = [{ channel = { DamageTaken = ["Monsters", "Multiplicative"] }, value = -0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -10: a percentage the engine keeps as a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 109966
+name = "Major Courage"
+source = { Buff = { ability_id = 109966 } }
+buff_code = 49
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 430.0 }]
+check = { field = "value1" }
+note = "Record value1 = 430: flat points."
+
+[[effect]]
+id = 147417
+name = "Minor Courage"
+source = { Buff = { ability_id = 147417 } }
+buff_code = 48
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 215.0 }]
+check = { field = "value1" }
+note = "Record value1 = 215: flat points."

@@ -320,11 +320,9 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
     vec![
         // ---- critical ---------------------------------------------------
         noun("crit_dmg_taken", r"critical (?:strike |hit )?damage taken", |_| vec![C::CriticalDamageTaken]),
-        // "critical damage and critical healing" is one bonus that feeds both channels
         noun("crit_dmg_and_heal", r"critical (?:strike |hit )?damage(?: done)? and (?:critical )?healing(?: done)?", |_| vec![C::CriticalDamage, C::CriticalHealing]),
         noun("crit_dmg", r"critical (?:strike |hit )?damage(?: done)?", |_| vec![C::CriticalDamage]),
-        // The chance to crit a heal is the spell critical chance: no channel of its own; consume it.
-        noun("crit_heal_chance", r"critical healing chance", |_| vec![]),
+        noun("crit_heal_chance", r"critical healing chance", |_| vec![]), // not modelled yet
         noun("crit_heal", r"critical healing(?: done)?", |_| vec![C::CriticalHealing]),
         noun("crit_resistance", r"critical resistance", |_| vec![C::CriticalResistance]),
         noun("crit_chance_both", r"(?:weapon|spell) critical(?: strike)?(?: rating| chance)?(?: and (?:weapon|spell) critical(?: strike)?(?: rating| chance)?)|(?:weapon and spell|spell and weapon) critical(?: strike)?(?: rating| chance)?", |_| vec![C::CriticalChance]),
@@ -416,13 +414,10 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("dodge_chance", r"dodge chance", |_| vec![C::DodgeChance]),
         noun("miss_chance", r"miss chance", |_| vec![C::MissChance]),
         noun("detection_radius", r"(?:radius|area) (?:where |in which )?you can be detected(?: while sneaking)?|detection radius(?: in stealth)?|stealth detection radius", |_| vec![C::DetectionRadius]),
-        // The Apprentice mundus and the Training traits say "experience" for kill experience.
         noun("kill_experience", r"(?:kill |all )?experience(?: points)?(?: gains?| gained)?(?: from kills)?", |_| vec![C::KillExperience]),
         noun("status_effect_chance", r"chance to apply status effects?|status effect chance", |_| vec![C::StatusEffectChance(StatusEffectContext::All)]),
         noun("stealth_detection", r"stealth detection", |_| vec![C::StealthDetection]),
-        // ---- power (last: "spell damage" is a suffix of several phrases above) --
         noun("power_both", r"weapon and spell (?:damage|power)|spell and weapon (?:damage|power)|weapon damage and spell damage|spell damage and weapon damage|weapon power and spell power|spell power and weapon power", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
-        // weapon and spell damage are one stat (the game hybridises them), so each alone is the same channel
         noun("power_weapon", r"weapon (?:damage|power)", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
         noun("power_spell", r"spell (?:damage|power)", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
     ]
