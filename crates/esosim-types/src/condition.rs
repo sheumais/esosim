@@ -90,6 +90,10 @@ pub enum Affliction {
     OffBalance,
     Silenced,
     Taunted,
+    /// The status effects (Spell Attunement: "doubled if you are afflicted with Burning, Chilled or Concussed").
+    Burning,
+    Chilled,
+    Concussed,
 }
 
 /// A shape you take ("while in werewolf form").

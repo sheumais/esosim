@@ -37,6 +37,11 @@ pub struct Build {
     /// Buffs the group provides, as ability ids.
     #[serde(default)]
     pub external_buffs: Vec<u32>,
+    /// Passive abilities the character has unlocked, as ability ids: one id per passive, the rank that is unlocked
+    /// (Dexterity I, II and III are three records). Switched on like any effect; its own condition (armour
+    /// pieces, weapon) decides whether it counts.
+    #[serde(default)]
+    pub passives: Vec<u32>,
     #[serde(default)]
     pub enemy: EnemyPreset,
 }
@@ -79,7 +84,8 @@ mod tests {
             food: Some(4),
             potion: None,
             external_buffs: vec![5],
-            enemy: EnemyPreset::Custom { max_health: 21_000_000.0, resistance: 18_200 },
+            passives: vec![],
+            enemy: EnemyPreset::Custom { max_health: 21_000_000.0, resistance: 18_200, debuffs: vec![61743] },
         }
     }
 

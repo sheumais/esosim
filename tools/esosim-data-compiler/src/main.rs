@@ -16,6 +16,9 @@ usage:
   esosim-data-compiler suggest-effects <category> [--dir <dir>] [inputs]
       print overrides.toml skeletons for the unreviewed roots of a category
       (skills, sets, cp, mundus, consumables, racial, buffs)
+  esosim-data-compiler item-types <item table> [--out <file>]
+      read a raw item table with eso-item-data and write item_types.csv (weapon type, armour weight,
+      ring or necklace per item id) to <file> (default `item_types.csv`)
 
 inputs (all commands):
   --roots <file>          roots.toml        (default: the one built into the compiler)
@@ -26,6 +29,7 @@ inputs (all commands):
 struct Cli {
     command: String,
     category: Option<String>,
+    item_table: Option<PathBuf>,
     mnf: Option<PathBuf>,
     out: Option<PathBuf>,
     dir: Option<PathBuf>,
@@ -56,7 +60,7 @@ fn parse(args: impl Iterator<Item = String>) -> Result<Cli, String> {
     let mut positional = positional.into_iter();
     // `compile` is the default command, so a bare manifest path keeps working
     cli.command = match positional.next().as_deref() {
-        Some(c @ ("compile" | "verify" | "suggest-effects")) => c.to_string(),
+        Some(c @ ("compile" | "verify" | "suggest-effects" | "item-types")) => c.to_string(),
         Some(other) => {
             cli.mnf.get_or_insert_with(|| other.into());
             "compile".to_string()
@@ -65,6 +69,7 @@ fn parse(args: impl Iterator<Item = String>) -> Result<Cli, String> {
     };
     match cli.command.as_str() {
         "suggest-effects" => cli.category = Some(positional.next().ok_or("suggest-effects needs a category")?),
+        "item-types" => cli.item_table = Some(positional.next().ok_or("item-types needs the item table file")?.into()),
         "compile" => {
             if let Some(p) = positional.next() {
                 if cli.mnf.is_some() {
@@ -126,6 +131,15 @@ fn run(cli: &Cli) -> Result<bool, String> {
             let report = esosim_data_compiler::verify_files(&bundle, &sets, &cp, &opts);
             eprintln!("{}", report.summary());
             Ok(report.ok())
+        }
+        "item-types" => {
+            let table = cli.item_table.as_deref().ok_or("item-types needs the item table file")?;
+            let bytes = fs::read(table).map_err(|e| format!("reading {}: {e}", table.display()))?;
+            let csv = esosim_data_compiler::item_types_from_table(&bytes)?;
+            let out = cli.out.clone().unwrap_or_else(|| PathBuf::from("item_types.csv"));
+            fs::write(&out, &csv).map_err(|e| format!("writing {}: {e}", out.display()))?;
+            eprintln!("item-types: {} line(s) written to {}", csv.lines().count(), out.display());
+            Ok(true)
         }
         "suggest-effects" => {
             let (bundle, sets, cp) = generated(cli)?;
@@ -195,6 +209,9 @@ mod tests {
         let c = cli(&["suggest-effects", "sets", "--roots", "r.toml"]).unwrap();
         assert_eq!((c.category.as_deref(), c.roots.as_deref()), (Some("sets"), Some(Path::new("r.toml"))));
         assert!(cli(&["suggest-effects"]).is_err(), "a category is required");
+        let c = cli(&["item-types", "items.bin", "--out", "o.csv"]).unwrap();
+        assert_eq!((c.item_table.as_deref(), c.out.as_deref()), (Some(Path::new("items.bin")), Some(Path::new("o.csv"))));
+        assert!(cli(&["item-types"]).is_err(), "the table file is required");
         assert!(cli(&["verify", "extra"]).is_err());
         assert!(cli(&["--nope"]).is_err());
         assert!(cli(&["--dir"]).is_err(), "a flag needs a value");

@@ -174,7 +174,7 @@ id = 13980
 name = "The Ritual (Mundus)"
 game_name = "Boon: The Ritual"
 source = { Mundus = { ability_id = 13980 } }
-channels = [{ channel = "HealingDone", value = 8.0 }]
+channels = [{ channel = { HealingDone = "All" }, value = 8.0 }]
 note = "HealingDone is in percentage points (8 = +8 %)."
 
 [[effect]]
@@ -196,8 +196,8 @@ id = 13984
 name = "The Shadow (Mundus)"
 game_name = "Boon: The Shadow"
 source = { Mundus = { ability_id = 13984 } }
-channels = [{ channel = "CriticalDamage", value = 11.0 }]
-note = "Critical Damage in percentage points (11 = +11 %). The stone also raises critical healing; there is no channel for that yet."
+channels = [{ channel = "CriticalDamage", value = 11.0 }, { channel = "CriticalHealing", value = 11.0 }]
+note = "Critical Damage and Critical Healing, percentage points (11 = +11 %): the tooltip gives both the one value (\"Increases your Critical Damage and Healing by <<1>>\")."
 
 [[effect]]
 id = 13985
@@ -239,7 +239,7 @@ id = 47354
 name = "Relics of the Physician, Ansur (3 pieces)"
 game_name = "Relics of the Physician, Ansur"
 source = { Set = { set_id = 117, pieces_required = 3 } }
-channels = [{ channel = "HealingDone", value = 5.0 }]
+channels = [{ channel = { HealingDone = "All" }, value = 5.0 }]
 check = { field = "value1" }
 note = "Healing done, percentage points (5 = +5 %), like the Ritual mundus stone."
 
@@ -801,28 +801,35 @@ condition = { Not = "InCombat" }
 check = { field = "value1" }
 note = "Tooltip number <<2>>, the linked record 136317: +45 % movement speed out of combat."
 
-# --- Major / Minor buffs the player gets (roadmap 2.6): units reviewed, each tied to its record by `check`.
+# --- Major / Minor buffs and debuffs (roadmap 2.6): units reviewed, each tied to its record by `check` where
+# the record holds the number the channel needs.
 # A multiplicative channel holds a fraction (the record stores 5 for 5 %), an additive one flat points or
-# percentage points, as for the set effects above. The debuffs (Breach, Maim, Vulnerability ...) wait for the
-# enemy side, 2.9; Savagery, Prophecy, Brutality and Sorcery wait for the answers in the roadmap.
+# percentage points, as for the set effects above. Crit chance is a *rating* (level 66: 21,912 per 100 %), and
+# Resolve / Breach are resistance at level 66 (2974 minor, 5948 major); those records store another scale, so
+# those rows have no `check` and the note says where the number comes from.
+# The magnitudes are the game's tooltip values (the `MajorMinorBuff::tooltip_value` table, Healer's Haven).
+# The debuff rows (source `Debuff`) are for the enemy side (2.9): `Player::effective_effects` never switches one
+# on for the player, so a set that "grants" Minor Breach or Vulnerability does not hit the wearer.
+# `buff_code` is the game's major_minor_id except where noted: Sorcery shares Brutality's codes (1, 2) and Prophecy shares
+# Savagery's (3, 4), so each pair counts once (the lowest id, same value) and does not stack; Minor + Major still add.
+# Not modelled, and why: Minor Lifesteal / Magickasteal (the enemy heals or restores the *attacker*: a proc, not a
+# stat), the light-attack Empower abilities (only the heavy-attack one, 61737, is written), Major Vexation (no ability record in the bundle).
 
 [[effect]]
 id = 61693
 name = "Minor Resolve"
 source = { Buff = { ability_id = 61693 } }
 buff_code = 9
-channels = [{ channel = { Armour = "All" }, value = 4507.0 }]
-check = { field = "value1" }
-note = "Record value1 = 4507: flat points."
+channels = [{ channel = { Armour = "All" }, value = 2974.0 }]
+note = "Resistance points at effective level 66 (2974). No `check`: the record stores 4507, the unscaled number."
 
 [[effect]]
 id = 61694
 name = "Major Resolve"
 source = { Buff = { ability_id = 61694 } }
 buff_code = 10
-channels = [{ channel = { Armour = "All" }, value = 9013.0 }]
-check = { field = "value1" }
-note = "Record value1 = 9013: flat points."
+channels = [{ channel = { Armour = "All" }, value = 5948.0 }]
+note = "Resistance points at effective level 66 (5948). No `check`: the record stores 9013, the unscaled number."
 
 [[effect]]
 id = 61697
@@ -883,7 +890,7 @@ id = 61710
 name = "Minor Mending"
 source = { Buff = { ability_id = 61710 } }
 buff_code = 21
-channels = [{ channel = "HealingDone", value = 8.0 }]
+channels = [{ channel = { HealingDone = "All" }, value = 8.0 }]
 check = { field = "value1" }
 note = "Record value1 = 8: percentage points."
 
@@ -892,7 +899,7 @@ id = 61711
 name = "Major Mending"
 source = { Buff = { ability_id = 61711 } }
 buff_code = 22
-channels = [{ channel = "HealingDone", value = 16.0 }]
+channels = [{ channel = { HealingDone = "All" }, value = 16.0 }]
 check = { field = "value1" }
 note = "Record value1 = 16: percentage points."
 
@@ -1057,3 +1064,742 @@ buff_code = 48
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 215.0 }]
 check = { field = "value1" }
 note = "Record value1 = 215: flat points."
+
+# Second pass: Brutality, Sorcery, Savagery, Prophecy (rating), Vitality, Heroism and every debuff.
+
+[[effect]]
+id = 61549
+name = "Minor Vitality"
+source = { Buff = { ability_id = 61549 } }
+buff_code = 23
+channels = [{ channel = "HealingTaken", value = 6.0 }, { channel = "DamageShieldStrength", value = 6.0 }]
+check = { field = "value1" }
+note = "Record value1 = 6: percentage points. Healing received and damage shield strength."
+
+[[effect]]
+id = 61662
+name = "Minor Brutality"
+source = { Buff = { ability_id = 61662 } }
+buff_code = 1
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 10: a percentage the engine keeps as a fraction in the multiplicative bucket. Weapon and Spell Damage."
+
+[[effect]]
+id = 61665
+name = "Major Brutality"
+source = { Buff = { ability_id = 61665 } }
+buff_code = 2
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.2 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 20: a percentage the engine keeps as a fraction in the multiplicative bucket. Weapon and Spell Damage."
+
+[[effect]]
+id = 61666
+name = "Minor Savagery"
+source = { Buff = { ability_id = 61666 } }
+buff_code = 3
+channels = [{ channel = "CriticalChance", value = 1314.0 }]
+note = "Record value1 = 6 is a percentage; the channel is a crit rating. 6 % x 21,912 (2 x 66 x 166, effective level 66) = 1314.72, which the game shows as 1314 (floored). No `check`: the record stores the percentage, not the rating."
+
+[[effect]]
+id = 61667
+name = "Major Savagery"
+source = { Buff = { ability_id = 61667 } }
+buff_code = 4
+channels = [{ channel = "CriticalChance", value = 2629.0 }]
+note = "Record value1 = 12 is a percentage; the channel is a crit rating. 12 % x 21,912 (2 x 66 x 166, effective level 66) = 2629.44, which the game shows as 2629 (floored). No `check`: the record stores the percentage, not the rating."
+
+[[effect]]
+id = 61685
+name = "Minor Sorcery"
+source = { Buff = { ability_id = 61685 } }
+buff_code = 1
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 10: a percentage the engine keeps as a fraction in the multiplicative bucket. Spell Damage. Shares buff_code 1 with Minor Brutality: the two do not stack, the engine counts one (lowest id)."
+
+[[effect]]
+id = 61687
+name = "Major Sorcery"
+source = { Buff = { ability_id = 61687 } }
+buff_code = 2
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.2 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 20: a percentage the engine keeps as a fraction in the multiplicative bucket. Spell Damage. Shares buff_code 2 with Major Brutality: the two do not stack, the engine counts one (lowest id)."
+
+[[effect]]
+id = 61689
+name = "Major Prophecy"
+source = { Buff = { ability_id = 61689 } }
+buff_code = 4
+channels = [{ channel = "CriticalChance", value = 2629.0 }]
+note = "Record value1 = 12 is a percentage; the channel is a crit rating. 12 % x 21,912 (2 x 66 x 166, effective level 66) = 2629.44, which the game shows as 2629 (floored). No `check`: the record stores the percentage, not the rating. Shares buff_code 4 with Major Savagery: the two do not stack, the engine counts one (lowest id)."
+
+[[effect]]
+id = 61691
+name = "Minor Prophecy"
+source = { Buff = { ability_id = 61691 } }
+buff_code = 3
+channels = [{ channel = "CriticalChance", value = 1314.0 }]
+note = "Record value1 = 6 is a percentage; the channel is a crit rating. 6 % x 21,912 (2 x 66 x 166, effective level 66) = 1314.72, which the game shows as 1314 (floored). No `check`: the record stores the percentage, not the rating. Shares buff_code 3 with Minor Savagery: the two do not stack, the engine counts one (lowest id)."
+
+[[effect]]
+id = 61708
+name = "Minor Heroism"
+source = { Buff = { ability_id = 61708 } }
+buff_code = 19
+channels = [{ channel = "UltimatePerTick", value = 1.0 }]
+condition = "InCombat"
+check = { field = "value1" }
+note = "Record value1 = 1: Ultimate points every 1.5 s, while in combat."
+
+[[effect]]
+id = 61709
+name = "Major Heroism"
+source = { Buff = { ability_id = 61709 } }
+buff_code = 20
+channels = [{ channel = "UltimatePerTick", value = 3.0 }]
+condition = "InCombat"
+check = { field = "value1" }
+note = "Record value1 = 3: Ultimate points every 1.5 s, while in combat."
+
+[[effect]]
+id = 61713
+name = "Major Vitality"
+source = { Buff = { ability_id = 61713 } }
+buff_code = 24
+channels = [{ channel = "HealingTaken", value = 12.0 }, { channel = "DamageShieldStrength", value = 12.0 }]
+check = { field = "value1" }
+note = "Record value1 = 12: percentage points. Healing received and damage shield strength."
+
+[[effect]]
+id = 61723
+name = "Minor Maim"
+source = { Debuff = { ability_id = 61723 } }
+buff_code = 29
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = -0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -5: a percentage the engine keeps as a fraction in the multiplicative bucket. Damage done."
+
+[[effect]]
+id = 61725
+name = "Major Maim"
+source = { Debuff = { ability_id = 61725 } }
+buff_code = 30
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = -0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -10: a percentage the engine keeps as a fraction in the multiplicative bucket. Damage done."
+
+[[effect]]
+id = 61726
+name = "Minor Defile"
+source = { Debuff = { ability_id = 61726 } }
+buff_code = 31
+channels = [{ channel = "HealingTaken", value = -6.0 }, { channel = "DamageShieldStrength", value = -6.0 }]
+check = { field = "value1" }
+note = "Record value1 = -6: percentage points. Healing received and damage shield strength."
+
+[[effect]]
+id = 61727
+name = "Major Defile"
+source = { Debuff = { ability_id = 61727 } }
+buff_code = 32
+channels = [{ channel = "HealingTaken", value = -12.0 }, { channel = "DamageShieldStrength", value = -12.0 }]
+check = { field = "value1" }
+note = "Record value1 = -12: percentage points. Healing received and damage shield strength."
+
+[[effect]]
+id = 61733
+name = "Minor Mangle"
+source = { Debuff = { ability_id = 61733 } }
+buff_code = 33
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = -0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = -10: a percentage the engine keeps as a fraction in the multiplicative bucket. Max Health."
+
+[[effect]]
+id = 61742
+name = "Minor Breach"
+source = { Debuff = { ability_id = 61742 } }
+buff_code = 40
+channels = [{ channel = { Armour = "All" }, value = -2974.0 }]
+note = "Resistance points at effective level 66, the same size as Minor Resolve (-2974). No `check`: the record stores -4507, the unscaled number."
+
+[[effect]]
+id = 61743
+name = "Major Breach"
+source = { Debuff = { ability_id = 61743 } }
+buff_code = 41
+channels = [{ channel = { Armour = "All" }, value = -5948.0 }]
+note = "Resistance points at effective level 66, the same size as Major Resolve (-5948). No `check`: the record stores -9013, the unscaled number."
+
+[[effect]]
+id = 79717
+name = "Minor Vulnerability"
+source = { Debuff = { ability_id = 79717 } }
+buff_code = 60
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 5: a percentage the engine keeps as a fraction in the multiplicative bucket. Damage taken."
+
+[[effect]]
+id = 79867
+name = "Minor Cowardice"
+source = { Debuff = { ability_id = 79867 } }
+buff_code = 38
+channels = [{ channel = { Power = ["All", "Additive"] }, value = -215.0 }]
+check = { field = "value1" }
+note = "Record value1 = -215: flat Weapon and Spell Damage points, like Minor Courage."
+
+[[effect]]
+id = 79895
+name = "Minor Uncertainty"
+source = { Debuff = { ability_id = 79895 } }
+buff_code = 56
+channels = [{ channel = "CriticalChance", value = -1314.0 }]
+note = "Crit rating -1314 (6 %, as Minor Savagery gives +1314): the tooltip says rating, the record stores -100. No `check`: the record is not the rating."
+
+[[effect]]
+id = 79907
+name = "Minor Enervation"
+source = { Debuff = { ability_id = 79907 } }
+buff_code = 55
+channels = [{ channel = "CriticalDamage", value = -10.0 }]
+check = { field = "value1" }
+note = "Record value1 = -10: percentage points. Critical damage done."
+
+[[effect]]
+id = 106754
+name = "Major Vulnerability"
+source = { Debuff = { ability_id = 106754 } }
+buff_code = 61
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 10: a percentage the engine keeps as a fraction in the multiplicative bucket. Damage taken."
+
+[[effect]]
+id = 140699
+name = "Minor Timidity"
+source = { Debuff = { ability_id = 140699 } }
+buff_code = 62
+channels = [{ channel = "UltimatePerTick", value = -1.0 }]
+condition = "InCombat"
+check = { field = "value1", scale = -1.0 }
+note = "Consumes Ultimate every 1.5 s while in combat; the record stores the amount as a positive 1, hence scale = -1."
+
+[[effect]]
+id = 145975
+name = "Minor Brittle"
+source = { Debuff = { ability_id = 145975 } }
+buff_code = 11
+channels = [{ channel = "CriticalDamageTaken", value = 10.0 }]
+check = { field = "value1" }
+note = "Record value1 = 10: percentage points. Critical damage taken."
+
+[[effect]]
+id = 145977
+name = "Major Brittle"
+source = { Debuff = { ability_id = 145977 } }
+buff_code = 12
+channels = [{ channel = "CriticalDamageTaken", value = 20.0 }]
+check = { field = "value1" }
+note = "Record value1 = 20: percentage points. Critical damage taken."
+
+[[effect]]
+id = 147643
+name = "Major Cowardice"
+source = { Debuff = { ability_id = 147643 } }
+buff_code = 39
+channels = [{ channel = { Power = ["All", "Additive"] }, value = -430.0 }]
+check = { field = "value1" }
+note = "Record value1 = -430: flat Weapon and Spell Damage points, like Major Courage."
+
+[[effect]]
+id = 263403
+name = "Minor Vexation"
+source = { Debuff = { ability_id = 263403 } }
+buff_code = 64
+channels = [{ channel = { HealingDone = "All" }, value = -8.0 }]
+check = { field = "value1" }
+note = "Record value1 = -8: percentage points. Healing done. Code 64 is shared with the 'Minor Vexing' damage-taken abilities (260724 ...), which are not modelled."
+
+[[effect]]
+id = 61737
+name = "Empower"
+source = { Buff = { ability_id = 61737 } }
+buff_code = 37
+channels = [{ channel = { DamageDone = ["HeavyAttack", "Multiplicative"] }, value = 1.5 }]
+condition = { Not = "InPvpArea" }
+check = { field = "value1", scale = 0.01 }
+note = "Record value1 = 150: heavy attack damage +150 %. Does not apply while Battle Spirit is active, i.e. in a PvP area. The tooltip table (MajorMinorBuff::Empower) says 70, so confirm which is current."
+
+# ---- Trial dummy (roadmap 2.9) -------------------------------------------------------------------
+# Root 120006; 120016 (caused by it) gives the player's buffs, everything else it causes is a debuff on the
+# dummy. Each effect has the trial dummy's own ability id and the buff_code of its raid-buff twin, so a group's
+# Major Force (61747) and the dummy's (120013) count once. No `check`: add one when the records are in the bundle.
+
+[[effect]]
+id = 120007
+name = "Crusher"
+source = { Debuff = { ability_id = 120007 } }
+channels = [{ channel = { Armour = "All" }, value = -2108.0 }]
+note = "Weapon-enchant style resistance debuff on the dummy: -2108 resistance. Stacks with Breach and Roar of Alkosh, so no buff_code. Value from the trial dummy's own list (roadmap 2.9)."
+
+[[effect]]
+id = 120008
+name = "Minor Berserk"
+source = { Buff = { ability_id = 120008 } }
+buff_code = 42
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = 0.05 }]
+note = "Given by the trial dummy; same buff_code as 61744."
+
+[[effect]]
+id = 120010
+name = "Major Breach"
+source = { Debuff = { ability_id = 120010 } }
+buff_code = 41
+channels = [{ channel = { Armour = "All" }, value = -5948.0 }]
+note = "The trial dummy's own Major Breach; same buff_code as 61743, so it counts once next to a group's."
+
+[[effect]]
+id = 120011
+name = "Traumatic Burns"
+source = { Debuff = { ability_id = 120011 } }
+channels = [{ channel = { DamageTaken = [{ Type = "Flame" }, "Multiplicative"] }, value = 0.05 }]
+note = "Roadmap 2.9: 5 % flame damage. Modelled as +5 % flame damage TAKEN by the dummy: confirm it is not the burning status effect's own damage."
+
+[[effect]]
+id = 120013
+name = "Major Force"
+source = { Buff = { ability_id = 120013 } }
+buff_code = 45
+channels = [{ channel = "CriticalDamage", value = 20.0 }]
+note = "Given by the trial dummy; same buff_code as 61747. Percentage points."
+
+[[effect]]
+id = 120015
+name = "Major Courage"
+source = { Buff = { ability_id = 120015 } }
+buff_code = 49
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 430.0 }]
+note = "Given by the trial dummy; same buff_code as 109966."
+
+[[effect]]
+id = 120017
+name = "Minor Sorcery"
+source = { Buff = { ability_id = 120017 } }
+buff_code = 1
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.1 }]
+note = "Given by the trial dummy; shares buff_code 1 with Minor Brutality, so the two count once."
+
+[[effect]]
+id = 120018
+name = "Roar of Alkosh"
+source = { Debuff = { ability_id = 120018 } }
+channels = [{ channel = { Armour = "All" }, value = -6000.0 }]
+note = "-6000 resistance on the dummy (roadmap 2.9). Stacks with Breach and Crusher."
+
+[[effect]]
+id = 120019
+name = "Minor Breach"
+source = { Debuff = { ability_id = 120019 } }
+buff_code = 40
+channels = [{ channel = { Armour = "All" }, value = -2974.0 }]
+note = "The trial dummy's own Minor Breach; same buff_code as 61742."
+
+[[effect]]
+id = 120020
+name = "Minor Toughness"
+source = { Buff = { ability_id = 120020 } }
+buff_code = 50
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.1 }]
+note = "Given by the trial dummy; same buff_code as 88490."
+
+[[effect]]
+id = 120021
+name = "Aggressive Horn"
+source = { Buff = { ability_id = 120021 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.1 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.1 }]
+
+[[effect]]
+id = 120023
+name = "Minor Brutality"
+source = { Buff = { ability_id = 120023 } }
+buff_code = 1
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.1 }]
+note = "Given by the trial dummy; same buff_code as 61662."
+
+[[effect]]
+id = 120024
+name = "Worm's Raiment"
+source = { Buff = { ability_id = 120024 } }
+channels = [{ channel = { Recovery = ["Magicka", "Additive"] }, value = 169.0 }]
+note = "ASSUMPTION: magicka recovery 169, the value of the set's group ability 47367. Confirm against the dummy's own record."
+
+[[effect]]
+id = 120026
+name = "Hircine's Veneer"
+source = { Buff = { ability_id = 120026 } }
+channels = [{ channel = { Recovery = ["Stamina", "Additive"] }, value = 169.0 }]
+note = "ASSUMPTION: stamina recovery 169, the value of the set's group ability 47365. Confirm against the dummy's own record."
+
+[[effect]]
+id = 120028
+name = "Exploitation"
+source = { Buff = { ability_id = 120028 } }
+channels = [{ channel = { Penetration = "All" }, value = 2974.0 }]
+note = "Roadmap 2.9: +2974 penetration for the player."
+
+[[effect]]
+id = 120029
+name = "Minor Savagery"
+source = { Buff = { ability_id = 120029 } }
+buff_code = 3
+channels = [{ channel = "CriticalChance", value = 1314.0 }]
+note = "Given by the trial dummy; same buff_code as 61666. Crit rating."
+
+[[effect]]
+id = 120030
+name = "Minor Vulnerability"
+source = { Debuff = { ability_id = 120030 } }
+buff_code = 60
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = 0.05 }]
+note = "The trial dummy's own Minor Vulnerability; same buff_code as 79717."
+
+[[effect]]
+id = 148976
+name = "Major Vulnerability"
+source = { Debuff = { ability_id = 148976 } }
+buff_code = 61
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = 0.1 }]
+note = "The trial dummy's own Major Vulnerability; same buff_code as 106754."
+
+[[effect]]
+id = 148977
+name = "Minor Brittle"
+source = { Debuff = { ability_id = 148977 } }
+buff_code = 11
+channels = [{ channel = "CriticalDamageTaken", value = 10.0 }]
+note = "The trial dummy's own Minor Brittle; same buff_code as 145975. Percentage points."
+
+[[effect]]
+id = 177885
+name = "Minor Courage"
+source = { Buff = { ability_id = 177885 } }
+buff_code = 48
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 215.0 }]
+note = "Given by the trial dummy; same buff_code as 147417."
+
+[[effect]]
+id = 177886
+name = "Major Slayer"
+source = { Buff = { ability_id = 177886 } }
+buff_code = 47
+channels = [{ channel = { DamageDone = ["Monsters", "Multiplicative"] }, value = 0.1 }]
+note = "Given by the trial dummy; same buff_code as 93109."
+
+[[effect]]
+id = 181606
+name = "Elemental Catalyst"
+source = { Debuff = { ability_id = 181606 } }
+channels = [{ channel = "CriticalDamageTaken", value = 15.0 }]
+note = "Roadmap 2.9: 15 % critical damage taken. Percentage points. Taken as always on, like the dummy's other debuffs."
+
+[[effect]]
+id = 265932
+name = "Major Brutality"
+source = { Buff = { ability_id = 265932 } }
+buff_code = 2
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.2 }]
+note = "Given by the trial dummy; same buff_code as 61665."
+
+[[effect]]
+id = 265933
+name = "Minor Heroism"
+source = { Buff = { ability_id = 265933 } }
+buff_code = 19
+channels = [{ channel = "UltimatePerTick", value = 1.0 }]
+condition = "InCombat"
+note = "Given by the trial dummy; same buff_code and condition as 61708."
+
+[[effect]]
+id = 265984
+name = "Major Savagery"
+source = { Buff = { ability_id = 265984 } }
+buff_code = 4
+channels = [{ channel = "CriticalChance", value = 2629.0 }]
+note = "Given by the trial dummy; same buff_code as 61667. Crit rating."
+
+[[effect]]
+id = 265985
+name = "Illuminate"
+source = { Buff = { ability_id = 265985 } }
+channels = [{ channel = { Armour = "All" }, value = 2974.0 }]
+note = "Roadmap 2.9: +2974 resistance for the player."
+
+# --- Roadmap 2.4: racial passives, rank 3 (what a character at the top of the racial skill line has) ---
+# `source = { Race = { name } }`: `Build::to_player` switches on every effect of the build's race. Only the top rank is written:
+# the lower ranks are the same passive earlier in the skill line. A tooltip with two numbers is two records (its `ids`), so two
+# effects, each tied to the record that holds its number.
+
+[[effect]]
+id = 45309
+name = "Brawny: Max Stamina (Orc)"
+game_name = "Brawny"
+source = { Race = { name = "Orc" } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45312
+name = "Swift Warrior: Weapon and Spell Damage (Orc)"
+game_name = "Swift Warrior"
+source = { Race = { name = "Orc" } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
+check = { field = "value1" }
+note = "The Sprint cost reduction and Sprint speed in the same tooltip are percentages written in the text, with no record behind them: not written."
+
+[[effect]]
+id = 84672
+name = "Unflinching Rage: Max Health (Orc)"
+game_name = "Unflinching Rage"
+source = { Race = { name = "Orc" } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+note = "The heal on damage (record 118206) is a proc for the simulator."
+
+[[effect]]
+id = 45276
+name = "Elemental Talent: Weapon and Spell Damage (Altmer)"
+game_name = "Elemental Talent"
+source = { Race = { name = "Altmer" } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 117970
+name = "Syrabane's Boon: Max Magicka (Altmer)"
+game_name = "Syrabane's Boon"
+source = { Race = { name = "Altmer" } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 2000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 49188
+name = "Resist Affliction: Max Stamina (Bosmer)"
+game_name = "Resist Affliction"
+source = { Race = { name = "Bosmer" } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
+check = { field = "value1" }
+note = "The tooltip of the rank 3 record 45319 takes its first number from this record and its second from 150997."
+
+[[effect]]
+id = 150997
+name = "Resist Affliction: Disease and Poison Resistance (Bosmer)"
+game_name = "Resist Affliction"
+source = { Race = { name = "Bosmer" } }
+channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 49177
+name = "Hunter's Eye: Movement Speed (Bosmer)"
+game_name = "Hunter's Eye"
+source = { Race = { name = "Bosmer" } }
+channels = [{ channel = "MovementSpeed", value = 5.0 }]
+check = { field = "value1" }
+note = "Record value1 = 5: percentage points, like the Steed stone."
+
+[[effect]]
+id = 121110
+name = "Hunter's Eye: Physical and Spell Penetration (Bosmer)"
+game_name = "Hunter's Eye"
+source = { Race = { name = "Bosmer" } }
+channels = [{ channel = { Penetration = "All" }, value = 950.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45301
+name = "Feline Ambush: Critical Damage and Healing (Khajiit)"
+game_name = "Feline Ambush"
+source = { Race = { name = "Khajiit" } }
+channels = [{ channel = "CriticalDamage", value = 12.0 }, { channel = "CriticalHealing", value = 12.0 }]
+check = { field = "value1" }
+note = "Percentage points. The stealth detection part is record 117879."
+
+[[effect]]
+id = 70390
+name = "Robustness: Health, Magicka and Stamina Recovery (Khajiit)"
+game_name = "Robustness"
+source = { Race = { name = "Khajiit" } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 90.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 90.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 90.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 117848
+name = "Lunar Blessings: Max Health, Magicka and Stamina (Khajiit)"
+game_name = "Lunar Blessings"
+source = { Race = { name = "Khajiit" } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 915.0 }, { channel = { Resource = ["Magicka", "Additive"] }, value = 915.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 915.0 }]
+check = { field = "value1" }
+note = "The parent record states all three numbers as 915; its two children (117869, 117870) are what the game applies."
+
+[[effect]]
+id = 45280
+name = "Imperial Mettle: Max Stamina (Imperial)"
+game_name = "Imperial Mettle"
+source = { Race = { name = "Imperial" } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45293
+name = "Red Diamond: ability cost (Imperial)"
+game_name = "Red Diamond"
+source = { Race = { name = "Imperial" } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.06 }]
+check = { field = "value1", scale = -0.01 }
+note = "\"Reduces the cost of all your abilities by 6 %\" (record value1 = -6): a fraction of the cost. Written for Magicka and Stamina only; whether Ultimate and Health costs are reduced is unconfirmed."
+
+[[effect]]
+id = 45260
+name = "Gift of Magnus: Max Magicka (Breton)"
+game_name = "Gift of Magnus"
+source = { Race = { name = "Breton" } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 2000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45262
+name = "Spell Attunement: Spell Resistance (Breton)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton" } }
+channels = [{ channel = { Armour = "Spell" }, value = 2310.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 121208
+name = "Spell Attunement: Spell Resistance, doubled while afflicted (Breton)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton" } }
+channels = [{ channel = { Armour = "Spell" }, value = 2310.0 }]
+condition = { Any = [{ SelfAfflicted = "Burning" }, { SelfAfflicted = "Chilled" }, { SelfAfflicted = "Concussed" }] }
+check = { field = "value1" }
+note = "\"Doubled if you are afflicted with Burning, Chilled or Concussed\": the base bonus (45262) always, this equal amount on top while afflicted. Record 121208 is the one the game applies for it. Combat state, so it is listed as conditional."
+
+[[effect]]
+id = 118949
+name = "Spell Attunement: Magicka Recovery (Breton)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton" } }
+channels = [{ channel = { Recovery = ["Magicka", "Additive"] }, value = 130.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45264
+name = "Magicka Mastery: Magicka cost (Breton)"
+game_name = "Magicka Mastery"
+source = { Race = { name = "Breton" } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.07 }]
+check = { field = "value1", scale = -0.01 }
+note = "\"Reduces the Magicka cost of your abilities by 7 %\": a fraction of the cost."
+
+[[effect]]
+id = 117754
+name = "Conditioning: Max Stamina (Redguard)"
+game_name = "Conditioning"
+source = { Race = { name = "Redguard" } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45247
+name = "Resourceful: Max Magicka and Stamina (Argonian)"
+game_name = "Resourceful"
+source = { Race = { name = "Argonian" } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1000.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+note = "The potion restore and potion effectiveness in the same tooltip are not stats."
+
+[[effect]]
+id = 49170
+name = "Argonian Resistance: Max Health (Argonian)"
+game_name = "Argonian Resistance 1"
+source = { Race = { name = "Argonian" } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 150994
+name = "Argonian Resistance: Disease and Poison Resistance (Argonian)"
+game_name = "Argonian Resistance"
+source = { Race = { name = "Argonian" } }
+channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45258
+name = "Life Mender: Healing Done (Argonian)"
+game_name = "Life Mender"
+source = { Race = { name = "Argonian" } }
+channels = [{ channel = { HealingDone = "All" }, value = 6.0 }]
+check = { field = "value1" }
+note = "Percentage points."
+
+[[effect]]
+id = 45267
+name = "Dynamic: Max Magicka and Stamina (Dunmer)"
+game_name = "Dynamic"
+source = { Race = { name = "Dunmer" } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1910.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 1910.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45270
+name = "Resist Flame: Flame Resistance (Dunmer)"
+game_name = "Resist Flame"
+source = { Race = { name = "Dunmer" } }
+channels = [{ channel = { Armour = "Flame" }, value = 4620.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45272
+name = "Ruination: Weapon and Spell Damage (Dunmer)"
+game_name = "Ruination"
+source = { Race = { name = "Dunmer" } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45298
+name = "Stalwart: Max Stamina (Nord)"
+game_name = "Stalwart"
+source = { Race = { name = "Nord" } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1500.0 }]
+check = { field = "value1" }
+note = "The Ultimate gained when damaged (record 118186) is a proc for the simulator."
+
+[[effect]]
+id = 49183
+name = "Resist Frost: Max Health (Nord)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord" } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45304
+name = "Resist Frost: Frost Resistance (Nord)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord" } }
+channels = [{ channel = { Armour = "Frost" }, value = 4620.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45306
+name = "Rugged: Physical and Spell Resistance (Nord)"
+game_name = "Rugged"
+source = { Race = { name = "Nord" } }
+channels = [{ channel = { Armour = "All" }, value = 2600.0 }]
+check = { field = "value1" }

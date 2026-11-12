@@ -207,10 +207,14 @@ pub enum RootCategory {
     Racial,
     Buffs,
     Class,
+    /// Armour-weight passives (ability tag 339 `ArmourPassive`; roadmap 2.4).
+    ArmourPassives,
+    /// Weapon-line passives (ability tag 337 `WeaponPassive`; roadmap 2.4).
+    WeaponPassives,
 }
 
 impl RootCategory {
-    pub const ALL: [RootCategory; 8] = [
+    pub const ALL: [RootCategory; 10] = [
         RootCategory::Skills,
         RootCategory::Sets,
         RootCategory::Cp,
@@ -219,6 +223,8 @@ impl RootCategory {
         RootCategory::Racial,
         RootCategory::Buffs,
         RootCategory::Class,
+        RootCategory::ArmourPassives,
+        RootCategory::WeaponPassives,
     ];
 
     /// The name used in `roots.toml` and in `categories`.
@@ -232,6 +238,8 @@ impl RootCategory {
             RootCategory::Racial => "racial",
             RootCategory::Buffs => "buffs",
             RootCategory::Class => "class",
+            RootCategory::ArmourPassives => "armour_passives",
+            RootCategory::WeaponPassives => "weapon_passives",
         }
     }
 

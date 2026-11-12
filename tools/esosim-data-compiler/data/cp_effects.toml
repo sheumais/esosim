@@ -156,7 +156,7 @@ channels = [{ channel = { DamageDone = ["SingleTarget", "Multiplicative"] }, sca
 [[star]]
 id = 26
 name = "Focused Mending"
-channels = [{ channel = "HealingDoneSingleTarget" }]
+channels = [{ channel = { HealingDone = "SingleTarget" } }]
 
 [[star]]
 id = 27
@@ -166,7 +166,7 @@ channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, s
 [[star]]
 id = 28
 name = "Swift Renewal"
-channels = [{ channel = "HealingDoneOverTime" }]
+channels = [{ channel = { HealingDone = "OverTime" } }]
 
 [[star]]
 id = 34
@@ -242,7 +242,7 @@ channels = [{ channel = { Resource = ["Magicka", "Additive"] } }]
 [[star]]
 id = 108
 name = "Blessed"
-channels = [{ channel = "HealingDone" }]
+channels = [{ channel = { HealingDone = "All" } }]
 
 [[star]]
 id = 113

@@ -1,6 +1,15 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use crate::data::enums::gear::{GearTrait, ItemType};
+
+static ITEM_TYPES: LazyLock<HashMap<u32, ItemType>> = LazyLock::new(parse_item_types_into_hashmap);
+
+/// What kind of gear `item_id` is (weapon type, armour weight, ring, necklace); `Unknown` for an id that is
+/// none of those. The data is `item_types.csv`, written by `cargo xtask sync-data`.
+pub fn item_type_of(item_id: u32) -> ItemType {
+    ITEM_TYPES.get(&item_id).copied().unwrap_or(ItemType::Unknown)
+}
 
 pub fn parse_item_types_into_hashmap() -> HashMap<u32, ItemType> {
     let mut item_type_table = HashMap::new();
@@ -40,6 +49,8 @@ pub fn calculate_item_type(str: &str) -> ItemType {
         "LIGHT" => ItemType::Light,
         "MEDIUM" => ItemType::Medium,
         "HEAVY" => ItemType::Heavy,
+        "RING" => ItemType::Ring,
+        "NECKLACE" => ItemType::Necklace,
         _ => ItemType::Unknown,
     }
 }
@@ -94,6 +105,10 @@ pub fn is_two_handed_weapon_option(item: Option<&ItemType>) -> bool {
     }
 }
 
+pub fn is_jewellery(item: &ItemType) -> bool {
+    matches!(item, ItemType::Ring | ItemType::Necklace)
+}
+
 pub fn is_armour(item: &ItemType) -> bool {
     matches!(item, ItemType::Light | ItemType::Medium | ItemType::Heavy | ItemType::Shield)
 }
@@ -110,4 +125,17 @@ pub fn weapon_trait_doubles(trait_: &GearTrait) -> bool {
             | GearTrait::WeaponSharpened
             | GearTrait::WeaponDecisive
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn jewellery_has_item_types() {
+        assert_eq!(calculate_item_type("RING"), ItemType::Ring);
+        assert_eq!(calculate_item_type("NECKLACE"), ItemType::Necklace);
+        assert!(is_jewellery(&ItemType::Ring) && is_jewellery(&ItemType::Necklace));
+        assert!(!is_jewellery(&ItemType::Heavy) && !is_armour(&ItemType::Ring));
+    }
 }

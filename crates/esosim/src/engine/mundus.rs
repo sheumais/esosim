@@ -117,7 +117,9 @@ impl Player {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use esosim_types::channel::HealingDoneContext;
+
+use super::*;
     use crate::data::enums::gear::{GearSlot, GearTrait, ItemQuality, ItemType};
     use crate::engine::aggregator::ChannelSet;
     use crate::engine::effect::{AggKind::Additive, Channel, DamageDoneContext, ResistableDamageType as Dmg, ResourceKind};
@@ -213,7 +215,8 @@ mod tests {
         assert_eq!(sheet(ATRONACH).get(Channel::Recovery(ResourceKind::Magicka, Additive)), 310);
         assert_eq!(sheet(SERPENT).get(Channel::Recovery(ResourceKind::Stamina, Additive)), 310);
         assert_eq!(sheet(SHADOW).get(Channel::CriticalDamage), 11);
-        assert_eq!(sheet(RITUAL).get(Channel::HealingDone), 8);
+        assert_eq!(sheet(SHADOW).get(Channel::CriticalHealing), 11);
+        assert_eq!(sheet(RITUAL).get(Channel::HealingDone(HealingDoneContext::All)), 8);
         let steed = sheet(STEED);
         assert_eq!((steed.get(Channel::MovementSpeed), steed.get(Channel::Recovery(ResourceKind::Health, Additive))), (10, 264));
         // and nothing else: one stone, one thing
@@ -240,7 +243,8 @@ mod tests {
         assert_eq!(full(ATRONACH).get(Channel::Recovery(ResourceKind::Magicka, Additive)), 535);
         assert_eq!(full(SERPENT).get(Channel::Recovery(ResourceKind::Stamina, Additive)), 535);
         assert_eq!(full(SHADOW).get(Channel::CriticalDamage), 18);
-        assert_eq!(full(RITUAL).get(Channel::HealingDone), 13);
+        assert_eq!(full(SHADOW).get(Channel::CriticalHealing), 18);
+        assert_eq!(full(RITUAL).get(Channel::HealingDone(HealingDoneContext::All)), 13);
         assert_eq!(full(APPRENTICE).get(Channel::KillExperience), 13);
         let steed = full(STEED);
         assert_eq!((steed.get(Channel::MovementSpeed), steed.get(Channel::Recovery(ResourceKind::Health, Additive))), (17, 455));

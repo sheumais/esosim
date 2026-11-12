@@ -39,6 +39,15 @@ impl GearPiece {
         }
     }
 
+    /// A piece from an item id: its type and set come from the game's item tables (`item_types.csv`,
+    /// `set_items.csv`), so the caller only says what the player chose on top of the item.
+    pub fn from_item_id(item_id: u32, level: u8, gear_trait: Option<GearTrait>, quality: ItemQuality, enchant: Option<GearEnchant>) -> Self {
+        Self {
+            item_id,
+            ..Self::new(item_type_of(item_id), level, gear_trait, quality, crate::data::tables::item_set::set_of_item(item_id), enchant)
+        }
+    }
+
     pub fn get_item_type(&self) -> ItemType {
         self.item_type.clone()
     }
@@ -72,7 +81,7 @@ impl GearPiece {
     /// Infused bonus and trait values for 2H weapons are included (pre-calculated) in the returned value
     pub fn get_trait_value(&self) -> PrismaticValueWrapper {
         let trait_opt = &self.gear_trait;
-        let item_type = self.get_item_type(); // todo fix jewellery
+        let item_type = self.get_item_type();
         let quality = &self.quality;
 
         let trait_ = if let Some(trait_) = trait_opt {
@@ -122,25 +131,33 @@ impl GearPiece {
         {
             value *= 2.0;
         }
-        if trait_.is_infused() {
-            value += 1.0;
-        }
-
         PrismaticValueWrapper::F32(value)
     }
 
-    pub fn get_infused_value(&self) -> f32 {
-        if let Some(i) = self.get_item_trait() {
-            if i.is_infused() {
-                match self.get_trait_value() {
-                    F32(x) => return x,
-                    Prismatic(_) => return 1.0
-                }
-            } else {
-                return 1f32
+    /// What an Infused trait adds to this piece's own enchantment, as a fraction (0.25 is +25 %).
+    /// 0 for any other trait, and for no trait. (`get_trait_value` is the trait's own number, so for
+    /// Infused it is this fraction too.)
+    pub fn infused_bonus(&self) -> f32 {
+        match (self.gear_trait, self.get_trait_value()) {
+            (Some(t), F32(v)) if t.is_infused() => v,
+            _ => 0.0,
+        }
+    }
+
+    /// The factor the piece's enchantment value is multiplied by: `1 + infused_bonus()`.
+    pub fn infused_multiplier(&self) -> f32 {
+        1.0 + self.infused_bonus()
+    }
+
+    /// Weapon and Spell Damage this piece gives against an enemy at `target_health_pct` through
+    /// Bloodthirsty (0 for any other trait). Only meaningful with a target: the build alone has no
+    /// enemy health, so `Player::derive` asks for this only when its context knows one.
+    pub fn bloodthirsty_power(&self, target_health_pct: u8) -> f32 {
+        match self.gear_trait {
+            Some(GearTrait::JewelryBloodthirsty) => {
+                get_jewelry_bloodthirsty_value(&self.quality) * bloodthirsty_fraction(target_health_pct)
             }
-        } else {
-            return 1.0
+            _ => 0.0,
         }
     }
 
@@ -149,8 +166,9 @@ impl GearPiece {
         let base_power = power_from_weapon_type(&self.get_item_type(), &self.quality)
             .unwrap_or(0) as f32;
 
+        // Nirnhoned raises this weapon's damage by a fraction (0.2 is +20 %), so the factor is 1.2
         let trait_multiplier = match self.gear_trait {
-            Some(GearTrait::WeaponNirnhoned) => get_weapon_nirnhoned_value(&self.quality),
+            Some(GearTrait::WeaponNirnhoned) => 1.0 + get_weapon_nirnhoned_value(&self.quality),
             _ => 1.0,
         };
 

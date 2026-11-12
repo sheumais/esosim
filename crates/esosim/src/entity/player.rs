@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
-use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, MundusLoadout, PlayerClass, channel::StatusEffectContext};
+use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, MundusLoadout, PlayerClass, channel::{HealingDoneContext, StatusEffectContext}};
 
 use crate::{data::{enums::{cca::CoreCombatAbility::{Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::*, DamageDoneContext::Bash as BashDamage, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
 
@@ -155,6 +155,11 @@ impl Player {
             active.set(id, 0);
         }
         for rule in grant_rules {
+            // A set that "grants" Minor Breach, Maim or Vulnerability puts it on the enemy, not on the
+            // player: a debuff never reaches the player's own channels (roadmap 2.6).
+            if registry.get(rule.effect_id).is_some_and(|d| matches!(d.source, EffectSource::Debuff { .. })) {
+                continue;
+            }
             if let Some(stacks) = rule.evaluate(self) {
                 active.set(rule.effect_id, stacks);
             }
@@ -180,6 +185,9 @@ impl Player {
         // counted once.
         let mut sources: Vec<(EffectSource, ChannelSet)> = self.gear_parts();
         sources.extend(self.set_bonus_parts());
+        if let Some(part) = self.bloodthirsty_part(ctx) {
+            sources.push((EffectSource::GearTrait, part));
+        }
         let mut so_far = ChannelSet::new();
         for (_, part) in &sources {
             so_far.merge(part);
@@ -211,6 +219,24 @@ impl Player {
             .collect()
     }
 
+    /// What Bloodthirsty jewellery gives against the target `ctx` knows: Weapon and Spell Damage that
+    /// grows with the enemy's missing health (see `bloodthirsty_fraction`). `None` when `ctx` has no
+    /// target health (the build's own sheet, where the player is the context) or no worn piece has the
+    /// trait, so it is only ever part of an enemy interaction. Each piece is rounded on its own.
+    pub fn bloodthirsty_part(&self, ctx: &dyn ConditionContext) -> Option<ChannelSet> {
+        let health = ctx.target_health_pct()?;
+        let mut part = ChannelSet::new();
+        let mut any = false;
+        for gear in self.get_active_gear() {
+            let power = gear.bloodthirsty_power(health);
+            if power > 0.0 {
+                part.add_additive(Power(DamageDoneContext::All, Additive), power);
+                any = true;
+            }
+        }
+        any.then_some(part)
+    }
+
     /// Everything the gear gives, in one set (see [`gear_parts`](Self::gear_parts) for where it comes from).
     pub fn apply_gear(&self, channels: &mut ChannelSet) {
         for (_, part) in self.gear_parts() {
@@ -238,7 +264,7 @@ impl Player {
                     _ => OFFHAND_MULTIPLIER,
                 };
                 let p = (power * m).round();
-                base.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), Additive), p);
+                base.add_additive(Power(DamageDoneContext::All, Additive), p);
             } 
             base.add_additive(Armour(ResistableDamageTypeAll), gear.get_armour_value(&slot));
             if let Some(gear_trait) = gear.get_item_trait() {
@@ -246,7 +272,7 @@ impl Player {
                 match wrapper {
                     PrismaticValueWrapper::F32(v) => {
                         match gear_trait {
-                            GearTrait::JewelryBloodthirsty => {},
+                            GearTrait::JewelryBloodthirsty => {}, // needs an enemy: `Player::bloodthirsty_part`
                             GearTrait::JewelryHarmony => {
                                 traits.add_additive(SynergyRestore(Health, Additive), v);
                                 traits.add_additive(SynergyRestore(Mag, Additive), v);
@@ -291,7 +317,7 @@ impl Player {
                             GearTrait::WeaponCharged => {traits.add_multiplicative_bps(StatusEffectChance(StatusEffectContext::All), (v * 10_000.0).round());},
                             GearTrait::WeaponDecisive => {traits.add_multiplicative_bps(DecisiveUltimateChance, (v * 10_000.0).round());},
                             GearTrait::WeaponDefending => {}, // handle in armour code
-                            GearTrait::WeaponPowered => {traits.add_multiplicative_bps(HealingDone, (v * 10_000.0).round());},
+                            GearTrait::WeaponPowered => {traits.add_multiplicative_bps(HealingDone(HealingDoneContext::All), (v * 10_000.0).round());},
                             GearTrait::WeaponPrecise => {traits.add_additive(CriticalChance, v)},
                             GearTrait::WeaponSharpened => {traits.add_additive(Penetration(ResistableDamageTypeAll), v)},
                             GearTrait::WeaponTraining => {traits.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
@@ -312,7 +338,7 @@ impl Player {
             }
             // Weapon enchants (Fiery, Absorb, ...) have no stat value: `get_enchant_value` is `None` for them.
             if let (Some(e), Some(wrapper)) = (gear.get_enchant(), gear.get_enchant_value()) {
-                let infused_multiplier = gear.get_infused_value();
+                let infused_multiplier = gear.infused_multiplier();
                 let slot_multiplier = get_armour_enchant_multiplier(&slot);
                 match wrapper {
                     PrismaticValueWrapper::F32(v_) => {
@@ -324,9 +350,10 @@ impl Player {
                             EnchantType::Health => {enchants.add_additive(Resource(Health, Additive), v)},
                             EnchantType::HealthRegen => {enchants.add_additive(Recovery(Health, Additive), v)},
                             EnchantType::IncreaseBashDamage => {enchants.add_additive(DamageDone(BashDamage, Additive), v);},
-                            EnchantType::IncreasePhysicalDamage => {enchants.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); enchants.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
-                            EnchantType::IncreasePotionEffectiveness => {enchants.add_additive(PotionEffectiveness, v);},
-                            EnchantType::IncreaseSpellDamage => {enchants.add_additive(Power(DamageDoneContext::Type(ResistableDamageTypeAll), AggKind::Additive), v); enchants.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreasePhysicalDamage => {enchants.add_additive(Power(DamageDoneContext::All, AggKind::Additive), v); enchants.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            // the glyph tables are in seconds; the channels are in milliseconds
+                            EnchantType::IncreasePotionEffectiveness => {enchants.add_additive(PotionEffectiveness, v * 1000.0);},
+                            EnchantType::IncreaseSpellDamage => {enchants.add_additive(Power(DamageDoneContext::All, AggKind::Additive), v); enchants.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
                             EnchantType::Magicka => {enchants.add_additive(Resource(Mag, Additive), v)},
                             EnchantType::MagickaRegen => {enchants.add_additive(Recovery(Mag, Additive), v)},
                             EnchantType::PhysicalResistance => {enchants.add_additive(Armour(Martial), v)},
@@ -335,7 +362,7 @@ impl Player {
                             EnchantType::PrismaticRecovery => {}, // handle below
                             EnchantType::ReduceBlockCost => {enchants.add_additive(CostReductionCCA(Block, Additive), v);},
                             EnchantType::ReduceFeatCost => {enchants.add_additive(CostReduction(Stamina, Additive), v);},
-                            EnchantType::ReducePotionCooldown => {enchants.add_additive(PotionCooldown, v);},
+                            EnchantType::ReducePotionCooldown => {enchants.add_additive(PotionCooldown, v * 1000.0);},
                             EnchantType::ReduceSpellCost => {enchants.add_additive(CostReduction(Magicka, Additive), v);},
                             EnchantType::ShockResistance => {enchants.add_additive(Armour(Shock), v)},
                             EnchantType::SpellResistance => {enchants.add_additive(Armour(Spell), v)},
@@ -492,10 +519,70 @@ mod tests {
         assert_eq!(feat.get(Channel::CostReduction(Mechanic::Stamina, Additive)), 203);
         let spell = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::ReduceSpellCost));
         assert_eq!(spell.get(Channel::CostReduction(Mechanic::Magicka, Additive)), 203);
-        // only checks the mapping, not the value: the table says 3.6 (%) but `add_additive` rounds an
-        // f32 to a whole number (roadmap 2.8 asks which unit this channel uses)
-        let potion = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::IncreasePotionEffectiveness));
-        assert_ne!(potion.get(Channel::PotionEffectiveness), 0);
+    }
+
+    /// Roadmap 2.8: both potion channels are in milliseconds. A Legendary CP160 Potion Boost glyph is
+    /// "increase the duration of Potion effects by 3.6 seconds" and a Potion Speed glyph takes 5 seconds
+    /// off the cooldown; Infused jewellery (+60 %) scales the glyph.
+    #[test]
+    fn potion_glyphs_are_in_milliseconds() {
+        let boost = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::IncreasePotionEffectiveness));
+        assert_eq!(boost.get(Channel::PotionEffectiveness), 3600);
+        let speed = gear_channels(GearSlot::Ring1, ring_with_enchant(EnchantType::ReducePotionCooldown));
+        assert_eq!(speed.get(Channel::PotionCooldown), 5000);
+
+        let enchant = GearEnchant { glyph: EnchantType::IncreasePotionEffectiveness, effective_level: 66, quality: Legendary };
+        let infused = GearPiece::new(ItemType::Ring, 66, Some(GearTrait::JewelryInfused), Legendary, None, Some(enchant));
+        assert_eq!(gear_channels(GearSlot::Ring1, infused).get(Channel::PotionEffectiveness), 5760);
+    }
+
+    /// Weapon power from gear is on the channel the sheet reads, and Nirnhoned raises it by its fraction
+    /// (+20 % at Legendary: 1335 -> 1602), where it used to leave 20 % of it.
+    #[test]
+    fn a_nirnhoned_weapon_has_more_power_not_less() {
+        let power = Channel::Power(DamageDoneContext::All, Additive);
+        let plain = GearPiece::new(ItemType::Sword, 66, None, Legendary, None, None);
+        assert_eq!(gear_channels(GearSlot::MainHand, plain).get(power), 1335);
+        let nirnhoned = GearPiece::new(ItemType::Sword, 66, Some(GearTrait::WeaponNirnhoned), Legendary, None, None);
+        assert_eq!(gear_channels(GearSlot::MainHand, nirnhoned).get(power), 1602);
+    }
+
+    #[test]
+    fn infused_is_a_fraction_of_the_piece_and_only_for_infused_traits() {
+        let piece = |t| GearPiece::new(ItemType::Heavy, 66, t, Legendary, None, None);
+        assert_eq!(piece(Some(GearTrait::ArmorInfused)).infused_bonus(), 0.25);
+        assert_eq!(piece(Some(GearTrait::ArmorInfused)).infused_multiplier(), 1.25);
+        assert_eq!(piece(Some(GearTrait::ArmorSturdy)).infused_multiplier(), 1.0);
+        assert_eq!(piece(None).infused_multiplier(), 1.0);
+    }
+
+    /// The target's health and nothing else.
+    struct TargetAt(u8);
+    impl ConditionContext for TargetAt {
+        fn target_health_pct(&self) -> Option<u8> { Some(self.0) }
+    }
+
+    /// Roadmap 2.8: Bloodthirsty is Power against a target: none at 90 % health or more, all of it at 0 %,
+    /// straight in between, and absent from any context that has no target (the build's own sheet).
+    #[test]
+    fn bloodthirsty_is_power_against_an_enemy_by_its_health() {
+        let power = Channel::Power(DamageDoneContext::All, Additive);
+        let ring = || GearPiece::new(ItemType::Ring, 66, Some(GearTrait::JewelryBloodthirsty), Legendary, None, None);
+        let mut player = Player::new();
+        player.set_gear_piece(GearSlot::Ring1, ring());
+        player.set_gear_piece(GearSlot::Ring2, ring());
+
+        let at = |health| player.bloodthirsty_part(&TargetAt(health)).map_or(0, |c| c.get(power));
+        assert_eq!((at(100), at(90), at(89)), (0, 0, 2 * 4)); // 350 / 90 = 3.9 per 1 %, rounded per piece
+        assert_eq!((at(45), at(0)), (350, 700));
+        assert!(player.bloodthirsty_part(&player).is_none(), "the player alone has no enemy health");
+        assert!(Player::new().bloodthirsty_part(&TargetAt(0)).is_none(), "no Bloodthirsty piece worn");
+
+        let registry = EffectRegistry::from_defs(Vec::new());
+        let (_, alone) = player.derive(&registry, &[], &player);
+        let (sources, against) = player.derive(&registry, &[], &TargetAt(0));
+        assert_eq!((alone.get(power), against.get(power)), (0, 700));
+        assert!(sources.iter().any(|(s, part)| *s == EffectSource::GearTrait && part.get(power) == 700));
     }
 
     #[test]

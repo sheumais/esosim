@@ -82,6 +82,21 @@ mod tests {
     }
 
     #[test]
+    fn savagery_from_the_effect_data_is_six_and_twelve_percent() {
+        use crate::engine::{active_effects::ActiveEffects, registry::EffectRegistry};
+        let registry = EffectRegistry::embedded();
+        let with = |id| {
+            let mut active = ActiveEffects::new();
+            active.set(id, 1);
+            active.aggregate(&registry)
+        };
+        let (minor, major) = (with(61666), with(61667)); // Minor / Major Savagery
+        assert_eq!((crit_rating(&minor), crit_rating(&major)), (1314, 2629));
+        assert!((crit_chance(&minor, EFFECTIVE_LEVEL) - (CRITICAL_CHANCE_DEFAULT + 0.06)).abs() < 1e-3);
+        assert!((crit_chance(&major, EFFECTIVE_LEVEL) - (CRITICAL_CHANCE_DEFAULT + 0.12)).abs() < 1e-3);
+    }
+
+    #[test]
     fn test_calculate_crit_damage() {
         let mut c = ChannelSet::new();
         c.add_additive(

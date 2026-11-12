@@ -20,3 +20,4 @@ esosim-types = { workspace = true }
 esosim = { workspace = true }
 
 
+#![allow(dead_code)]

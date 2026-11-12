@@ -34,7 +34,9 @@ pub use trigger::{CastKind, Trigger, TriggerEvent};
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::channel::HealingDoneContext;
+
+use super::*;
     use eso_skill_data::enums::{mechanic::Mechanic, skill_line::SkillLine};
 
     fn round_trip(c: Channel) {
@@ -66,7 +68,7 @@ mod tests {
                 }
                 round_trip(Channel::Power(DamageDoneContext::SkillLine(l), AggKind::Additive));
                 round_trip(Channel::DamageDone(DamageDoneContext::SkillLine(l), AggKind::Multiplicative));
-                round_trip(Channel::HealingDoneSkillLine(l));
+                round_trip(Channel::HealingDone(HealingDoneContext::SkillLine(l)));
             }
         }
     }
@@ -98,7 +100,9 @@ mod tests {
         assert_eq!(Channel::MundusBoost.bucket(), Bucket::Multiplicative);
         // no payload: always additive
         assert_eq!(Channel::MovementSpeed.bucket(), Bucket::Additive);
-        assert_eq!(Channel::HealingDone.bucket(), Bucket::Additive);
+        assert_eq!(Channel::HealingDone(HealingDoneContext::All).bucket(), Bucket::Additive);
+        // flat Ultimate points per tick (Heroism), not a fraction
+        assert_eq!(Channel::UltimatePerTick.bucket(), Bucket::Additive);
     }
 
     #[test]

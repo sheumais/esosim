@@ -19,3 +19,6 @@ esosim = { path = "crates/esosim" }
 
 # [patch."https://github.com/sheumais/eso_skill_data.git"]
 eso-skill-data = { path = "../eso_data_workspace/eso_skill_data" }
+
+#![allow(dead_code)]
+#![allow(unused)]

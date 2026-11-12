@@ -11,11 +11,14 @@
 //! 5. mundus stones
 //! 6. consumables (`Build::food`, `Build::potion`)
 //! 7. buffs the group provides (`Build::external_buffs`)
-//!
-//! Steps 3 to 7 are effects: each is switched on in `Player::active_effects` and aggregated by
+//! 8. unlocked passives (`Build::passives`)
+//! 9. race and class passives: every effect whose source is `EffectSource::Race` / `Class` named like the
+//!    build's race / class (roadmap 2.4); only the top rank of each is written, which is what a character at
+//!    the top of the line has
+//! Steps 3 to 8 are effects: each is switched on in `Player::active_effects` and aggregated by
 //! `recompute`, which decides their build-time conditions with the player as the context (1.2).
-//! Not gathered yet, because there is no data for them: race and class passives and skill-line
-//! passives (2.4), bar abilities that give stats (2.4), debuffs on the enemy (2.6, 2.9).
+//! Not gathered yet, because there is no data for them: class, weapon and armour passives (2.4: racials are
+//! in), bar abilities that give stats (2.4), debuffs on the enemy (2.6, 2.9).
 //!
 //! The player is on the front bar; `Player::active_bar` switches it and `recompute` again.
 //!
@@ -24,7 +27,7 @@
 //! [`Build::conditional_effects`] lists those, with their condition as text; [`Build::sheet_against`]
 //! is the second sheet, the same build against an [`Enemy`], where the target-aware effects count.
 
-use esosim_types::TargetKind;
+use esosim_types::{EffectSource, TargetKind};
 
 use crate::data::bundle::Bundle;
 use crate::engine::grant_rule::{GrantRule, all_grant_rules, set_effect_rules};
@@ -67,7 +70,7 @@ impl Build {
     /// condition, each with its condition as text (`ConditionalEffect::when`). With `target`, each
     /// also says whether that target settles it (`vs_target`).
     pub fn conditional_effects(&self, bundle: &Bundle, target: Option<(&Enemy, &[TargetKind])>) -> Vec<ConditionalEffect> {
-        let prepared = self.prepare(bundle);
+        let prepared = self.prepare_for(bundle, target.map(|(enemy, _)| enemy));
         let ctx = target.map(|(enemy, kinds)| TargetContext::new(&prepared.player, enemy, kinds));
         prepared.player.conditional_effects(&prepared.registry, &prepared.rules(), ctx.as_ref().map(|c| c as &dyn esosim_types::ConditionContext))
     }
@@ -76,8 +79,10 @@ impl Build {
     /// settles (its debuffs and health, what it is) are decided and the effects they gate count; every
     /// other value is the same as in [`sheet`](Self::sheet), because everything else is decided by the
     /// player exactly as before. Toggling a debuff on `enemy.active_effects` changes this sheet only.
+    /// The buffs the target gives the player (`enemy.player_buffs`: the trial dummy's) are on in this
+    /// sheet and not in [`sheet`](Self::sheet).
     pub fn sheet_against(&self, bundle: &Bundle, enemy: &Enemy, kinds: &[TargetKind]) -> StatSheet {
-        let prepared = self.prepare(bundle);
+        let prepared = self.prepare_for(bundle, Some(enemy));
         let ctx = TargetContext::new(&prepared.player, enemy, kinds);
         let (_, channels) = prepared.player.derive(&prepared.registry, &prepared.rules(), &ctx);
         derive_sheet(&channels, &self.stat_context(Some(enemy)))
@@ -87,7 +92,18 @@ impl Build {
         StatContext { level: self.level, attributes: self.attributes, target }
     }
 
+    /// The target `self.enemy` describes: health, resistance and debuffs, ready for
+    /// [`sheet_against`](Self::sheet_against) (roadmap 2.9).
+    pub fn enemy(&self, bundle: &Bundle) -> Enemy {
+        self.enemy.to_enemy(&EffectRegistry::from_bundle(bundle))
+    }
+
     fn prepare(&self, bundle: &Bundle) -> Prepared {
+        self.prepare_for(bundle, None)
+    }
+
+    /// `prepare`, with the buffs `target` gives the player switched on as well.
+    fn prepare_for(&self, bundle: &Bundle, target: Option<&Enemy>) -> Prepared {
         let mut player = Player::new();
         player.class = Some(self.class);
         player.food = self.food;
@@ -106,8 +122,26 @@ impl Build {
         player.active_effects.apply_champion_points(bundle, &self.champion);
         player.set_mundus(bundle, &self.mundus);
         // an id the bundle has no effect for is skipped when aggregating
-        for id in self.food.iter().chain(&self.potion).chain(&self.external_buffs) {
+        for id in self.food.iter().chain(&self.potion).chain(&self.external_buffs).chain(&self.passives) {
             player.active_effects.set(*id, 1);
+        }
+        // race and class passives (roadmap 2.4): the effects written for this race and this class, by name
+        let (race, class) = (format!("{:?}", self.race), format!("{:?}", self.class));
+        for def in bundle.effects.values() {
+            let named = match &def.source {
+                EffectSource::Race { name } => *name == race,
+                EffectSource::Class { name } => *name == class,
+                _ => false,
+            };
+            if named {
+                player.active_effects.set(def.id, 1);
+            }
+        }
+        // what the target gives the player (the trial dummy's buffs); the build alone does not have them
+        if let Some(target) = target {
+            for id in &target.player_buffs {
+                player.active_effects.set(*id, 1);
+            }
         }
 
         // set bonuses written as effects (class 3, roadmap 2.2) are switched on by the set they name
@@ -147,6 +181,7 @@ mod tests {
             food: None,
             potion: None,
             external_buffs: vec![],
+            passives: vec![],
             enemy: Default::default(),
         }
     }
@@ -272,7 +307,7 @@ mod tests {
 
     /// Roadmap 2.6: the Major/Minor buffs the player gets are reviewed data now, so a set's grant rule
     /// reaches the channels: three Ansuul's Torment pieces give Minor Slayer (+5 % damage to monsters),
-    /// two Mighty Chudan pieces give Major Resolve (+9013 resistance), and the buff says where it came from.
+    /// two Mighty Chudan pieces give Major Resolve (+5948 resistance), and the buff says where it came from.
     #[test]
     fn a_set_that_grants_a_major_or_minor_buff_puts_it_in_the_channels() {
         use crate::data::skill_data::major_minor::{RESOLVE_MAJOR_ID, SLAYER_MINOR_ID};
@@ -286,8 +321,19 @@ mod tests {
 
         let resolve = |pieces| wearing(MIGHTY_CHUDAN_SET_ID, pieces, None).explain(Channel::Armour(All));
         let buff = EffectSource::Buff { ability_id: RESOLVE_MAJOR_ID };
-        assert!(resolve(2).contains(&(buff.clone(), 9013.0)));
+        assert!(resolve(2).contains(&(buff.clone(), 5948.0)));
         assert!(!resolve(1).iter().any(|(s, _)| *s == buff));
+    }
+
+    /// Infallible Mage's 5-piece "grants" Minor Vulnerability, which is a debuff on the *enemy*: the
+    /// wearer must not take +5 % damage from their own set (roadmap 2.6).
+    #[test]
+    fn a_debuff_a_set_grants_never_reaches_the_wearer() {
+        use crate::data::tables::set_ids::INFALLIBLE_MAGE_SET_ID;
+        use crate::engine::effect::{AggKind::Multiplicative, DamageTakenContext::All};
+        let p = wearing(INFALLIBLE_MAGE_SET_ID, 5, None);
+        assert_eq!(p.channels.get_multiplicative_bps(Channel::DamageTaken(All, Multiplicative)), 0);
+        assert!(!p.explain(Channel::DamageTaken(All, Multiplicative)).iter().any(|(s, _)| matches!(s, EffectSource::Debuff { .. })));
     }
 
     /// A target with the given debuffs on it and full health.
@@ -299,7 +345,9 @@ mod tests {
         Enemy {
             id: 0,
             active_effects,
+            base_channels: crate::engine::aggregator::ChannelSet::new(),
             channels: crate::engine::aggregator::ChannelSet::new(),
+            player_buffs: vec![],
             max_health: 1_000.0,
             current_health: 1_000.0,
         }
@@ -512,7 +560,7 @@ mod tests {
         // Ancient Dragonguard: above 50 % damage (record 129532), 50 % or less resistance (record 129508)
         let power = Channel::Power(crate::engine::effect::DamageDoneContext::All, Additive);
         let d = |health| { let c = in_fight(&[129532, 129508], health, false); (c.get(power), c.get(armour)) };
-        assert_eq!((d(51), d(50)), ((349, 0), (0, 4024)));
+        assert_eq!((d(50), d(49)), ((349, 0), (0, 4024)));
     }
 
     #[test]
@@ -524,6 +572,34 @@ mod tests {
         assert_eq!(from_set(&p, Channel::Power(DamageDoneContext::All, Additive), SET, 5), 0.0);
     }
 
+    /// Roadmap 2.4: a build gets the racial passives of its race and no other race's, each says where it
+    /// came from, and Spell Attunement's doubling (a combat state) is listed as conditional, not added.
+    #[test]
+    fn a_race_gets_its_own_racial_passives_and_no_others() {
+        use crate::engine::effect::{AggKind::Additive, ResistableDamageType::Spell, ResourceKind::Stamina};
+        use esosim_types::Race;
+        let bundle = Bundle::embedded();
+        let stamina = Channel::Resource(Stamina, Additive);
+        let of = |race: Race| {
+            let mut b = build();
+            b.race = race;
+            b.to_player(bundle)
+        };
+        for (race, expected) in [(Race::Orc, 1000), (Race::Redguard, 2000), (Race::Nord, 1500), (Race::Imperial, 2000), (Race::Dunmer, 1910), (Race::Altmer, 0)] {
+            assert_eq!(of(race).channels.get(stamina), expected, "{race:?}");
+        }
+        let orc = of(Race::Orc);
+        assert!(orc.explain(stamina).contains(&(EffectSource::Race { name: "Orc".into() }, 1000.0)));
+        // two numbers in one tooltip are two effects: Argonian Resistance is Max Health and Disease/Poison resistance
+        assert_eq!(of(Race::Argonian).channels.get(Channel::Resource(crate::engine::effect::ResourceKind::Health, Additive)), 1000);
+
+        let mut b = build();
+        b.race = Race::Breton;
+        assert_eq!(b.to_player(bundle).channels.get(Channel::Armour(Spell)), 2310, "the base bonus; the doubling is not in the sheet");
+        let listed = b.conditional_effects(bundle, None);
+        assert!(listed.iter().any(|e| e.id == 121208), "{listed:?}");
+    }
+
     #[test]
     fn an_empty_build_is_an_empty_sheet() {
         let mut b = build();
@@ -533,5 +609,26 @@ mod tests {
         let p = b.to_player(Bundle::embedded());
         assert!(p.explain(Channel::CriticalChance).is_empty());
         assert_eq!(p.channels.get(Channel::CriticalChance), 0);
+    }
+
+    /// Roadmap 2.9: the trial dummy gives the player its buffs in the second sheet only, and a group's
+    /// copy of the same buff (same `buff_code`) does not add a second one.
+    #[test]
+    fn the_trial_dummys_buffs_are_on_the_player_against_it_and_not_in_the_build_alone() {
+        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext::Monsters};
+        use crate::entity::enemy::EnemyPreset;
+        let bundle = Bundle::embedded();
+        let slayer = Channel::DamageDone(Monsters, Multiplicative);
+        let mut b = build();
+        let dummy = b.enemy(bundle);
+        let bps = |p: &Prepared| p.player.channels.get_multiplicative_bps(slayer);
+        assert_eq!(bps(&b.prepare(bundle)), 0, "Major Slayer comes from the dummy only");
+        assert_eq!(bps(&b.prepare_for(bundle, Some(&dummy))), 1000);
+        b.external_buffs = vec![93109]; // a group's Major Slayer shares buff_code 47 with the dummy's 177886
+        assert_eq!(bps(&b.prepare_for(bundle, Some(&dummy))), 1000);
+        b.external_buffs.clear();
+        b.enemy = EnemyPreset::Custom { max_health: 1.0, resistance: 0, debuffs: vec![] };
+        let custom = b.enemy(bundle);
+        assert_eq!(bps(&b.prepare_for(bundle, Some(&custom))), 0, "a custom target gives no buffs");
     }
 }

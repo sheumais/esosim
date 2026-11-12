@@ -313,7 +313,7 @@ mod tests {
         if let Some((id, stacks)) = debuff {
             active_effects.set(id, stacks);
         }
-        Enemy { id: 0, active_effects, channels: ChannelSet::new(), max_health, current_health }
+        Enemy { id: 0, active_effects, base_channels: ChannelSet::new(), channels: ChannelSet::new(), player_buffs: vec![], max_health, current_health }
     }
 
     #[test]

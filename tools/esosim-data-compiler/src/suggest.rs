@@ -83,7 +83,8 @@ fn source_line(category: RootCategory, id: u32) -> String {
         RootCategory::Racial => "source = { Race = { name = \"TODO\" } }".to_string(),
         RootCategory::Consumables => "source = \"Food\" # or \"Potion\"".to_string(),
         RootCategory::Sets => "source = { Set = { set_id = 0, pieces_required = 0 } } # TODO: set id and piece count".to_string(),
-        RootCategory::Class => todo!(),
+        RootCategory::Class => "source = { Class = { name = \"TODO\" } }".to_string(),
+        RootCategory::ArmourPassives | RootCategory::WeaponPassives => format!("source = {{ Passive = {{ ability_id = {id} }} }}"),
     }
 }
 

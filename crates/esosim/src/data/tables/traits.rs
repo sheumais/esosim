@@ -210,6 +210,18 @@ pub fn get_jewelry_robust_value(q: &ItemQuality) -> f32 {
     }
 }
 
+/// Bloodthirsty only works on enemies below this health (percent).
+pub const BLOODTHIRSTY_THRESHOLD_PCT: u8 = 90;
+
+/// How much of a Bloodthirsty piece's value applies against an enemy at `target_health_pct`:
+/// nothing at 90 % health or more, rising in a straight line per 1 % of missing health to all of it
+/// at 0 % (the game's "up to 350 Weapon and Spell Damage against enemies under 90 % Health").
+pub fn bloodthirsty_fraction(target_health_pct: u8) -> f32 {
+    let missing = BLOODTHIRSTY_THRESHOLD_PCT.saturating_sub(target_health_pct);
+    missing as f32 / BLOODTHIRSTY_THRESHOLD_PCT as f32
+}
+
+/// The most Weapon and Spell Damage a Bloodthirsty piece gives (at 0 % enemy health).
 pub fn get_jewelry_bloodthirsty_value(q: &ItemQuality) -> f32 {
     match q {
         ItemQuality::Normal => 70.0,

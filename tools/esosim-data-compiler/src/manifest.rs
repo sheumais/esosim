@@ -6,9 +6,10 @@
 //!
 //! | file                 | id           |
 //! |----------------------|--------------|
-//! | ability (skill) data | `0x0`        |
-//! | set table            | `0x16`       |
-//! | champion point table | `0x1AB`      |
+//! | ability (skill) data | `0x60000000` |
+//! | item table           | `0x60000004` |
+//! | set table            | `0x60000016` |
+//! | champion point table | `0x600001AB` |
 //! | lang                 | `0x01000014` |
 //!
 //! Needs the DAT archives next to the MNF and, for version 3 archives, the Oodle library.
@@ -21,8 +22,10 @@ use eso_skill_data::champion_points::{ChampionPointData, load_champion_point_dat
 use eso_skill_data::{SkillData34, load_skill_data};
 
 use crate::corpus::LangTexts;
+use crate::items;
 
 pub const ABILITY_MANIFEST_ID: u32 = 0x6000_0000;
+pub const ITEM_MANIFEST_ID: u32 = 0x6000_0004;
 pub const SET_MANIFEST_ID: u32 = 0x6000_0016;
 pub const CP_MANIFEST_ID: u32 = 0x6000_01AB;
 pub const LANG_MANIFEST_ID: u32 = 0x0100_0014;
@@ -35,6 +38,8 @@ pub struct GameData {
     /// Every record of the champion point table, in file order.
     pub cp: Vec<ChampionPointData>,
     pub lang: LangTexts,
+    /// `item_types.csv`, already decoded from the item table (roadmap 2.8).
+    pub item_types_csv: String,
 }
 
 fn entry_for(mnf: &MnfFile, id: u32, what: &str) -> Result<MnfFileEntry, String> {
@@ -69,6 +74,9 @@ pub fn read(mnf_path: &Path) -> Result<GameData, String> {
     let abilities = table(ABILITY_MANIFEST_ID, "abilities")?;
     let set_table = table(SET_MANIFEST_ID, "sets")?;
     let cp_table = table(CP_MANIFEST_ID, "champion points")?;
+    let item_table = table(ITEM_MANIFEST_ID, "items")?;
+    let item_types_csv = items::item_types_from_table(&item_table)
+        .map_err(|e| format!("manifest id 0x{ITEM_MANIFEST_ID:X} is not a valid item table: {e}"))?;
 
     let lang_entry = entry_for(&mnf, LANG_MANIFEST_ID, "lang")?;
     let lang_bytes = mnf
@@ -83,6 +91,7 @@ pub fn read(mnf_path: &Path) -> Result<GameData, String> {
         set_table,
         cp: parse_champion_points(&cp_table)?,
         lang: LangTexts::from_lang(&lang),
+        item_types_csv,
     })
 }
 

@@ -28,7 +28,7 @@
 
 use esosim_types::AggKind::Multiplicative;
 use esosim_types::cca::CoreCombatAbility as Cca;
-use esosim_types::channel::StatusEffectContext;
+use esosim_types::channel::{HealingDoneContext, StatusEffectContext};
 use esosim_types::damage::ResistableDamageType as Dmg;
 use esosim_types::{
     AggKind as Agg, Channel, DamageDoneContext as DoneCtx, DamageTakenContext as TakenCtx,
@@ -368,14 +368,14 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("done_bash", r"damage (?:done )?(?:by|with) bash(?: attacks| abilities)?|bash(?: attack| ability)? damage", |_| vec![C::DamageDone(DoneCtx::Bash, Multiplicative)]),
         noun("done_monsters", r"damage (?:done )?(?:against|to) (?:dungeon,? ?trial,? and arena )?monsters", |_| vec![C::DamageDone(DoneCtx::Monsters, Multiplicative)]),
         noun("done_noncrit", r"non-critical damage(?: done)?", |_| vec![C::DamageDone(DoneCtx::NonCritical, Multiplicative)]),
-        noun("done_and_healing", r"damage and healing done|damage done and healing done|healing and damage done|damage and healing", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative), C::HealingDone]),
+        noun("done_and_healing", r"damage and healing done|damage done and healing done|healing and damage done|damage and healing", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative), C::HealingDone(HealingDoneContext::All)]),
         noun("done_all", r"damage (?:done|dealt)|outgoing damage|damage enemies do|damage they deal", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative)]),
         // ---- healing & shields ------------------------------------------
         noun("heal_taken", r"healing (?:received|taken)", |_| vec![C::HealingTaken]),
-        noun("heal_done_restoration", r"healing with restoration staff(?: spells| abilities)?", |_| vec![C::HealingDoneSkillLine(Line::RestorationStaff)]),
-        noun("heal_done_hot", r"healing done with healing over time(?: effects)?", |_| vec![C::HealingDoneOverTime]),
-        noun("heal_done_single", r"healing done with single target(?: heals| abilities| healing)?", |_| vec![C::HealingDoneSingleTarget]),
-        noun("heal_done", r"healing done|healing you (?:do|deal)", |_| vec![C::HealingDone]),
+        noun("heal_done_restoration", r"healing with restoration staff(?: spells| abilities)?", |_| vec![C::HealingDone(HealingDoneContext::SkillLine(Line::RestorationStaff))]),
+        noun("heal_done_hot", r"healing done with healing over time(?: effects)?", |_| vec![C::HealingDone(HealingDoneContext::OverTime)]),
+        noun("heal_done_single", r"healing done with single target(?: heals| abilities| healing)?", |_| vec![C::HealingDone(HealingDoneContext::SingleTarget)]),
+        noun("heal_done", r"healing done|healing you (?:do|deal)", |_| vec![C::HealingDone(HealingDoneContext::All)]),
         noun("shield_strength", r"damage shields?(?: strength| effectiveness)?(?: applied to you)?|strength of (?:your )?damage shields?", |_| vec![C::DamageShieldStrength]),
         // ---- resources ---------------------------------------------------
         noun("heavy_restore", r"(?P<a>magicka|stamina)(?: (?:or|and) (?P<b>magicka|stamina))? (?:that )?your (?:fully-charged )?heavy attacks? (?:restore|recover|grants?)", |c| resources(c, &["a", "b"]).into_iter().map(C::HeavyAttackRestore).collect()),
@@ -428,7 +428,7 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
 static BARE: LazyLock<Vec<Noun>> = LazyLock::new(|| {
     vec![
         noun("bare_damage", r"^(?:(?:your|their|the|all|enemy|enemies|target's)\s+)*damage$", |_| vec![C::DamageDone(DoneCtx::All, Multiplicative)]),
-        noun("bare_healing", r"^(?:(?:your|their|the|all)\s+)*healing$", |_| vec![C::HealingDone]),
+        noun("bare_healing", r"^(?:(?:your|their|the|all)\s+)*healing$", |_| vec![C::HealingDone(HealingDoneContext::All)]),
     ]
 });
 

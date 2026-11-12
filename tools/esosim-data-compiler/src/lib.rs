@@ -19,6 +19,7 @@ mod corpus;
 pub mod cp;
 pub mod effects;
 mod graph;
+pub mod items;
 mod manifest;
 pub mod overrides;
 pub mod resolved;
@@ -27,6 +28,12 @@ mod setdata;
 pub mod suggest;
 pub mod triggers;
 pub mod verify;
+
+/// Compile just `item_types.csv` (item id -> weapon type, armour weight, ring, necklace) from a raw item
+/// table file, with the `eso-item-data` crate (roadmap 2.8).
+pub fn item_types_from_table(table: &[u8]) -> Result<String, String> {
+    items::item_types_from_table(table)
+}
 
 /// Compile just `set_items.csv` from a raw set table file (the `.EsoFileData` extract of manifest id 0x16).
 pub fn set_items_from_table(table: &[u8]) -> Result<String, String> {
@@ -154,6 +161,8 @@ pub struct Bundle {
     /// its `provenance` (roadmap 2.0 item 4).
     pub effects_jsonl: String,
     pub cp_effects_jsonl: String,
+    /// `item_types.csv`: `KIND,item id,...` one line per weapon type, armour weight, ring and necklace (roadmap 2.8).
+    pub item_types_csv: String,
     /// One-paragraph report of the classification (counts per class, unclassified blocks).
     pub behaviour_report: String,
     /// What building the roots found: counts per category, listed ids the game does not have.
@@ -179,6 +188,7 @@ impl Bundle {
             ("skill_lines.csv", &self.skill_lines_csv),
             ("effects.jsonl", &self.effects_jsonl),
             ("cp_effects.jsonl", &self.cp_effects_jsonl),
+            ("item_types.csv", &self.item_types_csv),
         ] {
             let path = dir.join(name);
             fs::write(&path, text).map_err(|e| format!("writing {path:?}: {e}"))?;
@@ -264,6 +274,7 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
         skill_lines_csv: compile::skill_lines_csv(&abilities),
         effects_jsonl,
         cp_effects_jsonl: cp::effects_to_jsonl(&cp_effects)?,
+        item_types_csv: data.item_types_csv,
         behaviour_report: report.summary(),
         roots_report: format!(
             "{}\ncp table: {} record(s) read, {} real star(s) (a star has an ability and a map position)\ncp {cp_trees_report}{}",
@@ -329,6 +340,7 @@ mod tests {
             set_table: set_table(20, 5),
             cp: Vec::new(),
             lang,
+            item_types_csv: String::new(),
         }
     }
 
@@ -455,7 +467,7 @@ mod tests {
     fn write_to_creates_every_output_file() {
         let dir = std::env::temp_dir().join(format!("esosim-compiler-test-{}", std::process::id()));
         build(data(), &no_cp()).unwrap().write_to(&dir).unwrap();
-        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl", "skill_lines.csv"] {
+        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl", "skill_lines.csv", "item_types.csv"] {
             assert!(dir.join(f).is_file(), "{f}");
         }
         fs::remove_dir_all(&dir).unwrap();

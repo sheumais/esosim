@@ -25,6 +25,7 @@
 //! Output (see `generate_with`): one JSON object per set, with the channels typed by the engine's own
 //! `Channel`, so the engine loads it without any generated Rust that mentions engine types.
 
+use esosim_types::channel::HealingDoneContext;
 use esosim_types::damage::ResistableDamageType as Dmg;
 use esosim_types::{AggKind as Agg, Channel, DamageDoneContext, ResourceKind as Res};
 use serde::Serialize;
@@ -208,7 +209,7 @@ fn channel_of(code: u32) -> Option<Channel> {
         4 => C::Resource(Res::Magicka, Agg::Additive),
         7 => C::Resource(Res::Health, Agg::Additive),
         10 => C::HealingTaken,
-        12 => C::HealingDone,
+        12 => C::HealingDone(HealingDoneContext::All),
         17 => C::Recovery(Res::Magicka, Agg::Additive),
         18 => C::Recovery(Res::Stamina, Agg::Additive),
         19 => C::Recovery(Res::Health, Agg::Additive),
@@ -457,6 +458,7 @@ fn rows_for(rec: &SetRecord, report: &mut Report) -> Vec<Vec<BonusOut>> {
 
 /// `sets.jsonl` (one set per line, sorted by id, LF endings, so diffs between patches show
 /// only real changes) and `set_ids.rs` (nothing but `pub const <NAME>_SET_ID: u16`).
+#[cfg(test)]
 pub fn generate(
     records: &[SetRecord],
     lang: &BTreeMap<u32, String>,

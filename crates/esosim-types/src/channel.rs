@@ -39,6 +39,20 @@ pub enum DamageDoneContext {
     Type(ResistableDamageType),
 }
 
+/// Which kinds of outgoing healing a bonus applies to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum HealingDoneContext {
+    All,
+    OverTime,
+    AreaOfEffect,
+    SingleTarget,
+    ClassAbilities,
+    Critical,
+    NonCritical,
+    Channeled,
+    SkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
+}
+
 /// Which kinds of incoming damage a bonus applies to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum DamageTakenContext {
@@ -87,7 +101,6 @@ pub enum Channel {
     Resource(ResourceKind, AggKind),
     Recovery(ResourceKind, AggKind),
     SynergyRestore(ResourceKind, AggKind),
-    HealingDone,
     HealingTaken,
     CriticalHealing,
     MovementSpeed,
@@ -112,15 +125,17 @@ pub enum Channel {
     BlockMitigation,
     CriticalDamageTaken,
 
-    HealingDoneSingleTarget,
-    HealingDoneOverTime,
-    HealingDoneSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
+    HealingDone(HealingDoneContext),
 
     HeavyAttackRestore(ResourceKind),
     UltimateGain,
+    UltimatePerTick,
     AttackSpeed,
     AbilityCooldown,
+    /// Milliseconds taken off the potion cooldown (Glyph of Potion Speed: 5 seconds is 5000).
     PotionCooldown,
+    /// Milliseconds added to the duration of potion effects (Glyph of Potion Boost: "Increase the
+    /// duration of Potion effects by 3.6 seconds" is 3600).
     PotionEffectiveness,
 
     DodgeChance,

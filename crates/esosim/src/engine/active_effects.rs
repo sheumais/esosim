@@ -219,6 +219,125 @@ mod tests {
         assert_eq!(active.aggregate(&registry).get(Channel::CriticalChance), 200);
     }
 
+    /// What the embedded effect data gives when exactly the abilities `ids` are on, no conditions decided.
+    fn embedded_sheet(ids: &[u32]) -> ChannelSet {
+        let registry = EffectRegistry::embedded();
+        let mut active = ActiveEffects::new();
+        for id in ids {
+            active.set(*id, 1);
+        }
+        active.aggregate(&registry)
+    }
+
+    // The Major/Minor rows below are held to the game's tooltip values (roadmap 2.6).
+
+    #[test]
+    fn brutality_and_sorcery_are_multiplicative_percentages() {
+        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext};
+        let power = Channel::Power(DamageDoneContext::All, Multiplicative);
+        assert_eq!(embedded_sheet(&[61662]).get_multiplicative_bps(power), 1000); // Minor Brutality
+        assert_eq!(embedded_sheet(&[61665]).get_multiplicative_bps(power), 2000); // Major Brutality
+        assert_eq!(embedded_sheet(&[61662, 61665]).get_multiplicative_bps(power), 3000);
+        assert_eq!(embedded_sheet(&[61685]).get_multiplicative_bps(power), 1000); // Minor Sorcery
+        assert_eq!(embedded_sheet(&[61687]).get_multiplicative_bps(power), 2000); // Major Sorcery
+        // nothing went into the additive bucket any more
+        assert_eq!(embedded_sheet(&[61665]).get(Channel::Power(DamageDoneContext::All, crate::engine::effect::AggKind::Additive)), 0);
+    }
+
+    #[test]
+    fn brutality_and_sorcery_do_not_stack_and_savagery_and_prophecy_do_not_stack() {
+        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext};
+        let power = Channel::Power(DamageDoneContext::All, Multiplicative);
+        // same tier: counted once
+        assert_eq!(embedded_sheet(&[61665, 61687]).get_multiplicative_bps(power), 2000); // Major Brutality + Major Sorcery
+        assert_eq!(embedded_sheet(&[61662, 61685]).get_multiplicative_bps(power), 1000);
+        // Minor and Major of the family still add, whichever name each came from
+        assert_eq!(embedded_sheet(&[61685, 61665]).get_multiplicative_bps(power), 3000); // Minor Sorcery + Major Brutality
+        assert_eq!(embedded_sheet(&[61662, 61687]).get_multiplicative_bps(power), 3000);
+        let crit = Channel::CriticalChance;
+        assert_eq!(embedded_sheet(&[61667, 61689]).get(crit), 2629); // Major Savagery + Major Prophecy
+        assert_eq!(embedded_sheet(&[61666, 61691]).get(crit), 1314);
+        assert_eq!(embedded_sheet(&[61666, 61689]).get(crit), 1314 + 2629); // Minor Savagery + Major Prophecy
+    }
+
+    #[test]
+    fn empower_is_heavy_attack_damage_outside_pvp() {
+        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext};
+        struct Pve(bool);
+        impl ConditionContext for Pve {
+            fn in_pvp_area(&self) -> Option<bool> { Some(self.0) }
+        }
+        let registry = EffectRegistry::embedded();
+        let mut active = ActiveEffects::new();
+        active.set(61737, 1);
+        let heavy = Channel::DamageDone(DamageDoneContext::HeavyAttack, Multiplicative);
+        assert_eq!(active.aggregate_with(&registry, &Pve(false)).get_multiplicative_bps(heavy), 15_000);
+        assert_eq!(active.aggregate_with(&registry, &Pve(true)).get_multiplicative_bps(heavy), 0, "Battle Spirit");
+    }
+
+    #[test]
+    fn savagery_and_prophecy_are_crit_ratings_not_percentages() {
+        // 6 % and 12 % at effective level 66 (21,912 rating per 100 %), floored like the game's tooltip
+        assert_eq!(embedded_sheet(&[61666]).get(Channel::CriticalChance), 1314); // Minor Savagery
+        assert_eq!(embedded_sheet(&[61667]).get(Channel::CriticalChance), 2629); // Major Savagery
+        assert_eq!(embedded_sheet(&[61691]).get(Channel::CriticalChance), 1314); // Minor Prophecy
+        assert_eq!(embedded_sheet(&[61689]).get(Channel::CriticalChance), 2629); // Major Prophecy
+        assert_eq!(embedded_sheet(&[79895]).get(Channel::CriticalChance), -1314); // Minor Uncertainty
+    }
+
+    #[test]
+    fn resolve_and_breach_are_the_level_66_resistance_values() {
+        let armour = Channel::Armour(ResistableDamageType::All);
+        assert_eq!(embedded_sheet(&[61693]).get(armour), 2974); // Minor Resolve
+        assert_eq!(embedded_sheet(&[61694]).get(armour), 5948); // Major Resolve
+        assert_eq!(embedded_sheet(&[61742]).get(armour), -2974); // Minor Breach
+        assert_eq!(embedded_sheet(&[61743]).get(armour), -5948); // Major Breach
+    }
+
+    #[test]
+    fn vitality_and_defile_move_healing_taken_and_shield_strength_together() {
+        let sheet = embedded_sheet(&[61713]); // Major Vitality
+        assert_eq!((sheet.get(Channel::HealingTaken), sheet.get(Channel::DamageShieldStrength)), (12, 12));
+        let sheet = embedded_sheet(&[61726]); // Minor Defile
+        assert_eq!((sheet.get(Channel::HealingTaken), sheet.get(Channel::DamageShieldStrength)), (-6, -6));
+        // Vitality and Defile on the same target cancel out
+        let sheet = embedded_sheet(&[61713, 61727]); // Major Vitality, Major Defile
+        assert_eq!((sheet.get(Channel::HealingTaken), sheet.get(Channel::DamageShieldStrength)), (0, 0));
+    }
+
+    #[test]
+    fn debuffs_are_percentages_in_the_right_bucket() {
+        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext, DamageTakenContext};
+        let taken = Channel::DamageTaken(DamageTakenContext::All, Multiplicative);
+        assert_eq!(embedded_sheet(&[79717]).get_multiplicative_bps(taken), 500); // Minor Vulnerability
+        assert_eq!(embedded_sheet(&[106754]).get_multiplicative_bps(taken), 1000); // Major Vulnerability
+        let done = Channel::DamageDone(DamageDoneContext::All, Multiplicative);
+        assert_eq!(embedded_sheet(&[61723]).get_multiplicative_bps(done), -500); // Minor Maim
+        assert_eq!(embedded_sheet(&[61725]).get_multiplicative_bps(done), -1000); // Major Maim
+        let health = Channel::Resource(crate::engine::effect::ResourceKind::Health, Multiplicative);
+        assert_eq!(embedded_sheet(&[61733]).get_multiplicative_bps(health), -1000); // Minor Mangle
+        assert_eq!(embedded_sheet(&[145977]).get(Channel::CriticalDamageTaken), 20); // Major Brittle
+        assert_eq!(embedded_sheet(&[79907]).get(Channel::CriticalDamage), -10); // Minor Enervation
+        let power = Channel::Power(DamageDoneContext::All, crate::engine::effect::AggKind::Additive);
+        assert_eq!(embedded_sheet(&[147643]).get(power), -430); // Major Cowardice
+        assert_eq!(embedded_sheet(&[79867]).get(power), -215); // Minor Cowardice
+        assert_eq!(embedded_sheet(&[263403]).get(Channel::HealingDone(esosim_types::channel::HealingDoneContext::All)), -8); // Minor Vexation
+    }
+
+    #[test]
+    fn heroism_and_timidity_count_only_in_combat() {
+        struct InCombat;
+        impl ConditionContext for InCombat {
+            fn in_combat(&self) -> Option<bool> { Some(true) }
+        }
+        let registry = EffectRegistry::embedded();
+        let mut active = ActiveEffects::new();
+        active.set(61709, 1); // Major Heroism: +3 per tick
+        active.set(140699, 1); // Minor Timidity: -1 per tick
+        assert_eq!(active.aggregate(&registry).get(Channel::UltimatePerTick), 0, "combat is undecided on the sheet");
+        assert_eq!(active.aggregate_with(&registry, &InCombat).get(Channel::UltimatePerTick), 2);
+    }
+
     #[test]
     fn conditional_effects_need_a_deciding_context() {
         struct FrontBar;

@@ -50,7 +50,7 @@ impl Channel {
             | CriticalDamage
             | CriticalResistance
             | Penetration(_)
-            | HealingDone
+            | HealingDone(_)
             | HealingTaken
             | CriticalHealing
             | MovementSpeed
@@ -61,11 +61,9 @@ impl Channel {
             | DamageShieldStrength
             | BlockMitigation
             | CriticalDamageTaken
-            | HealingDoneSingleTarget
-            | HealingDoneOverTime
-            | HealingDoneSkillLine(_)
             | HeavyAttackRestore(_)
             | UltimateGain
+            | UltimatePerTick
             | AttackSpeed
             | AbilityCooldown
             | PotionCooldown

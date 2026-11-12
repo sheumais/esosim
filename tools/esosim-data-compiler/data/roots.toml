@@ -1,44 +1,81 @@
-# Root categories beyond the two structural ones (roadmap 2.0 item 1).
-#
-# `skills` (every ability with a player_skill_index), `sets` (every ability block / keystone
-# of the set table) and `cp` (the ability of every star of the champion point table) come from
-# the game tables and cannot be listed here. Every other category is
-# a table named after it:
-#
-#   ids         ability ids
-#   names       exact ability names (lang file)
-#   name_prefix every ability whose name starts with this
-#   expect      how many roots `names` / `name_prefix` must find; any other count is reported,
-#               and `verify` fails on it
-#   debuff_ids  [buffs] only: ids applied to the enemy; they are roots too
-#
-# The bundle is the closure of all roots over the ability graph, and every ability carries the
-# categories whose closure it belongs to (`categories` in bundle.jsonl).
-# `cargo xtask check` / `verify` fail when a listed id disappears in a patch.
-
-# Every id of `crates/esosim/src/data/skill_data/major_minor.rs`: Major/Minor buffs and debuffs
-# are always present, whether or not a skill or set reaches them (Minor Slayer 76617, Major Force 61747).
 [buffs]
 ids = [
-    # Major buffs
-    93123, 61745, 61665, 109966, 61705, 61716, 61736, 61747, 61698, 61709,
-    61707, 61711, 61689, 61722, 61694, 61667, 93109, 61687, 61713,
-    # Minor buffs
-    76618, 61744, 61662, 147417, 61704, 61715, 61735, 61746, 61697, 63569,
-    61708, 61706, 61710, 61691, 61721, 61693, 61666, 76617, 61685, 88490, 61549,
-]
-# Major / Minor debuffs: applied to the enemy.
-debuff_ids = [
-    # Major debuffs
-    61743, 145977, 147643, 61727, 61725, 106754,
-    # Minor debuffs
-    61742, 145975, 79867, 61726, 79907, 86304, 88401, 61723, 61733, 140699, 79895, 79717,
+    61665,   # Major Brutality
+    61667,   # Major Savagery
+    61687,   # Major Sorcery
+    61689,   # Major Prophecy
+    61694,   # Major Resolve
+    61698,   # Major Fortitude
+    61705,   # Major Endurance
+    61707,   # Major Intellect
+    61709,   # Major Heroism
+    61711,   # Major Mending
+    61713,   # Major Vitality
+    61716,   # Major Evasion
+    61722,   # Major Protection
+    61736,   # Major Expedition
+    61745,   # Major Berserk
+    61747,   # Major Force
+    93109,   # Major Slayer
+    93123,   # Major Aegis
+    109966,  # Major Courage
+
+    61549,   # Minor Vitality
+    61662,   # Minor Brutality
+    61666,   # Minor Savagery
+    61685,   # Minor Sorcery
+    61691,   # Minor Prophecy
+    61693,   # Minor Resolve
+    61697,   # Minor Fortitude
+    61704,   # Minor Endurance
+    61706,   # Minor Intellect
+    61708,   # Minor Heroism
+    61710,   # Minor Mending
+    61715,   # Minor Evasion
+    61721,   # Minor Protection
+    61735,   # Minor Expedition
+    61744,   # Minor Berserk
+    61746,   # Minor Force
+    63569,   # Gallop
+    76617,   # Minor Slayer
+    76618,   # Minor Aegis
+    88490,   # Minor Toughness
+    147417,  # Minor Courage
+
+    61737,   # Empower
+
+    # Trial dummy (roadmap 2.9). One root is enough: the bundle is the closure of its roots, so everything the
+    # dummy causes comes with it. 120016 (caused by 120006) gives the player's buffs, the rest are debuffs on the
+    # dummy. `Build.enemy` lists them in `entity/enemy.rs`; their effects are in overrides.toml.
+    120006,  # Trial Dummy
 ]
 
-# The 13 stones are found by name: "Boon: The Thief" ... (Thief 13975, Shadow 13984); the Apprentice has a
-# twin record (269724), hence 14. Their numbers are hand-written in overrides.toml (roadmap 2.3).
+debuff_ids = [
+    61725,   # Major Maim
+    61727,   # Major Defile
+    61743,   # Major Breach
+    106754,  # Major Vulnerability
+    145977,  # Major Brittle
+    147643,  # Major Cowardice
+    263406,  # Major Vexation
+
+    61723,   # Minor Maim
+    61726,   # Minor Defile
+    61733,   # Minor Mangle
+    61742,   # Minor Breach
+    79717,   # Minor Vulnerability
+    79867,   # Minor Cowardice
+    79895,   # Minor Uncertainty
+    79907,   # Minor Enervation
+    86304,   # Minor Lifesteal
+    88401,   # Minor Magickasteal
+    140699,  # Minor Timidity
+    145975,  # Minor Brittle
+    263403,  # Minor Vexation
+]
+
 [mundus]
-name_prefix = "Boon: "
+tags = [5]
 expect = 14
 
 [racial]
@@ -49,3 +86,9 @@ tags = [156, 474, 97, 298]
 
 [class]
 tags = [324, 335]
+
+[armour_passives]
+tags = [339]
+
+[weapon_passives]
+tags = [337]
