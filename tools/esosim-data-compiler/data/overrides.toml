@@ -1592,7 +1592,7 @@ check = { field = "value1" }
 id = 49188
 name = "Resist Affliction: Max Stamina (Bosmer)"
 game_name = "Resist Affliction"
-source = { Race = { name = "Bosmer", ability_id = 49188 } }
+source = { Race = { name = "Bosmer", ability_id = 45319 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
 check = { field = "value1" }
 note = "The tooltip of the rank 3 record 45319 takes its first number from this record and its second from 150997."
@@ -1601,7 +1601,7 @@ note = "The tooltip of the rank 3 record 45319 takes its first number from this 
 id = 150997
 name = "Resist Affliction: Disease and Poison Resistance (Bosmer)"
 game_name = "Resist Affliction"
-source = { Race = { name = "Bosmer", ability_id = 49188 } }
+source = { Race = { name = "Bosmer", ability_id = 45319 } }
 channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
 check = { field = "value1" }
 
@@ -1609,7 +1609,7 @@ check = { field = "value1" }
 id = 49177
 name = "Hunter's Eye: Movement Speed (Bosmer)"
 game_name = "Hunter's Eye"
-source = { Race = { name = "Bosmer", ability_id = 49177 } }
+source = { Race = { name = "Bosmer", ability_id = 45296 } }
 channels = [{ channel = "MovementSpeed", value = 5.0 }]
 check = { field = "value1" }
 note = "Record value1 = 5: percentage points, like the Steed stone."
@@ -1618,7 +1618,7 @@ note = "Record value1 = 5: percentage points, like the Steed stone."
 id = 121110
 name = "Hunter's Eye: Physical and Spell Penetration (Bosmer)"
 game_name = "Hunter's Eye"
-source = { Race = { name = "Bosmer", ability_id = 49177 } }
+source = { Race = { name = "Bosmer", ability_id = 45296 } }
 channels = [{ channel = { Penetration = "All" }, value = 950.0 }]
 check = { field = "value1" }
 
@@ -1726,22 +1726,6 @@ check = { field = "value1" }
 note = "The potion restore and potion effectiveness in the same tooltip are not stats."
 
 [[effect]]
-id = 49170
-name = "Argonian Resistance: Max Health (Argonian)"
-game_name = "Argonian Resistance 1"
-source = { Race = { name = "Argonian", ability_id = 49170 } }
-channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
-check = { field = "value1" }
-
-[[effect]]
-id = 150994
-name = "Argonian Resistance: Disease and Poison Resistance (Argonian)"
-game_name = "Argonian Resistance"
-source = { Race = { name = "Argonian", ability_id = 49170 } }
-channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
-check = { field = "value1" }
-
-[[effect]]
 id = 45258
 name = "Life Mender: Healing Done (Argonian)"
 game_name = "Life Mender"
@@ -1782,22 +1766,6 @@ source = { Race = { name = "Nord", ability_id = 45298 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1500.0 }]
 check = { field = "value1" }
 note = "The Ultimate gained when damaged (record 118186) is a proc for the simulator."
-
-[[effect]]
-id = 49183
-name = "Resist Frost: Max Health (Nord)"
-game_name = "Resist Frost"
-source = { Race = { name = "Nord", ability_id = 45304 } }
-channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
-check = { field = "value1" }
-
-[[effect]]
-id = 45304
-name = "Resist Frost: Frost Resistance (Nord)"
-game_name = "Resist Frost"
-source = { Race = { name = "Nord", ability_id = 45304 } }
-channels = [{ channel = { Armour = "Frost" }, value = 4620.0 }]
-check = { field = "value1" }
 
 [[effect]]
 id = 45306
@@ -2333,7 +2301,7 @@ note = "Percentage points."
 id = 88656
 name = "Pressure Points: Critical Chance rating (Assassination)"
 game_name = "Pressure Points"
-source = { Class = { name = "Nightblade", ability_id = 88656 } }
+source = { Class = { name = "Nightblade", ability_id = 45053 } }
 channels = [{ channel = "CriticalChance", value = 438.0 }]
 condition = { SkillLineSlotted = { skill_line = "Assassination", at_least = 1 } }
 stacking = "Additive"
@@ -2460,12 +2428,14 @@ check = { field = "value1", scale = 0.01 }
 note = "Record 228526 is the tooltip's number <<2>>: +15 % Frost damage."
 
 [[effect]]
-id = 2147483801
+id = 215059
 name = "Expert Summoner: Max Health with a permanent pet"
+game_name = "Expert Summoner"
 source = { Class = { name = "Sorcerer", ability_id = 45199 } }
 channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.05 }]
 condition = { SelfState = "PetActive" }
-note = "Synthetic id: the same record 45199 as the Magicka and Stamina effect, which is Always. 5 % Max Health while a permanent combat pet is active."
+check = { field = "value1", scale = 0.01 }
+note = "Same passive as the Max Magicka and Stamina effect (45199): 5 % Max Health while a permanent combat pet is active. Record 215059 (215060 has the same text and value and is not written)."
 
 [[effect]]
 id = 2147483802
@@ -2525,3 +2495,1190 @@ source = { Passive = { ability_id = 40436 } }
 channels = [{ channel = { CostReductionSkillLine = ["Mages Guild", "Multiplicative"] }, value = 0.08 }]
 check = { field = "value1", scale = -0.01 }
 note = "Record -8: reduces the Magicka and Health cost of Mages Guild abilities by 8 %. The channel is per skill line, so it covers both resources."
+
+# ---- Lower ranks (roadmap 2.4): the same passives at the ranks below (Mage Adept: above) the one written above.
+# Each is the rank record the bundle holds, `ability_id` is that rank's own skill-line record, and `check` ties the value to it.
+
+[[effect]]
+id = 18929
+name = "Focused Killer: Dual Wield damage under 25 % Health (rank 1)"
+game_name = "Focused Killer"
+source = { Passive = { ability_id = 18929 } }
+channels = [{ channel = { DamageDone = [{ SkillLine = "Dual Wield" }, "Multiplicative"] }, value = 0.1 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { TargetHealthBelowPct = 25 }] }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 18929, value1 = 10."
+
+[[effect]]
+id = 21114
+name = "Ruffian: damage against stunned, immobilised or silenced enemies (rank 1)"
+game_name = "Ruffian"
+source = { Passive = { ability_id = 21114 } }
+channels = [{ channel = { DamageDone = [{ SkillLine = "Dual Wield" }, "Multiplicative"] }, value = 0.08 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { Any = [{ TargetAfflicted = "Stunned" }, { TargetAfflicted = "Immobilized" }, { TargetAfflicted = "Silenced" }] }] }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 21114, value1 = 8."
+
+[[effect]]
+id = 29388
+name = "Balanced Blade: Two Handed cost (rank 1)"
+game_name = "Balanced Blade"
+source = { Passive = { ability_id = 29388 } }
+channels = [{ channel = { CostReductionSkillLine = ["Two Handed", "Multiplicative"] }, value = 0.07 }]
+condition = { WeaponEquipped = "TwoHanded" }
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 29388, value1 = -7."
+
+[[effect]]
+id = 29397
+name = "Sword and Board: Weapon and Spell Damage (rank 1)"
+game_name = "Sword and Board"
+source = { Passive = { ability_id = 29397 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.03 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29397, value1 = 3."
+
+[[effect]]
+id = 29398
+name = "Sword and Board: Block Mitigation (rank 1)"
+game_name = "Sword and Board"
+source = { Passive = { ability_id = 29397 } }
+channels = [{ channel = "BlockMitigation", value = 10.0 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29398, value1 = 10."
+
+[[effect]]
+id = 29420
+name = "Fortress: One Hand and Shield cost (rank 1)"
+game_name = "Fortress"
+source = { Passive = { ability_id = 29420 } }
+channels = [{ channel = { CostReductionSkillLine = ["One Hand and Shield", "Multiplicative"] }, value = 0.07 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 29420, value1 = -7."
+
+[[effect]]
+id = 29451
+name = "A Soul Ablaze: Healing Received (rank 1)"
+game_name = "A Soul Ablaze"
+source = { Class = { name = "Dragonknight", ability_id = 29451 } }
+channels = [{ channel = "HealingTaken", value = 4.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29451, value1 = 4."
+
+[[effect]]
+id = 29455
+name = "Burnished Scales: Block Mitigation (rank 1)"
+game_name = "Burnished Scales"
+source = { Class = { name = "Dragonknight", ability_id = 29455 } }
+channels = [{ channel = "BlockMitigation", value = 4.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29455, value1 = 4."
+
+[[effect]]
+id = 29457
+name = "World in Ruin: area and damage over time damage (rank 1)"
+game_name = "World in Ruin"
+source = { Class = { name = "Dragonknight", ability_id = 29457 } }
+channels = [{ channel = { DamageDone = ["AreaOfEffect", "Multiplicative"] }, value = 0.05 }, { channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29457, value1 = 5."
+
+[[effect]]
+id = 29468
+name = "Heart of Stone: Armour (rank 1)"
+game_name = "Heart of Stone"
+source = { Class = { name = "Dragonknight", ability_id = 29468 } }
+channels = [{ channel = { Armour = "All" }, value = 1487.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29468, value1 = 1487."
+
+[[effect]]
+id = 29473
+name = "Blessing at the Peak: Critical Damage (rank 1)"
+game_name = "Blessing at the Peak"
+source = { Class = { name = "Dragonknight", ability_id = 29473 } }
+channels = [{ channel = "CriticalDamage", value = 5.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29473, value1 = 5."
+
+[[effect]]
+id = 29663
+name = "Spell Warding: Spell Resistance (Light, per piece) (rank 1)"
+game_name = "Spell Warding"
+source = { Passive = { ability_id = 29663 } }
+channels = [{ channel = { Armour = "Spell" }, value = 550.0 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29663, value1 = 550. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29665
+name = "Evocation: Magicka Recovery (Light, per piece) (rank 1)"
+game_name = "Evocation"
+source = { Passive = { ability_id = 29665 } }
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29665, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29667
+name = "Concentration: Physical and Spell Penetration (Light, per piece) (rank 1)"
+game_name = "Concentration"
+source = { Passive = { ability_id = 29667 } }
+channels = [{ channel = { Penetration = "All" }, value = 711.0 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29667, value1 = 711. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29668
+name = "Prodigy: Weapon and Spell Critical rating (Light, per piece) (rank 1)"
+game_name = "Prodigy"
+source = { Passive = { ability_id = 29668 } }
+channels = [{ channel = "CriticalChance", value = 150.0 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29668, value1 = 150. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29686
+name = "Agility: Weapon and Spell Damage (Medium, per piece) (rank 1)"
+game_name = "Agility"
+source = { Passive = { ability_id = 29686 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.01 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.0001 }
+note = "Rank 1 of 2 of this passive: record 29686, value1 = 100. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29687
+name = "Wind Walker: Stamina Recovery (Medium, per piece) (rank 1)"
+game_name = "Wind Walker"
+source = { Passive = { ability_id = 29687 } }
+channels = [{ channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29687, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29739
+name = "Improved Sneak: Sneak cost (Medium, per piece) (rank 1)"
+game_name = "Improved Sneak"
+source = { Passive = { ability_id = 29738 } }
+channels = [{ channel = { CostReductionCCA = ["Sneak", "Multiplicative"] }, value = 0.04 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = -0.0001 }
+note = "Rank 1 of 2 of this passive: record 29739, value1 = -400. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29743
+name = "Dexterity: Critical Damage and Healing (Medium, per piece) (rank 1)"
+game_name = "Dexterity"
+source = { Passive = { ability_id = 29743 } }
+channels = [{ channel = "CriticalDamage", value = 0.5 }, { channel = "CriticalHealing", value = 0.5 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 3 of this passive: record 29743, value1 = 50. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29769
+name = "Constitution: Health Recovery (Heavy, per piece) (rank 1)"
+game_name = "Constitution"
+source = { Passive = { ability_id = 29769 } }
+channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29769, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29773
+name = "Revitalize: Heavy Attack restore (Heavy, per piece) (rank 1)"
+game_name = "Revitalize"
+source = { Passive = { ability_id = 29773 } }
+channels = [{ channel = { HeavyAttackRestore = "Magicka" }, value = 2.0 }, { channel = { HeavyAttackRestore = "Stamina" }, value = 2.0 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29773, value1 = 200. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29791
+name = "Rapid Mending: Healing Received (Heavy, per piece) (rank 1)"
+game_name = "Rapid Mending"
+source = { Passive = { ability_id = 29791 } }
+channels = [{ channel = "HealingTaken", value = 0.5 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29791, value1 = 50. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29804
+name = "Juggernaut: Max Health (Heavy, per piece) (rank 1)"
+game_name = "Juggernaut"
+source = { Passive = { ability_id = 29804 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.01 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 29804, value1 = 1. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 29825
+name = "Resolve: Physical and Spell Resistance (Heavy, per piece) (rank 1)"
+game_name = "Resolve"
+source = { Passive = { ability_id = 29825 } }
+channels = [{ channel = { Armour = "All" }, value = 173.0 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 29825, value1 = 173. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 30872
+name = "Controlled Fury: Dual Wield cost (rank 1)"
+game_name = "Controlled Fury"
+source = { Passive = { ability_id = 30872 } }
+channels = [{ channel = { CostReductionSkillLine = ["Dual Wield", "Multiplicative"] }, value = 0.07 }]
+condition = { WeaponEquipped = "DualWield" }
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 30872, value1 = -7."
+
+[[effect]]
+id = 30873
+name = "Ambidextrous: off-hand weapon damage (rank 1)"
+game_name = "Ambidextrous"
+source = { Passive = { ability_id = 30873 } }
+channels = [{ channel = "OffhandWeaponPowerBonus", value = 3.0 }]
+condition = { WeaponEquipped = "DualWield" }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30873, value1 = 3."
+
+[[effect]]
+id = 30930
+name = "Accuracy: Critical Chance rating (Bow) (rank 1)"
+game_name = "Accuracy"
+source = { Passive = { ability_id = 30930 } }
+channels = [{ channel = "CriticalChance", value = 657.0 }]
+condition = { WeaponEquipped = "Bow" }
+check = { field = "value1", scale = 219.0 }
+note = "Rank 1 of 2 of this passive: record 30930, value1 = 3."
+
+[[effect]]
+id = 30942
+name = "Ranger: Bow cost (rank 1)"
+game_name = "Ranger"
+source = { Passive = { ability_id = 30942 } }
+channels = [{ channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.07 }]
+condition = { WeaponEquipped = "Bow" }
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 30942, value1 = -7."
+
+[[effect]]
+id = 30957
+name = "Penetrating Magic: Spell Penetration (Destruction Staff) (rank 1)"
+game_name = "Penetrating Magic"
+source = { Passive = { ability_id = 30957 } }
+channels = [{ channel = { Penetration = "Spell" }, value = 1487.0 }]
+condition = { WeaponEquipped = "DestructionStaff" }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30957, value1 = 1487."
+
+[[effect]]
+id = 30972
+name = "Cycle of Life: Heavy Attack Magicka (rank 1)"
+game_name = "Cycle of Life"
+source = { Passive = { ability_id = 30972 } }
+channels = [{ channel = { HeavyAttackRestore = "Magicka" }, value = 15.0 }]
+condition = { WeaponEquipped = "RestorationStaff" }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30972, value1 = 15."
+
+[[effect]]
+id = 30981
+name = "Restoration Master: Restoration Staff healing (rank 1)"
+game_name = "Restoration Master"
+source = { Passive = { ability_id = 30981 } }
+channels = [{ channel = { HealingDone = { SkillLine = "Restoration Staff" } }, value = 3.0 }]
+condition = { WeaponEquipped = "RestorationStaff" }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30981, value1 = 3."
+
+[[effect]]
+id = 31386
+name = "Unholy Knowledge: Health, Magicka and Stamina cost (rank 1)"
+game_name = "Unholy Knowledge"
+source = { Class = { name = "Sorcerer", ability_id = 31386 } }
+channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.03 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.03 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.03 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 31386, value1 = -3."
+
+[[effect]]
+id = 31396
+name = "Power Stone: Ultimate cost (rank 1)"
+game_name = "Power Stone"
+source = { Class = { name = "Sorcerer", ability_id = 31396 } }
+channels = [{ channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.08 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 31396, value1 = -8."
+
+[[effect]]
+id = 31412
+name = "Expert Summoner: Max Magicka and Stamina (rank 1)"
+game_name = "Expert Summoner"
+source = { Class = { name = "Sorcerer", ability_id = 31412 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.02 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.02 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 31412, value1 = 2."
+
+[[effect]]
+id = 31417
+name = "Daedric Protection: damage taken (rank 1)"
+game_name = "Daedric Protection"
+source = { Class = { name = "Sorcerer", ability_id = 31417 } }
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.02 }]
+condition = { SkillLineAbilityActive = { skill_line = "Daedric Summoning", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 31417, value1 = -2."
+
+[[effect]]
+id = 31419
+name = "Capacitor: Health, Magicka and Stamina Recovery (rank 1)"
+game_name = "Capacitor"
+source = { Class = { name = "Sorcerer", ability_id = 31419 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 70.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 70.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 70.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 31419, value1 = 70."
+
+[[effect]]
+id = 31421
+name = "Energized: Physical and Shock damage (rank 1)"
+game_name = "Energized"
+source = { Class = { name = "Sorcerer", ability_id = 31421 } }
+channels = [{ channel = { DamageDone = [{ Type = "Physical" }, "Multiplicative"] }, value = 0.03 }, { channel = { DamageDone = [{ Type = "Shock" }, "Multiplicative"] }, value = 0.03 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 31421, value1 = 3."
+
+[[effect]]
+id = 31425
+name = "Expert Mage: Weapon and Spell Damage (Storm Calling) (rank 1)"
+game_name = "Expert Mage"
+source = { Class = { name = "Sorcerer", ability_id = 31425 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 54.0 }]
+condition = { SkillLineSlotted = { skill_line = "Storm Calling", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 31425, value1 = 54. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 31698
+name = "Piercing Spear: Critical Damage (rank 1)"
+game_name = "Piercing Spear"
+source = { Class = { name = "Templar", ability_id = 31698 } }
+channels = [{ channel = "CriticalDamage", value = 6.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 31698, value1 = 6."
+
+[[effect]]
+id = 31721
+name = "Restoring Spirit: Health, Magicka, Stamina and Ultimate cost (rank 1)"
+game_name = "Restoring Spirit"
+source = { Class = { name = "Templar", ability_id = 31721 } }
+channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.02 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 31721, value1 = -2."
+
+[[effect]]
+id = 33301
+name = "Brawny: Max Stamina (Orc) (rank 1)"
+game_name = "Brawny"
+source = { Race = { name = "Orc", ability_id = 33301 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 333.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 33301, value1 = 333."
+
+[[effect]]
+id = 33304
+name = "Swift Warrior: Weapon and Spell Damage (Orc) (rank 1)"
+game_name = "Swift Warrior"
+source = { Race = { name = "Orc", ability_id = 33304 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 86.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 33304, value1 = 86."
+
+[[effect]]
+id = 35995
+name = "Gift of Magnus: Max Magicka (Breton) (rank 1)"
+game_name = "Gift of Magnus"
+source = { Race = { name = "Breton", ability_id = 35995 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 35995, value1 = 600."
+
+[[effect]]
+id = 35998
+name = "Elemental Talent: Weapon and Spell Damage (Altmer) (rank 1)"
+game_name = "Elemental Talent"
+source = { Race = { name = "Altmer", ability_id = 35998 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 86.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 35998, value1 = 86."
+
+[[effect]]
+id = 36009
+name = "Martial Training: weapon ability cost (Redguard) (rank 1)"
+game_name = "Martial Training"
+source = { Race = { name = "Redguard", ability_id = 36009 } }
+channels = [{ channel = { CostReductionSkillLine = ["One Hand and Shield", "Multiplicative"] }, value = 0.02 }, { channel = { CostReductionSkillLine = ["Two Handed", "Multiplicative"] }, value = 0.02 }, { channel = { CostReductionSkillLine = ["Dual Wield", "Multiplicative"] }, value = 0.02 }, { channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.02 }, { channel = { CostReductionSkillLine = ["Destruction Staff", "Multiplicative"] }, value = 0.02 }, { channel = { CostReductionSkillLine = ["Restoration Staff", "Multiplicative"] }, value = 0.02 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 3 of this passive: record 36009, value1 = -2."
+
+[[effect]]
+id = 36064
+name = "Stalwart: Max Stamina (Nord) (rank 1)"
+game_name = "Stalwart"
+source = { Race = { name = "Nord", ability_id = 36064 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 500.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36064, value1 = 500."
+
+[[effect]]
+id = 36067
+name = "Feline Ambush: Critical Damage and Healing (Khajiit) (rank 1)"
+game_name = "Feline Ambush"
+source = { Race = { name = "Khajiit", ability_id = 36067 } }
+channels = [{ channel = "CriticalDamage", value = 4.0 }, { channel = "CriticalHealing", value = 4.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36067, value1 = 4."
+
+[[effect]]
+id = 36153
+name = "Imperial Mettle: Max Stamina (Imperial) (rank 1)"
+game_name = "Imperial Mettle"
+source = { Race = { name = "Imperial", ability_id = 36153 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36153, value1 = 600."
+
+[[effect]]
+id = 36155
+name = "Red Diamond: ability cost (Imperial) (rank 1)"
+game_name = "Red Diamond"
+source = { Race = { name = "Imperial", ability_id = 36155 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.02 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 3 of this passive: record 36155, value1 = -2."
+
+[[effect]]
+id = 36266
+name = "Spell Attunement: Spell Resistance (Breton) (rank 1)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton", ability_id = 36266 } }
+channels = [{ channel = { Armour = "Spell" }, value = 660.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36266, value1 = 660."
+
+[[effect]]
+id = 36303
+name = "Magicka Mastery: Magicka cost (Breton) (rank 1)"
+game_name = "Magicka Mastery"
+source = { Race = { name = "Breton", ability_id = 36303 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.02 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 3 of this passive: record 36303, value1 = -2."
+
+[[effect]]
+id = 36532
+name = "Dark Vigor: Max Health (Shadow) (rank 1)"
+game_name = "Dark Vigor"
+source = { Class = { name = "Nightblade", ability_id = 36532 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.02 }]
+condition = { SkillLineSlotted = { skill_line = "Shadow", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 36532, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 36549
+name = "Refreshing Shadows: Health, Magicka and Stamina Recovery (rank 1)"
+game_name = "Refreshing Shadows"
+source = { Class = { name = "Nightblade", ability_id = 36549 } }
+channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.07 }, { channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.07 }, { channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.07 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 36549, value1 = 7."
+
+[[effect]]
+id = 36568
+name = "Resourceful: Max Magicka and Stamina (Argonian) (rank 1)"
+game_name = "Resourceful"
+source = { Race = { name = "Argonian", ability_id = 36568 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 333.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 333.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36568, value1 = 333."
+
+[[effect]]
+id = 36585
+name = "Life Mender: Healing Done (Argonian) (rank 1)"
+game_name = "Life Mender"
+source = { Race = { name = "Argonian", ability_id = 36585 } }
+channels = [{ channel = { HealingDone = "All" }, value = 1.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36585, value1 = 1."
+
+[[effect]]
+id = 36591
+name = "Dynamic: Max Magicka and Stamina (Dunmer) (rank 1)"
+game_name = "Dynamic"
+source = { Race = { name = "Dunmer", ability_id = 36591 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 600.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36591, value1 = 600."
+
+[[effect]]
+id = 36593
+name = "Resist Flame: Flame Resistance (Dunmer) (rank 1)"
+game_name = "Resist Flame"
+source = { Race = { name = "Dunmer", ability_id = 36593 } }
+channels = [{ channel = { Armour = "Flame" }, value = 1540.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36593, value1 = 1540."
+
+[[effect]]
+id = 36595
+name = "Magicka Flood: Max Magicka and Stamina (rank 1)"
+game_name = "Magicka Flood"
+source = { Class = { name = "Nightblade", ability_id = 36595 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.03 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.03 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 36595, value1 = 3."
+
+[[effect]]
+id = 36598
+name = "Ruination: Weapon and Spell Damage (Dunmer) (rank 1)"
+game_name = "Ruination"
+source = { Race = { name = "Dunmer", ability_id = 36598 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 86.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36598, value1 = 86."
+
+[[effect]]
+id = 36603
+name = "Soul Siphoner: Healing Done (Siphoning) (rank 1)"
+game_name = "Soul Siphoner"
+source = { Class = { name = "Nightblade", ability_id = 36603 } }
+channels = [{ channel = { HealingDone = "All" }, value = 1.0 }]
+condition = { SkillLineSlotted = { skill_line = "Siphoning", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 36603, value1 = 1. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 36641
+name = "Hemorrhage: Critical Damage (rank 1)"
+game_name = "Hemorrhage"
+source = { Class = { name = "Nightblade", ability_id = 36641 } }
+channels = [{ channel = "CriticalDamage", value = 5.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 36641, value1 = 5."
+
+[[effect]]
+id = 38523
+name = "Acrobatics: Roll Dodge cost (Medium, per piece) (rank 1)"
+game_name = "Acrobatics"
+source = { Passive = { ability_id = 29742 } }
+channels = [{ channel = { CostReductionCCA = ["DodgeRoll", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 38523, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 45243
+name = "Resourceful: Max Magicka and Stamina (Argonian) (rank 2)"
+game_name = "Resourceful"
+source = { Race = { name = "Argonian", ability_id = 45243 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 666.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 666.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45243, value1 = 666."
+
+[[effect]]
+id = 45257
+name = "Life Mender: Healing Done (Argonian) (rank 2)"
+game_name = "Life Mender"
+source = { Race = { name = "Argonian", ability_id = 45257 } }
+channels = [{ channel = { HealingDone = "All" }, value = 3.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45257, value1 = 3."
+
+[[effect]]
+id = 45259
+name = "Gift of Magnus: Max Magicka (Breton) (rank 2)"
+game_name = "Gift of Magnus"
+source = { Race = { name = "Breton", ability_id = 45259 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1200.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45259, value1 = 1200."
+
+[[effect]]
+id = 45261
+name = "Spell Attunement: Spell Resistance (Breton) (rank 2)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton", ability_id = 45261 } }
+channels = [{ channel = { Armour = "Spell" }, value = 1320.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45261, value1 = 1320."
+
+[[effect]]
+id = 45263
+name = "Magicka Mastery: Magicka cost (Breton) (rank 2)"
+game_name = "Magicka Mastery"
+source = { Race = { name = "Breton", ability_id = 45263 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.04 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 2 of 3 of this passive: record 45263, value1 = -4."
+
+[[effect]]
+id = 45265
+name = "Dynamic: Max Magicka and Stamina (Dunmer) (rank 2)"
+game_name = "Dynamic"
+source = { Race = { name = "Dunmer", ability_id = 45265 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1200.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 1200.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45265, value1 = 1200."
+
+[[effect]]
+id = 45269
+name = "Resist Flame: Flame Resistance (Dunmer) (rank 2)"
+game_name = "Resist Flame"
+source = { Race = { name = "Dunmer", ability_id = 45269 } }
+channels = [{ channel = { Armour = "Flame" }, value = 3080.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45269, value1 = 3080."
+
+[[effect]]
+id = 45271
+name = "Ruination: Weapon and Spell Damage (Dunmer) (rank 2)"
+game_name = "Ruination"
+source = { Race = { name = "Dunmer", ability_id = 45271 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 127.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45271, value1 = 127."
+
+[[effect]]
+id = 45275
+name = "Elemental Talent: Weapon and Spell Damage (Altmer) (rank 2)"
+game_name = "Elemental Talent"
+source = { Race = { name = "Altmer", ability_id = 45275 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 172.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45275, value1 = 172."
+
+[[effect]]
+id = 45277
+name = "Martial Training: weapon ability cost (Redguard) (rank 2)"
+game_name = "Martial Training"
+source = { Race = { name = "Redguard", ability_id = 45277 } }
+channels = [{ channel = { CostReductionSkillLine = ["One Hand and Shield", "Multiplicative"] }, value = 0.04 }, { channel = { CostReductionSkillLine = ["Two Handed", "Multiplicative"] }, value = 0.04 }, { channel = { CostReductionSkillLine = ["Dual Wield", "Multiplicative"] }, value = 0.04 }, { channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.04 }, { channel = { CostReductionSkillLine = ["Destruction Staff", "Multiplicative"] }, value = 0.04 }, { channel = { CostReductionSkillLine = ["Restoration Staff", "Multiplicative"] }, value = 0.04 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 2 of 3 of this passive: record 45277, value1 = -4."
+
+[[effect]]
+id = 45279
+name = "Imperial Mettle: Max Stamina (Imperial) (rank 2)"
+game_name = "Imperial Mettle"
+source = { Race = { name = "Imperial", ability_id = 45279 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1200.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45279, value1 = 1200."
+
+[[effect]]
+id = 45291
+name = "Red Diamond: ability cost (Imperial) (rank 2)"
+game_name = "Red Diamond"
+source = { Race = { name = "Imperial", ability_id = 45291 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.04 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.04 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 2 of 3 of this passive: record 45291, value1 = -4."
+
+[[effect]]
+id = 45297
+name = "Stalwart: Max Stamina (Nord) (rank 2)"
+game_name = "Stalwart"
+source = { Race = { name = "Nord", ability_id = 45297 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45297, value1 = 1000."
+
+[[effect]]
+id = 45299
+name = "Feline Ambush: Critical Damage and Healing (Khajiit) (rank 2)"
+game_name = "Feline Ambush"
+source = { Race = { name = "Khajiit", ability_id = 45299 } }
+channels = [{ channel = "CriticalDamage", value = 8.0 }, { channel = "CriticalHealing", value = 8.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45299, value1 = 8."
+
+[[effect]]
+id = 45305
+name = "Rugged: Physical and Spell Resistance (Nord) (rank 2)"
+game_name = "Rugged"
+source = { Race = { name = "Nord", ability_id = 45305 } }
+channels = [{ channel = { Armour = "All" }, value = 1732.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45305, value1 = 1732."
+
+[[effect]]
+id = 45307
+name = "Brawny: Max Stamina (Orc) (rank 2)"
+game_name = "Brawny"
+source = { Race = { name = "Orc", ability_id = 45307 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 666.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45307, value1 = 666."
+
+[[effect]]
+id = 45311
+name = "Swift Warrior: Weapon and Spell Damage (Orc) (rank 2)"
+game_name = "Swift Warrior"
+source = { Race = { name = "Orc", ability_id = 45311 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 127.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45311, value1 = 127."
+
+[[effect]]
+id = 45531
+name = "Resolve: Physical and Spell Resistance (Heavy, per piece) (rank 2)"
+game_name = "Resolve"
+source = { Passive = { ability_id = 45531 } }
+channels = [{ channel = { Armour = "All" }, value = 347.0 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45531, value1 = 347. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 45563
+name = "Dexterity: Critical Damage and Healing (Medium, per piece) (rank 2)"
+game_name = "Dexterity"
+source = { Passive = { ability_id = 45563 } }
+channels = [{ channel = "CriticalDamage", value = 1.0 }, { channel = "CriticalHealing", value = 1.0 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 3 of this passive: record 45563, value1 = 100. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 45601
+name = "Mage Adept: Mages Guild cost (rank 2)"
+game_name = "Mage Adept"
+source = { Passive = { ability_id = 45601 } }
+channels = [{ channel = { CostReductionSkillLine = ["Mages Guild", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 2 of 2 of this passive: record 45601, value1 = -15."
+
+[[effect]]
+id = 49175
+name = "Hunter's Eye: Movement Speed (Bosmer) (rank 1)"
+game_name = "Hunter's Eye"
+source = { Race = { name = "Bosmer", ability_id = 36022 } }
+channels = [{ channel = "MovementSpeed", value = 1.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 49175, value1 = 1."
+
+[[effect]]
+id = 49176
+name = "Hunter's Eye: Movement Speed (Bosmer) (rank 2)"
+game_name = "Hunter's Eye"
+source = { Race = { name = "Bosmer", ability_id = 45295 } }
+channels = [{ channel = "MovementSpeed", value = 3.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 49176, value1 = 3."
+
+[[effect]]
+id = 49185
+name = "Resist Affliction: Max Stamina (Bosmer) (rank 1)"
+game_name = "Resist Affliction"
+source = { Race = { name = "Bosmer", ability_id = 36011 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 49185, value1 = 600."
+
+[[effect]]
+id = 49186
+name = "Resist Affliction: Max Stamina (Bosmer) (rank 2)"
+game_name = "Resist Affliction"
+source = { Race = { name = "Bosmer", ability_id = 45317 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1200.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 49186, value1 = 1200."
+
+[[effect]]
+id = 56953
+name = "Wind Walker: Stamina cost (Medium, per piece) (rank 1)"
+game_name = "Wind Walker"
+source = { Passive = { ability_id = 29687 } }
+channels = [{ channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.01 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 56953, value1 = -1. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 70386
+name = "Robustness: Health, Magicka and Stamina Recovery (Khajiit) (rank 1)"
+game_name = "Robustness"
+source = { Race = { name = "Khajiit", ability_id = 70386 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 30.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 30.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 30.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 70386, value1 = 30."
+
+[[effect]]
+id = 70388
+name = "Robustness: Health, Magicka and Stamina Recovery (Khajiit) (rank 2)"
+game_name = "Robustness"
+source = { Race = { name = "Khajiit", ability_id = 70388 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 60.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 60.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 60.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 70388, value1 = 60."
+
+[[effect]]
+id = 84668
+name = "Unflinching Rage: Max Health (Orc) (rank 1)"
+game_name = "Unflinching Rage"
+source = { Race = { name = "Orc", ability_id = 84668 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 300.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 84668, value1 = 300."
+
+[[effect]]
+id = 84670
+name = "Unflinching Rage: Max Health (Orc) (rank 2)"
+game_name = "Unflinching Rage"
+source = { Race = { name = "Orc", ability_id = 84670 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 84670, value1 = 600."
+
+[[effect]]
+id = 85876
+name = "Emerald Moss: Green Balance healing (rank 1)"
+game_name = "Emerald Moss"
+source = { Class = { name = "Warden", ability_id = 85876 } }
+channels = [{ channel = { HealingDone = { SkillLine = "Green Balance" } }, value = 2.0 }]
+condition = { SkillLineSlotted = { skill_line = "Green Balance", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 85876, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 86068
+name = "Advanced Species: Critical Damage (Animal Companions) (rank 1)"
+game_name = "Advanced Species"
+source = { Class = { name = "Warden", ability_id = 86068 } }
+channels = [{ channel = "CriticalDamage", value = 2.0 }]
+condition = { SkillLineSlotted = { skill_line = "Animal Companions", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 86068, value1 = 2. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 86189
+name = "Frozen Armor: Armour (Winter's Embrace) (rank 1)"
+game_name = "Frozen Armor"
+source = { Class = { name = "Warden", ability_id = 86189 } }
+channels = [{ channel = { Armour = "All" }, value = 620.0 }]
+condition = { SkillLineSlotted = { skill_line = "Winter's Embrace", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 86189, value1 = 620. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 86195
+name = "Piercing Cold: Block Mitigation (rank 1)"
+game_name = "Piercing Cold"
+source = { Class = { name = "Warden", ability_id = 86195 } }
+channels = [{ channel = "BlockMitigation", value = 4.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 86195, value1 = 4."
+
+[[effect]]
+id = 88655
+name = "Pressure Points: Critical Chance rating (Assassination) (rank 1)"
+game_name = "Pressure Points"
+source = { Class = { name = "Nightblade", ability_id = 36636 } }
+channels = [{ channel = "CriticalChance", value = 219.0 }]
+condition = { SkillLineSlotted = { skill_line = "Assassination", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 88655, value1 = 219. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 114959
+name = "Evocation: Magicka cost (Light, per piece) (rank 1)"
+game_name = "Evocation"
+source = { Passive = { ability_id = 29665 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.01 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 114959, value1 = -1. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 116192
+name = "Dismember: Physical and Spell Penetration (rank 1)"
+game_name = "Dismember"
+source = { Class = { name = "Necromancer", ability_id = 116192 } }
+channels = [{ channel = { Penetration = "All" }, value = 1635.0 }]
+condition = { SkillLineAbilityActive = { skill_line = "Grave Lord", at_least = 1 } }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 116192, value1 = 1635."
+
+[[effect]]
+id = 116199
+name = "Rapid Rot: damage over time (rank 1)"
+game_name = "Rapid Rot"
+source = { Class = { name = "Necromancer", ability_id = 116199 } }
+channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 116199, value1 = 5."
+
+[[effect]]
+id = 116239
+name = "Disdain Harm: damage over time taken (rank 1)"
+game_name = "Disdain Harm"
+source = { Class = { name = "Necromancer", ability_id = 116239 } }
+channels = [{ channel = { DamageTaken = ["DamageOverTime", "Multiplicative"] }, value = -0.07 }]
+condition = { SkillLineAbilityActive = { skill_line = "Bone Tyrant", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 116239, value1 = -7."
+
+[[effect]]
+id = 116269
+name = "Health Avarice: Healing Received (Bone Tyrant) (rank 1)"
+game_name = "Health Avarice"
+source = { Class = { name = "Necromancer", ability_id = 116269 } }
+channels = [{ channel = "HealingTaken", value = 1.0 }]
+condition = { SkillLineSlotted = { skill_line = "Bone Tyrant", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 116269, value1 = 1. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 116271
+name = "Last Gasp: Max Health (rank 1)"
+game_name = "Last Gasp"
+source = { Class = { name = "Necromancer", ability_id = 116271 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1206.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 116271, value1 = 1206."
+
+[[effect]]
+id = 117752
+name = "Conditioning: Max Stamina (Redguard) (rank 1)"
+game_name = "Conditioning"
+source = { Race = { name = "Redguard", ability_id = 117752 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 117752, value1 = 600."
+
+[[effect]]
+id = 117753
+name = "Conditioning: Max Stamina (Redguard) (rank 2)"
+game_name = "Conditioning"
+source = { Race = { name = "Redguard", ability_id = 117753 } }
+channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1200.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 117753, value1 = 1200."
+
+[[effect]]
+id = 117846
+name = "Lunar Blessings: Max Health, Magicka and Stamina (Khajiit) (rank 1)"
+game_name = "Lunar Blessings"
+source = { Race = { name = "Khajiit", ability_id = 117846 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 305.0 }, { channel = { Resource = ["Magicka", "Additive"] }, value = 305.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 305.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 117846, value1 = 305."
+
+[[effect]]
+id = 117847
+name = "Lunar Blessings: Max Health, Magicka and Stamina (Khajiit) (rank 2)"
+game_name = "Lunar Blessings"
+source = { Race = { name = "Khajiit", ability_id = 117847 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 610.0 }, { channel = { Resource = ["Magicka", "Additive"] }, value = 610.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 610.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 117847, value1 = 610."
+
+[[effect]]
+id = 117968
+name = "Syrabane's Boon: Max Magicka (Altmer) (rank 1)"
+game_name = "Syrabane's Boon"
+source = { Race = { name = "Altmer", ability_id = 117968 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 117968, value1 = 600."
+
+[[effect]]
+id = 117969
+name = "Syrabane's Boon: Max Magicka (Altmer) (rank 2)"
+game_name = "Syrabane's Boon"
+source = { Race = { name = "Altmer", ability_id = 117969 } }
+channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1200.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 117969, value1 = 1200."
+
+[[effect]]
+id = 118947
+name = "Spell Attunement: Magicka Recovery (Breton) (rank 1)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton", ability_id = 36266 } }
+channels = [{ channel = { Recovery = ["Magicka", "Additive"] }, value = 40.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 118947, value1 = 40."
+
+[[effect]]
+id = 118948
+name = "Spell Attunement: Magicka Recovery (Breton) (rank 2)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton", ability_id = 45261 } }
+channels = [{ channel = { Recovery = ["Magicka", "Additive"] }, value = 80.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 118948, value1 = 80."
+
+[[effect]]
+id = 121106
+name = "Hunter's Eye: Physical and Spell Penetration (Bosmer) (rank 1)"
+game_name = "Hunter's Eye"
+source = { Race = { name = "Bosmer", ability_id = 36022 } }
+channels = [{ channel = { Penetration = "All" }, value = 300.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 121106, value1 = 300."
+
+[[effect]]
+id = 121108
+name = "Hunter's Eye: Physical and Spell Penetration (Bosmer) (rank 2)"
+game_name = "Hunter's Eye"
+source = { Race = { name = "Bosmer", ability_id = 45295 } }
+channels = [{ channel = { Penetration = "All" }, value = 600.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 121108, value1 = 600."
+
+[[effect]]
+id = 121184
+name = "Spell Attunement: Spell Resistance, doubled while afflicted (Breton) (rank 1)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton", ability_id = 36266 } }
+channels = [{ channel = { Armour = "Spell" }, value = 660.0 }]
+condition = { Any = [{ SelfAfflicted = "Burning" }, { SelfAfflicted = "Chilled" }, { SelfAfflicted = "Concussed" }] }
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 121184, value1 = 660."
+
+[[effect]]
+id = 121207
+name = "Spell Attunement: Spell Resistance, doubled while afflicted (Breton) (rank 2)"
+game_name = "Spell Attunement"
+source = { Race = { name = "Breton", ability_id = 45261 } }
+channels = [{ channel = { Armour = "Spell" }, value = 1320.0 }]
+condition = { Any = [{ SelfAfflicted = "Burning" }, { SelfAfflicted = "Chilled" }, { SelfAfflicted = "Concussed" }] }
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 121207, value1 = 1320."
+
+[[effect]]
+id = 147189
+name = "Deadly Bash: Bash cost (rank 1)"
+game_name = "Deadly Bash"
+source = { Passive = { ability_id = 29415 } }
+channels = [{ channel = { CostReductionCCA = ["Bash", "Multiplicative"] }, value = 0.25 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 147189, value1 = -25."
+
+
+[[effect]]
+id = 150995
+name = "Resist Affliction: Disease and Poison Resistance (Bosmer) (rank 1)"
+game_name = "Resist Affliction"
+source = { Race = { name = "Bosmer", ability_id = 36011 } }
+channels = [{ channel = { Armour = "Disease" }, value = 660.0 }, { channel = { Armour = "Poison" }, value = 660.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 150995, value1 = 660."
+
+[[effect]]
+id = 150996
+name = "Resist Affliction: Disease and Poison Resistance (Bosmer) (rank 2)"
+game_name = "Resist Affliction"
+source = { Race = { name = "Bosmer", ability_id = 45317 } }
+channels = [{ channel = { Armour = "Disease" }, value = 1320.0 }, { channel = { Armour = "Poison" }, value = 1320.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 150996, value1 = 1320."
+
+[[effect]]
+id = 184870
+name = "Psychic Lesion: Status Effect damage (rank 1)"
+game_name = "Psychic Lesion"
+source = { Class = { name = "Arcanist", ability_id = 184870 } }
+channels = [{ channel = { DamageDone = ["StatusEffects", "Multiplicative"] }, value = 0.07 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 184870, value1 = 7."
+
+[[effect]]
+id = 184885
+name = "Splintered Secrets: Physical and Spell Penetration (Herald of the Tome) (rank 1)"
+game_name = "Splintered Secrets"
+source = { Class = { name = "Arcanist", ability_id = 184885 } }
+channels = [{ channel = { Penetration = "All" }, value = 620.0 }]
+condition = { SkillLineSlotted = { skill_line = "Herald of the Tome", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 184885, value1 = 620. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 184918
+name = "Aegis of the Unseen: Armour (rank 1)"
+game_name = "Aegis of the Unseen"
+source = { Class = { name = "Arcanist", ability_id = 184918 } }
+channels = [{ channel = { Armour = "All" }, value = 1636.0 }]
+condition = { SkillLineAbilityActive = { skill_line = "Soldier of Apocrypha", at_least = 1 } }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 184918, value1 = 1636."
+
+[[effect]]
+id = 185033
+name = "Wellspring of the Abyss: Health, Magicka and Stamina Recovery (Soldier of Apocrypha) (rank 1)"
+game_name = "Wellspring of the Abyss"
+source = { Class = { name = "Arcanist", ability_id = 185033 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 40.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 40.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 40.0 }]
+condition = { SkillLineSlotted = { skill_line = "Soldier of Apocrypha", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 185033, value1 = 40. Per piece worn or ability slotted on the active bar (Additive stacking)."
+
+[[effect]]
+id = 215055
+name = "Expert Summoner: Max Health with a permanent pet (rank 1)"
+game_name = "Expert Summoner"
+source = { Class = { name = "Sorcerer", ability_id = 31412 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.02 }]
+condition = { SelfState = "PetActive" }
+note = "Rank 1 of 2 of this passive: record 215055, value1 = 2."
+
+[[effect]]
+id = 228521
+name = "Piercing Cold: Frost damage (rank 1)"
+game_name = "Piercing Cold"
+source = { Class = { name = "Warden", ability_id = 86195 } }
+channels = [{ channel = { DamageDone = [{ Type = "Frost" }, "Multiplicative"] }, value = 0.07 }]
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 228521, value1 = 7."

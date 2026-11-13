@@ -97,6 +97,7 @@ pub fn resolve(s: &SkillData34, corpus: &Corpus, graph: &Graph) -> ResolvedAbili
         classification: classify::classify_one(s, corpus, graph),
         categories: Vec::new(),
         morph_of: s.base_ability_id(),
+        rank_index: s.list25.first().map(|e| e.rank_index).filter(|&r| r != 0),
         edges: graph.out.get(&id).cloned().unwrap_or_default(),
         referenced_by: graph.incoming.get(&id).cloned().unwrap_or_default(),
     }

@@ -19,6 +19,8 @@ pub struct Bundle {
     /// The skill line of each ability that has one (`skill_lines.csv`).
     skill_lines: HashMap<u32, SkillLine>,
     abilities_by_line: HashMap<SkillLine, Vec<u32>>,
+    /// Every passive that has ranks: ability id -> (the row's first id, its rank counted from 0) (`passive_ranks.csv`).
+    passive_ranks: HashMap<u32, (u32, usize)>,
     /// Skill line ids in `skill_lines.csv` that `eso_skill_data` has no `SkillLine` for; their
     /// abilities are not indexed. Empty when the data and the parser are from the same patch.
     pub unknown_skill_lines: Vec<u32>,
@@ -43,6 +45,9 @@ impl Bundle {
             bundle
                 .add_skill_lines_csv(esosim_data::SKILL_LINES_CSV)
                 .unwrap_or_else(|e| panic!("embedded skill_lines.csv: {e}"));
+            bundle
+                .add_passive_ranks_csv(esosim_data::PASSIVE_RANKS_CSV)
+                .unwrap_or_else(|e| panic!("embedded passive_ranks.csv: {e}"));
             bundle
         })
     }
@@ -137,6 +142,44 @@ impl Bundle {
         Ok(())
     }
 
+    /// `ability id,ability id,...` per line, the ranks of one passive, lowest first, as `passive_ranks.csv`. An ability
+    /// in two rows is an error.
+    pub fn add_passive_ranks_csv(&mut self, csv: &str) -> Result<(), String> {
+        for (n, row) in csv.lines().enumerate().filter(|(_, l)| !l.trim().is_empty()) {
+            let mut first = None;
+            for (rank, cell) in row.trim().split(',').enumerate() {
+                let id: u32 = cell.trim().parse().map_err(|_| format!("passive ranks line {}: bad ability id {cell:?}", n + 1))?;
+                let line = *first.get_or_insert(id);
+                if self.passive_ranks.insert(id, (line, rank)).is_some() {
+                    return Err(format!("passive ranks line {}: ability {id} is in two rows", n + 1));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// `ids` with, for every passive that has ranks, only the highest rank listed: a character holds one rank of a
+    /// passive, and the ranks are alternatives (each has its own effects), so listing two must not count both.
+    /// Ids that are not ranks of a passive, and the order, are kept.
+    pub fn highest_ranks(&self, ids: &[u32]) -> Vec<u32> {
+        let mut best: HashMap<u32, (usize, u32)> = HashMap::new();
+        for id in ids {
+            if let Some(&(line, rank)) = self.passive_ranks.get(id) {
+                let held = best.entry(line).or_insert((rank, *id));
+                if rank > held.0 {
+                    *held = (rank, *id);
+                }
+            }
+        }
+        ids.iter()
+            .copied()
+            .filter(|id| match self.passive_ranks.get(id) {
+                Some((line, _)) => best[line].1 == *id,
+                None => true,
+            })
+            .collect()
+    }
+
     /// The skill line an ability belongs to (`None`: it is in no line, or in one the parser does not know).
     pub fn skill_line_of(&self, ability_id: u32) -> Option<SkillLine> {
         self.skill_lines.get(&ability_id).copied()
@@ -174,6 +217,44 @@ mod tests {
         let b = Bundle::embedded();
         assert!(b.effect(142035).is_some());
         assert!(b.dangling_ids().is_empty());
+    }
+
+    #[test]
+    fn only_the_highest_listed_rank_of_a_passive_is_kept() {
+        let mut b = Bundle::default();
+        b.add_passive_ranks_csv("10,11,12\n20,21\n").unwrap();
+        assert_eq!(b.highest_ranks(&[11, 10]), vec![11]);
+        assert_eq!(b.highest_ranks(&[10, 12, 11, 99, 20]), vec![12, 99, 20]);
+        assert_eq!(b.highest_ranks(&[21, 20, 12]), vec![21, 12]);
+        assert_eq!(b.highest_ranks(&[]), Vec::<u32>::new());
+        assert!(b.add_passive_ranks_csv("12,30\n").is_err(), "12 is already a rank of another row");
+    }
+
+    /// Roadmap 2.4: every rank of a passive that has several is an `ability_id` of some passive effect, so a build that
+    /// holds any rank gets that rank's numbers, and every rank-row passive has its effects at every rank.
+    #[test]
+    fn every_rank_in_passive_ranks_has_effects() {
+        use esosim_types::EffectSource;
+        let b = Bundle::embedded();
+        let with_effects: std::collections::HashSet<u32> = b
+            .effects
+            .values()
+            .filter_map(|d| match d.source {
+                EffectSource::Race { ability_id, .. } | EffectSource::Class { ability_id, .. } | EffectSource::Passive { ability_id } => Some(ability_id),
+                _ => None,
+            })
+            .collect();
+        let rows: Vec<Vec<u32>> = esosim_data::PASSIVE_RANKS_CSV
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .map(|l| l.split(',').map(|c| c.trim().parse().unwrap()).collect())
+            .collect();
+        assert!(rows.len() > 80, "{}", rows.len());
+        for row in rows {
+            for id in &row {
+                assert!(with_effects.contains(id), "rank {id} of {row:?} has no effect");
+            }
+        }
     }
 
     #[test]

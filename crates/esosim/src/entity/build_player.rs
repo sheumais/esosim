@@ -143,7 +143,9 @@ impl Build {
         // passives (roadmap 2.4): the effects of the passives the build unlocked (`Build::passives`), a race or class
         // one only if it is this race's or class's; a per-piece or per-slotted-ability one gets its count as stacks
         let (race, class) = (format!("{:?}", self.race), format!("{:?}", self.class));
-        set_effects.extend(passive_effect_rules(bundle.effects.values(), &race, &class, &self.passives));
+        // a passive has ranks, each with its own effects: only the highest rank listed counts
+        let held = bundle.highest_ranks(&self.passives);
+        set_effects.extend(passive_effect_rules(bundle.effects.values(), &race, &class, &held));
         player.recompute_with(&registry, all_grant_rules().into_iter().chain(&set_effects));
         Prepared { player, registry, set_effects }
     }
@@ -661,7 +663,7 @@ mod tests {
         assert!(near(from_source(&p, max_health, nightblade(45084)), 0.10), "two on the front bar");
         p.active_bar = crate::entity::player::ActiveBar::Backup;
         let registry = EffectRegistry::from_bundle(bundle);
-        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &unlocked)));
+        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &bundle.highest_ranks(&unlocked))));
         assert!(near(from_source(&p, max_health, nightblade(45084)), 0.05), "one on the backup bar");
 
         // weapon: Sword and Board (45452) is +5 % Weapon and Spell Damage with a sword and shield, not with a sword alone
@@ -728,6 +730,61 @@ mod tests {
         assert_eq!(from_source(&b.to_player(bundle), cost, source.clone()), 0.0, "the passive is not unlocked");
         b.passives = vec![MAGE_ADEPT];
         assert!((from_source(&b.to_player(bundle), cost, source) - 0.08).abs() < 1e-9);
+    }
+
+    /// Roadmap 2.4: a passive has ranks, each written as its own effects. The build lists the rank its character holds:
+    /// Juggernaut is 1 % per Heavy piece at rank 1 (29804) and 2 % at rank 2 (45546); Resist Frost is 1540 / 3080 / 4620
+    /// Frost Resistance at ranks 1 to 3; Mage Adept is 8 % at rank 1 and 15 % at rank 2. Listing two ranks of one
+    /// passive counts the higher only.
+    #[test]
+    fn a_passive_counts_at_the_rank_the_build_lists() {
+        use crate::data::tables::set_ids::ANSUULS_TORMENT_SET_ID as SET;
+        use crate::engine::effect::{AggKind::Multiplicative, ResistableDamageType::Frost, ResourceKind::Health};
+        use eso_skill_data::enums::skill_line::SkillLine;
+        let bundle = Bundle::embedded();
+        let near = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        let passive = |ability_id| EffectSource::Passive { ability_id };
+
+        // per piece, five Heavy pieces
+        let max_health = Channel::Resource(Health, Multiplicative);
+        let juggernaut = |ids: &[u32]| {
+            let mut b = wearing_build(SET, 5, None);
+            b.passives = ids.to_vec();
+            b.to_player(bundle)
+        };
+        assert!(near(from_source(&juggernaut(&[29804]), max_health, passive(29804)), 0.05), "rank 1");
+        assert!(near(from_source(&juggernaut(&[45546]), max_health, passive(45546)), 0.10), "rank 2");
+        let both = juggernaut(&[29804, 45546]);
+        assert_eq!(from_source(&both, max_health, passive(29804)), 0.0, "the lower rank does not count as well");
+        assert!(near(from_source(&both, max_health, passive(45546)), 0.10));
+        assert_eq!(from_source(&juggernaut(&[]), max_health, passive(29804)), 0.0);
+
+        // a racial passive, three ranks
+        let frost = Channel::Armour(Frost);
+        let nord = |ids: &[u32]| {
+            let mut b = build();
+            b.race = esosim_types::Race::Nord;
+            b.passives = ids.to_vec();
+            b.to_player(bundle)
+        };
+        for (rank_id, expected) in [(36627, 1540.0), (45303, 3080.0), (45304, 4620.0)] {
+            let source = EffectSource::Race { name: "Nord".into(), ability_id: rank_id };
+            assert_eq!(from_source(&nord(&[rank_id]), frost, source), expected, "{rank_id}");
+        }
+        let all_three = nord(&[36627, 45303, 45304]);
+        let race = |ability_id| EffectSource::Race { name: "Nord".into(), ability_id };
+        assert_eq!(from_source(&all_three, frost, race(45304)), 4620.0, "all three listed: the top rank counts");
+        assert_eq!((from_source(&all_three, frost, race(36627)), from_source(&all_three, frost, race(45303))), (0.0, 0.0));
+
+        // a guild passive that has a rank above the one the bundle used to hold
+        let cost = Channel::CostReductionSkillLine(SkillLine::MagesGuild, Multiplicative);
+        let mut b = build();
+        b.passives = vec![45601];
+        assert!(near(from_source(&b.to_player(bundle), cost, passive(45601)), 0.15));
+        b.passives = vec![40436, 45601];
+        let p = b.to_player(bundle);
+        assert_eq!(from_source(&p, cost, passive(40436)), 0.0);
+        assert!(near(from_source(&p, cost, passive(45601)), 0.15));
     }
 
     #[test]

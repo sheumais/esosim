@@ -29,6 +29,7 @@ pub fn outputs(root: &Path) -> Vec<Output> {
         Output { name: "set_behaviour.jsonl", dest: data.join("set_behaviour.jsonl") },
         Output { name: "set_items.csv", dest: data.join("set_items.csv") },
         Output { name: "skill_lines.csv", dest: data.join("skill_lines.csv") },
+        Output { name: "passive_ranks.csv", dest: data.join("passive_ranks.csv") },
         Output { name: "effects.jsonl", dest: data.join("effects.jsonl") },
         Output { name: "cp.jsonl", dest: data.join("cp.jsonl") },
         Output { name: "cp_effects.jsonl", dest: data.join("cp_effects.jsonl") },

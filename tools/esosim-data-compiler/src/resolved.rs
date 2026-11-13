@@ -303,6 +303,9 @@ pub struct ResolvedAbility {
     #[serde(default, skip_serializing_if = "Vec::is_empty")] pub categories: Vec<RootCategory>,
 
     #[serde(default, skip_serializing_if = "Option::is_none")] pub morph_of: Option<u32>,
+    /// `list25[0].rank_index`: which rank of its skill this ability is (1 for the base, which names itself as its
+    /// base and so has no `morph_of`; 2, 3, ... for the later ranks). Omitted when 0 or there is no list 25 entry.
+    #[serde(default, skip_serializing_if = "Option::is_none")] pub rank_index: Option<u8>,
     /// Outgoing references, sorted, only to ids that exist in the corpus.
     #[serde(default, skip_serializing_if = "Vec::is_empty")] pub edges: Vec<Edge>,
     /// Incoming references (who points at me), sorted. Denormalised on purpose:

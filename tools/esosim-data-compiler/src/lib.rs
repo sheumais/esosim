@@ -21,6 +21,7 @@ pub mod effects;
 mod graph;
 pub mod items;
 mod manifest;
+mod passives;
 pub mod overrides;
 pub mod resolved;
 pub mod roots;
@@ -157,6 +158,9 @@ pub struct Bundle {
     pub set_items_csv: String,
     /// `skill_lines.csv`: `skill line id,ability id,...` one line per skill line (roadmap 1.4).
     pub skill_lines_csv: String,
+    /// `passive_ranks.csv`: `ability id,ability id,...` one row per passive, its ranks lowest first, grouped by
+    /// `base_ability_id` (roadmap 2.4).
+    pub passive_ranks_csv: String,
     /// `effects.jsonl`: every override plus the high-confidence auto-classified effects, each with
     /// its `provenance` (roadmap 2.0 item 4).
     pub effects_jsonl: String,
@@ -186,6 +190,7 @@ impl Bundle {
             ("set_behaviour.jsonl", &self.set_behaviour_jsonl),
             ("set_items.csv", &self.set_items_csv),
             ("skill_lines.csv", &self.skill_lines_csv),
+            ("passive_ranks.csv", &self.passive_ranks_csv),
             ("effects.jsonl", &self.effects_jsonl),
             ("cp_effects.jsonl", &self.cp_effects_jsonl),
             ("item_types.csv", &self.item_types_csv),
@@ -236,6 +241,8 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
     let kind_overrides = behaviour::parse_kind_overrides(behaviour::KIND_OVERRIDES)?;
     let set_inputs = behaviour::inputs_from_records(&sets.records, &set_names, &sets.perfected, &kind_overrides);
 
+    // before the table moves into the corpus
+    let passive_families = passives::families(&data.skills);
     let corpus = Corpus::build(data.skills, lang);
     let graph = Graph::build(&corpus);
     let mut cp_stars = cp::stars(&data.cp, |id| corpus.names.get(&id).cloned())?;
@@ -260,6 +267,17 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
     let auto = effects::auto_effects(&abilities, &config, &taken);
     let effects_jsonl = effects::to_jsonl(&overrides, &auto)?;
 
+    // every ability with an effect (hand-written, override or auto) is a rank a build can hold
+    let mut written = taken.clone();
+    written.extend(auto.iter().map(|d| d.id));
+    let (passive_ranks_csv, passive_report) = passives::ranks_csv(&passive_families, &written);
+    if !passive_families.is_empty() && passive_report.rows == 0 {
+        return Err(format!(
+            "{} passive families found by base_ability_id, but none has two ranks with an effect: the effect ids and the ranks disagree",
+            passive_families.len()
+        ));
+    }
+
     let (set_behaviours, mut report) = behaviour::classify(&set_inputs, &abilities);
     report.dangling_kind_overrides =
         kind_overrides.keys().copied().filter(|id| !sets.records.iter().any(|r| r.id == *id)).collect();
@@ -272,13 +290,15 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
         set_behaviour_jsonl: behaviour::to_jsonl(&set_behaviours)?,
         set_items_csv: sets.items_csv,
         skill_lines_csv: compile::skill_lines_csv(&abilities),
+        passive_ranks_csv,
         effects_jsonl,
         cp_effects_jsonl: cp::effects_to_jsonl(&cp_effects)?,
         item_types_csv: data.item_types_csv,
         behaviour_report: report.summary(),
         roots_report: format!(
-            "{}\ncp table: {} record(s) read, {} real star(s) (a star has an ability and a map position)\ncp {cp_trees_report}{}",
+            "{}\n{}\ncp table: {} record(s) read, {} real star(s) (a star has an ability and a map position)\ncp {cp_trees_report}{}",
             roots_report.summary(),
+            passive_report.summary(),
             data.cp.len(),
             cp_stars.len(),
             if one_way.is_empty() {
@@ -467,7 +487,7 @@ mod tests {
     fn write_to_creates_every_output_file() {
         let dir = std::env::temp_dir().join(format!("esosim-compiler-test-{}", std::process::id()));
         build(data(), &no_cp()).unwrap().write_to(&dir).unwrap();
-        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl", "skill_lines.csv", "item_types.csv"] {
+        for f in ["bundle.jsonl", "sets.jsonl", "cp.jsonl", "set_ids.rs", "set_behaviour.jsonl", "cp_effects.jsonl", "skill_lines.csv", "passive_ranks.csv", "item_types.csv"] {
             assert!(dir.join(f).is_file(), "{f}");
         }
         fs::remove_dir_all(&dir).unwrap();

@@ -7,6 +7,7 @@
 //! * `data/set_items.csv`  `set id,item id,...` per set: which items belong to which set (roadmap 2.1e)
 //! * `data/skill_lines.csv` `skill line id,ability id,...` per skill line: which abilities are in which line (roadmap 1.4)
 //! * `data/effects.jsonl` overrides + high-confidence auto-classified effects, one `EffectDef` per line plus a `provenance` (roadmap 2.0)
+//! * `data/passive_ranks.csv` one passive per line: the ability ids of its ranks, lowest rank first (roadmap 2.4)
 //! * `data/cp.jsonl`       one champion point star per line: stages, cost and value per stage, its tree (roadmap 2.2a, 2.2b)
 //! * `data/cp_effects.jsonl` one `EffectDef` per modelled champion point star, from `cp.jsonl` and the compiler's `cp_effects.toml` (roadmap 2.2c)
 //! * `data/bundle.jsonl`    one resolved ability per line (not compiled in; no engine code reads it yet)
@@ -23,6 +24,11 @@ pub const SET_BEHAVIOUR_JSONL: &str = include_str!("../data/set_behaviour.jsonl"
 
 /// `data/set_items.csv`: `set id,item id,item id,...` one line per set (roadmap 2.1e).
 pub const SET_ITEMS_CSV: &str = include_str!("../data/set_items.csv");
+
+/// `data/passive_ranks.csv`: one passive line per row, `ability id,ability id,...` lowest rank first. Each id is the
+/// `ability_id` of the effects written for that rank in `effects.jsonl`; a build lists the rank its character holds, and
+/// when it lists several of one row only the highest counts (`Bundle::highest_ranks`).
+pub const PASSIVE_RANKS_CSV: &str = include_str!("../data/passive_ranks.csv");
 
 /// `data/skill_lines.csv`: `skill line id,ability id,ability id,...` one line per skill line (roadmap 1.4).
 pub const SKILL_LINES_CSV: &str = include_str!("../data/skill_lines.csv");
@@ -67,6 +73,18 @@ mod tests {
         let mut sets = ids(SETS_JSONL);
         sets.sort_by_key(|s| s.parse::<u32>().unwrap());
         assert_eq!(ids(SET_BEHAVIOUR_JSONL), sets);
+    }
+
+    #[test]
+    fn a_passive_rank_row_lists_two_or_more_ascending_ids_and_no_id_twice() {
+        let mut seen = std::collections::HashSet::new();
+        for row in PASSIVE_RANKS_CSV.lines().filter(|l| !l.trim().is_empty()) {
+            let ids: Vec<u32> = row.split(',').map(|c| c.trim().parse().unwrap()).collect();
+            assert!(ids.len() >= 2 && ids.windows(2).all(|w| w[0] < w[1]), "{row}");
+            for id in ids {
+                assert!(seen.insert(id), "{id} is in two rows");
+            }
+        }
     }
 
     #[test]
