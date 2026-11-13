@@ -259,9 +259,7 @@ impl Player {
             if power > 0f32 {
                 let m = 1.0 + match () {
                     _ if !slot.is_offhand() => 0.0,
-                    _ if self.has_buff(45477) => OFFHAND_MULTIPLIER + 0.06,
-                    _ if self.has_buff(30873) => OFFHAND_MULTIPLIER + 0.03,
-                    _ => OFFHAND_MULTIPLIER,
+                    _ => self.channels.get(Channel::OffhandWeaponPowerBonus) as f32 / 100.0 + OFFHAND_MULTIPLIER,
                 };
                 let p = (power * m).round();
                 base.add_additive(Power(DamageDoneContext::All, Additive), p);

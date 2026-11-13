@@ -37,9 +37,11 @@ pub struct Build {
     /// Buffs the group provides, as ability ids.
     #[serde(default)]
     pub external_buffs: Vec<u32>,
-    /// Passive abilities the character has unlocked, as ability ids: one id per passive, the rank that is unlocked
-    /// (Dexterity I, II and III are three records). Switched on like any effect; its own condition (armour
-    /// pieces, weapon) decides whether it counts.
+    /// Passive abilities the character has unlocked, as ability ids: one id per passive, however many effects it has
+    /// (a tooltip with two numbers is one entry), at the rank that is unlocked (Dexterity I, II and III are three
+    /// records). Nothing is on unless it is listed here: racial, class, armour-weight, weapon, world and guild passives
+    /// (`EffectSource::Race` / `Class` / `Passive`, roadmap 2.4) all work this way. A race or class passive also has to
+    /// be the build's own. Its own condition (armour pieces, weapon) then decides whether it counts.
     #[serde(default)]
     pub passives: Vec<u32>,
     #[serde(default)]

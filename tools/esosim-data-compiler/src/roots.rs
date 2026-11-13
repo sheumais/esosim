@@ -41,6 +41,9 @@ pub struct CategorySpec {
     /// Every ability carrying one of these `ability_tags` (`SkillData34::ability_tags`).
     #[serde(default)]
     pub tags: Vec<u16>,
+    /// Every ability belonging to a `skill_line_id` (`SkillData34::base_data::skill_line_id`).
+    #[serde(default)]
+    pub skill_line: Vec<u16>,
 }
 
 /// The parsed `roots.toml`.
@@ -184,9 +187,18 @@ impl Roots {
                 found.extend(by_name.iter().copied());
             }
             if !spec.tags.is_empty() {
-            for (id, s) in &corpus.skills {
+                for (id, s) in &corpus.skills {
                     if s.ability_tags.iter().any(|t| spec.tags.contains(t)) {
                         found.insert(*id);
+                    }
+                }
+            }
+            if !spec.skill_line.is_empty() {
+                for (id, s) in &corpus.skills {
+                    if s.skill_line().is_some() {
+                        if spec.skill_line.iter().any(|t| &s.base_data.skill_line_id == &(*t as u32)) {
+                            found.insert(*id);
+                        }
                     }
                 }
             }

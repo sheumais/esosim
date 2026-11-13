@@ -71,7 +71,9 @@
 # ---- Vocabulary -------------------------------------------------------------------------------------------
 # source     "Food" | "Potion" | "Gear" | "GearTrait" | "Enchant" | "CoreCombat"
 #            { Set = { set_id, pieces_required } } | { ChampionPoint = { cp_id } } | { Mundus = { ability_id } }
-#            { Race = { name } } | { Class = { name } } | { Passive = { ability_id } } | { ActiveSkill = { ability_id } }
+#            { Race = { name, ability_id } } | { Class = { name, ability_id } } | { Passive = { ability_id } } | { ActiveSkill = { ability_id } }
+#            Race / Class / Passive are the passives (racial, class, armour, weapon, world, guild): every one is on only when
+#            Build.passives lists its ability_id (a Race / Class one also has to be the build's own race / class)
 #            { Buff = { ability_id } } | { Debuff = { ability_id } }      (only Set is switched on by a piece count)
 # channel    "CriticalChance" "CriticalDamage" "CriticalHealing" "CriticalResistance" "CriticalDamageTaken"
 #            "HealingDone" "HealingTaken" "HealingDoneSingleTarget" "HealingDoneOverTime" "MovementSpeed"
@@ -686,7 +688,7 @@ game_name = "Robes of Alteration Mastery"
 source = { Set = { set_id = 76, pieces_required = 5 } }
 channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.06 }]
 check = { field = "value1", scale = -0.01 }
-note = "Reduces the cost of all abilities by 6 % (the record stores -6)."
+note = "\"Reduces the cost of all your abilities by 6 %\" (record value1 = -6): a fraction of the cost. Applies to every resource including Health and Ultimate (confirmed)."
 
 [[effect]]
 id = 113419
@@ -1539,15 +1541,16 @@ channels = [{ channel = { Armour = "All" }, value = 2974.0 }]
 note = "Roadmap 2.9: +2974 resistance for the player."
 
 # --- Roadmap 2.4: racial passives, rank 3 (what a character at the top of the racial skill line has) ---
-# `source = { Race = { name } }`: `Build::to_player` switches on every effect of the build's race. Only the top rank is written:
-# the lower ranks are the same passive earlier in the skill line. A tooltip with two numbers is two records (its `ids`), so two
-# effects, each tied to the record that holds its number.
+# `source = { Race = { name, ability_id } }`: `Build::to_player` switches an effect on only when `Build.passives` lists its
+# `ability_id` and `name` is the build's race. Only the top rank is written: the lower ranks are the same passive earlier in
+# the skill line. A tooltip with two numbers is two records (its `ids`), so two effects, each tied to the record that holds
+# its number; both name the same `ability_id` (the passive's lowest record id), so one entry in the build turns both on.
 
 [[effect]]
 id = 45309
 name = "Brawny: Max Stamina (Orc)"
 game_name = "Brawny"
-source = { Race = { name = "Orc" } }
+source = { Race = { name = "Orc", ability_id = 45309 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1000.0 }]
 check = { field = "value1" }
 
@@ -1555,7 +1558,7 @@ check = { field = "value1" }
 id = 45312
 name = "Swift Warrior: Weapon and Spell Damage (Orc)"
 game_name = "Swift Warrior"
-source = { Race = { name = "Orc" } }
+source = { Race = { name = "Orc", ability_id = 45312 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
 check = { field = "value1" }
 note = "The Sprint cost reduction and Sprint speed in the same tooltip are percentages written in the text, with no record behind them: not written."
@@ -1564,7 +1567,7 @@ note = "The Sprint cost reduction and Sprint speed in the same tooltip are perce
 id = 84672
 name = "Unflinching Rage: Max Health (Orc)"
 game_name = "Unflinching Rage"
-source = { Race = { name = "Orc" } }
+source = { Race = { name = "Orc", ability_id = 84672 } }
 channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
 check = { field = "value1" }
 note = "The heal on damage (record 118206) is a proc for the simulator."
@@ -1573,7 +1576,7 @@ note = "The heal on damage (record 118206) is a proc for the simulator."
 id = 45276
 name = "Elemental Talent: Weapon and Spell Damage (Altmer)"
 game_name = "Elemental Talent"
-source = { Race = { name = "Altmer" } }
+source = { Race = { name = "Altmer", ability_id = 45276 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
 check = { field = "value1" }
 
@@ -1581,7 +1584,7 @@ check = { field = "value1" }
 id = 117970
 name = "Syrabane's Boon: Max Magicka (Altmer)"
 game_name = "Syrabane's Boon"
-source = { Race = { name = "Altmer" } }
+source = { Race = { name = "Altmer", ability_id = 117970 } }
 channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 2000.0 }]
 check = { field = "value1" }
 
@@ -1589,7 +1592,7 @@ check = { field = "value1" }
 id = 49188
 name = "Resist Affliction: Max Stamina (Bosmer)"
 game_name = "Resist Affliction"
-source = { Race = { name = "Bosmer" } }
+source = { Race = { name = "Bosmer", ability_id = 49188 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
 check = { field = "value1" }
 note = "The tooltip of the rank 3 record 45319 takes its first number from this record and its second from 150997."
@@ -1598,7 +1601,7 @@ note = "The tooltip of the rank 3 record 45319 takes its first number from this 
 id = 150997
 name = "Resist Affliction: Disease and Poison Resistance (Bosmer)"
 game_name = "Resist Affliction"
-source = { Race = { name = "Bosmer" } }
+source = { Race = { name = "Bosmer", ability_id = 49188 } }
 channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
 check = { field = "value1" }
 
@@ -1606,7 +1609,7 @@ check = { field = "value1" }
 id = 49177
 name = "Hunter's Eye: Movement Speed (Bosmer)"
 game_name = "Hunter's Eye"
-source = { Race = { name = "Bosmer" } }
+source = { Race = { name = "Bosmer", ability_id = 49177 } }
 channels = [{ channel = "MovementSpeed", value = 5.0 }]
 check = { field = "value1" }
 note = "Record value1 = 5: percentage points, like the Steed stone."
@@ -1615,7 +1618,7 @@ note = "Record value1 = 5: percentage points, like the Steed stone."
 id = 121110
 name = "Hunter's Eye: Physical and Spell Penetration (Bosmer)"
 game_name = "Hunter's Eye"
-source = { Race = { name = "Bosmer" } }
+source = { Race = { name = "Bosmer", ability_id = 49177 } }
 channels = [{ channel = { Penetration = "All" }, value = 950.0 }]
 check = { field = "value1" }
 
@@ -1623,7 +1626,7 @@ check = { field = "value1" }
 id = 45301
 name = "Feline Ambush: Critical Damage and Healing (Khajiit)"
 game_name = "Feline Ambush"
-source = { Race = { name = "Khajiit" } }
+source = { Race = { name = "Khajiit", ability_id = 45301 } }
 channels = [{ channel = "CriticalDamage", value = 12.0 }, { channel = "CriticalHealing", value = 12.0 }]
 check = { field = "value1" }
 note = "Percentage points. The stealth detection part is record 117879."
@@ -1632,7 +1635,7 @@ note = "Percentage points. The stealth detection part is record 117879."
 id = 70390
 name = "Robustness: Health, Magicka and Stamina Recovery (Khajiit)"
 game_name = "Robustness"
-source = { Race = { name = "Khajiit" } }
+source = { Race = { name = "Khajiit", ability_id = 70390 } }
 channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 90.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 90.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 90.0 }]
 check = { field = "value1" }
 
@@ -1640,7 +1643,7 @@ check = { field = "value1" }
 id = 117848
 name = "Lunar Blessings: Max Health, Magicka and Stamina (Khajiit)"
 game_name = "Lunar Blessings"
-source = { Race = { name = "Khajiit" } }
+source = { Race = { name = "Khajiit", ability_id = 117848 } }
 channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 915.0 }, { channel = { Resource = ["Magicka", "Additive"] }, value = 915.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 915.0 }]
 check = { field = "value1" }
 note = "The parent record states all three numbers as 915; its two children (117869, 117870) are what the game applies."
@@ -1649,7 +1652,7 @@ note = "The parent record states all three numbers as 915; its two children (117
 id = 45280
 name = "Imperial Mettle: Max Stamina (Imperial)"
 game_name = "Imperial Mettle"
-source = { Race = { name = "Imperial" } }
+source = { Race = { name = "Imperial", ability_id = 45280 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
 check = { field = "value1" }
 
@@ -1657,7 +1660,7 @@ check = { field = "value1" }
 id = 45293
 name = "Red Diamond: ability cost (Imperial)"
 game_name = "Red Diamond"
-source = { Race = { name = "Imperial" } }
+source = { Race = { name = "Imperial", ability_id = 45293 } }
 channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.06 }]
 check = { field = "value1", scale = -0.01 }
 note = "\"Reduces the cost of all your abilities by 6 %\" (record value1 = -6): a fraction of the cost. Written for Magicka and Stamina only; whether Ultimate and Health costs are reduced is unconfirmed."
@@ -1666,7 +1669,7 @@ note = "\"Reduces the cost of all your abilities by 6 %\" (record value1 = -6): 
 id = 45260
 name = "Gift of Magnus: Max Magicka (Breton)"
 game_name = "Gift of Magnus"
-source = { Race = { name = "Breton" } }
+source = { Race = { name = "Breton", ability_id = 45260 } }
 channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 2000.0 }]
 check = { field = "value1" }
 
@@ -1674,7 +1677,7 @@ check = { field = "value1" }
 id = 45262
 name = "Spell Attunement: Spell Resistance (Breton)"
 game_name = "Spell Attunement"
-source = { Race = { name = "Breton" } }
+source = { Race = { name = "Breton", ability_id = 45262 } }
 channels = [{ channel = { Armour = "Spell" }, value = 2310.0 }]
 check = { field = "value1" }
 
@@ -1682,7 +1685,7 @@ check = { field = "value1" }
 id = 121208
 name = "Spell Attunement: Spell Resistance, doubled while afflicted (Breton)"
 game_name = "Spell Attunement"
-source = { Race = { name = "Breton" } }
+source = { Race = { name = "Breton", ability_id = 45262 } }
 channels = [{ channel = { Armour = "Spell" }, value = 2310.0 }]
 condition = { Any = [{ SelfAfflicted = "Burning" }, { SelfAfflicted = "Chilled" }, { SelfAfflicted = "Concussed" }] }
 check = { field = "value1" }
@@ -1692,7 +1695,7 @@ note = "\"Doubled if you are afflicted with Burning, Chilled or Concussed\": the
 id = 118949
 name = "Spell Attunement: Magicka Recovery (Breton)"
 game_name = "Spell Attunement"
-source = { Race = { name = "Breton" } }
+source = { Race = { name = "Breton", ability_id = 45262 } }
 channels = [{ channel = { Recovery = ["Magicka", "Additive"] }, value = 130.0 }]
 check = { field = "value1" }
 
@@ -1700,7 +1703,7 @@ check = { field = "value1" }
 id = 45264
 name = "Magicka Mastery: Magicka cost (Breton)"
 game_name = "Magicka Mastery"
-source = { Race = { name = "Breton" } }
+source = { Race = { name = "Breton", ability_id = 45264 } }
 channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.07 }]
 check = { field = "value1", scale = -0.01 }
 note = "\"Reduces the Magicka cost of your abilities by 7 %\": a fraction of the cost."
@@ -1709,7 +1712,7 @@ note = "\"Reduces the Magicka cost of your abilities by 7 %\": a fraction of the
 id = 117754
 name = "Conditioning: Max Stamina (Redguard)"
 game_name = "Conditioning"
-source = { Race = { name = "Redguard" } }
+source = { Race = { name = "Redguard", ability_id = 117754 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 2000.0 }]
 check = { field = "value1" }
 
@@ -1717,7 +1720,7 @@ check = { field = "value1" }
 id = 45247
 name = "Resourceful: Max Magicka and Stamina (Argonian)"
 game_name = "Resourceful"
-source = { Race = { name = "Argonian" } }
+source = { Race = { name = "Argonian", ability_id = 45247 } }
 channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1000.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 1000.0 }]
 check = { field = "value1" }
 note = "The potion restore and potion effectiveness in the same tooltip are not stats."
@@ -1726,7 +1729,7 @@ note = "The potion restore and potion effectiveness in the same tooltip are not 
 id = 49170
 name = "Argonian Resistance: Max Health (Argonian)"
 game_name = "Argonian Resistance 1"
-source = { Race = { name = "Argonian" } }
+source = { Race = { name = "Argonian", ability_id = 49170 } }
 channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
 check = { field = "value1" }
 
@@ -1734,7 +1737,7 @@ check = { field = "value1" }
 id = 150994
 name = "Argonian Resistance: Disease and Poison Resistance (Argonian)"
 game_name = "Argonian Resistance"
-source = { Race = { name = "Argonian" } }
+source = { Race = { name = "Argonian", ability_id = 49170 } }
 channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
 check = { field = "value1" }
 
@@ -1742,7 +1745,7 @@ check = { field = "value1" }
 id = 45258
 name = "Life Mender: Healing Done (Argonian)"
 game_name = "Life Mender"
-source = { Race = { name = "Argonian" } }
+source = { Race = { name = "Argonian", ability_id = 45258 } }
 channels = [{ channel = { HealingDone = "All" }, value = 6.0 }]
 check = { field = "value1" }
 note = "Percentage points."
@@ -1751,7 +1754,7 @@ note = "Percentage points."
 id = 45267
 name = "Dynamic: Max Magicka and Stamina (Dunmer)"
 game_name = "Dynamic"
-source = { Race = { name = "Dunmer" } }
+source = { Race = { name = "Dunmer", ability_id = 45267 } }
 channels = [{ channel = { Resource = ["Magicka", "Additive"] }, value = 1910.0 }, { channel = { Resource = ["Stamina", "Additive"] }, value = 1910.0 }]
 check = { field = "value1" }
 
@@ -1759,7 +1762,7 @@ check = { field = "value1" }
 id = 45270
 name = "Resist Flame: Flame Resistance (Dunmer)"
 game_name = "Resist Flame"
-source = { Race = { name = "Dunmer" } }
+source = { Race = { name = "Dunmer", ability_id = 45270 } }
 channels = [{ channel = { Armour = "Flame" }, value = 4620.0 }]
 check = { field = "value1" }
 
@@ -1767,7 +1770,7 @@ check = { field = "value1" }
 id = 45272
 name = "Ruination: Weapon and Spell Damage (Dunmer)"
 game_name = "Ruination"
-source = { Race = { name = "Dunmer" } }
+source = { Race = { name = "Dunmer", ability_id = 45272 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
 check = { field = "value1" }
 
@@ -1775,7 +1778,7 @@ check = { field = "value1" }
 id = 45298
 name = "Stalwart: Max Stamina (Nord)"
 game_name = "Stalwart"
-source = { Race = { name = "Nord" } }
+source = { Race = { name = "Nord", ability_id = 45298 } }
 channels = [{ channel = { Resource = ["Stamina", "Additive"] }, value = 1500.0 }]
 check = { field = "value1" }
 note = "The Ultimate gained when damaged (record 118186) is a proc for the simulator."
@@ -1784,7 +1787,7 @@ note = "The Ultimate gained when damaged (record 118186) is a proc for the simul
 id = 49183
 name = "Resist Frost: Max Health (Nord)"
 game_name = "Resist Frost"
-source = { Race = { name = "Nord" } }
+source = { Race = { name = "Nord", ability_id = 45304 } }
 channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
 check = { field = "value1" }
 
@@ -1792,7 +1795,7 @@ check = { field = "value1" }
 id = 45304
 name = "Resist Frost: Frost Resistance (Nord)"
 game_name = "Resist Frost"
-source = { Race = { name = "Nord" } }
+source = { Race = { name = "Nord", ability_id = 45304 } }
 channels = [{ channel = { Armour = "Frost" }, value = 4620.0 }]
 check = { field = "value1" }
 
@@ -1800,6 +1803,725 @@ check = { field = "value1" }
 id = 45306
 name = "Rugged: Physical and Spell Resistance (Nord)"
 game_name = "Rugged"
-source = { Race = { name = "Nord" } }
+source = { Race = { name = "Nord", ability_id = 45306 } }
 channels = [{ channel = { Armour = "All" }, value = 2600.0 }]
 check = { field = "value1" }
+
+[[effect]]
+id = 44046
+name = "Piercing Spear: Critical Damage"
+game_name = "Piercing Spear"
+source = { Class = { name = "Templar", ability_id = 44046 } }
+channels = [{ channel = "CriticalDamage", value = 12.0 }]
+check = { field = "value1" }
+note = "Percentage points. The damage to blocking players (record 44047) needs the target's state: not written."
+
+[[effect]]
+id = 44922
+name = "Burnished Scales: Block Mitigation"
+game_name = "Burnished Scales"
+source = { Class = { name = "Dragonknight", ability_id = 44922 } }
+channels = [{ channel = "BlockMitigation", value = 10.0 }]
+check = { field = "value1" }
+note = "Percentage points."
+
+[[effect]]
+id = 44933
+name = "World in Ruin: area and damage over time damage"
+game_name = "World in Ruin"
+source = { Class = { name = "Dragonknight", ability_id = 44933 } }
+channels = [{ channel = { DamageDone = ["AreaOfEffect", "Multiplicative"] }, value = 0.1 }, { channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 10. Simulator input."
+
+[[effect]]
+id = 44996
+name = "Heart of Stone: Armour"
+game_name = "Heart of Stone"
+source = { Class = { name = "Dragonknight", ability_id = 44996 } }
+channels = [{ channel = { Armour = "All" }, value = 2974.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 45001
+name = "Blessing at the Peak: Critical Damage"
+game_name = "Blessing at the Peak"
+source = { Class = { name = "Dragonknight", ability_id = 45001 } }
+channels = [{ channel = "CriticalDamage", value = 10.0 }]
+check = { field = "value1" }
+note = "Percentage points. The Ultimate gain is a proc."
+
+[[effect]]
+id = 45029
+name = "A Soul Ablaze: Healing Received"
+game_name = "A Soul Ablaze"
+source = { Class = { name = "Dragonknight", ability_id = 45029 } }
+channels = [{ channel = "HealingTaken", value = 8.0 }]
+check = { field = "value1" }
+note = "Percentage points."
+
+[[effect]]
+id = 45060
+name = "Hemorrhage: Critical Damage"
+game_name = "Hemorrhage"
+source = { Class = { name = "Nightblade", ability_id = 45060 } }
+channels = [{ channel = "CriticalDamage", value = 10.0 }]
+check = { field = "value1" }
+note = "Percentage points. The group Critical Chance buff on a critical strike is a buff: not written."
+
+[[effect]]
+id = 45084
+name = "Dark Vigor: Max Health (Shadow)"
+game_name = "Dark Vigor"
+source = { Class = { name = "Nightblade", ability_id = 45084 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.05 }]
+condition = { SkillLineSlotted = { skill_line = "Shadow", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Record 5: +5 % per Shadow ability."
+
+[[effect]]
+id = 45103
+name = "Refreshing Shadows: Health, Magicka and Stamina Recovery"
+game_name = "Refreshing Shadows"
+source = { Class = { name = "Nightblade", ability_id = 45103 } }
+channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.15 }, { channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.15 }, { channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 15, percent tooltip."
+
+[[effect]]
+id = 45150
+name = "Magicka Flood: Max Magicka and Stamina"
+game_name = "Magicka Flood"
+source = { Class = { name = "Nightblade", ability_id = 45150 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.06 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 6."
+
+[[effect]]
+id = 45155
+name = "Soul Siphoner: Healing Done (Siphoning)"
+game_name = "Soul Siphoner"
+source = { Class = { name = "Nightblade", ability_id = 45155 } }
+channels = [{ channel = { HealingDone = "All" }, value = 3.0 }]
+condition = { SkillLineSlotted = { skill_line = "Siphoning", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Percentage points per Siphoning ability."
+
+[[effect]]
+id = 45176
+name = "Unholy Knowledge: Health, Magicka and Stamina cost"
+game_name = "Unholy Knowledge"
+source = { Class = { name = "Sorcerer", ability_id = 45176 } }
+channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.06 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.06 }]
+check = { field = "value1", scale = -0.01 }
+note = "Record -6, for abilities that are not Core Combat abilities."
+
+[[effect]]
+id = 45188
+name = "Capacitor: Health, Magicka and Stamina Recovery"
+game_name = "Capacitor"
+source = { Class = { name = "Sorcerer", ability_id = 45188 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 141.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 141.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 141.0 }]
+check = { field = "value1" }
+note = "Flat recovery (tooltip type 16)."
+
+[[effect]]
+id = 45190
+name = "Energized: Physical and Shock damage"
+game_name = "Energized"
+source = { Class = { name = "Sorcerer", ability_id = 45190 } }
+channels = [{ channel = { DamageDone = [{ Type = "Physical" }, "Multiplicative"] }, value = 0.05 }, { channel = { DamageDone = [{ Type = "Shock" }, "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 5. Simulator input."
+
+[[effect]]
+id = 45195
+name = "Expert Mage: Weapon and Spell Damage (Storm Calling)"
+game_name = "Expert Mage"
+source = { Class = { name = "Sorcerer", ability_id = 45195 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 108.0 }]
+condition = { SkillLineSlotted = { skill_line = "Storm Calling", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Counts Sorcerer abilities: one effect per skill line."
+
+[[effect]]
+id = 45196
+name = "Power Stone: Ultimate cost"
+game_name = "Power Stone"
+source = { Class = { name = "Sorcerer", ability_id = 45196 } }
+channels = [{ channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = -0.01 }
+note = "Record -15."
+
+[[effect]]
+id = 45199
+name = "Expert Summoner: Max Magicka and Stamina"
+game_name = "Expert Summoner"
+source = { Class = { name = "Sorcerer", ability_id = 45199 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.05 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 5."
+
+[[effect]]
+id = 45200
+name = "Daedric Protection: damage taken"
+game_name = "Daedric Protection"
+source = { Class = { name = "Sorcerer", ability_id = 45200 } }
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.05 }]
+condition = { SkillLineAbilityActive = { skill_line = "Daedric Summoning", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Record -5: 5 % less damage taken while a Daedric Summoning ability is active (combat state: conditional)."
+
+[[effect]]
+id = 45212
+name = "Restoring Spirit: Health, Magicka, Stamina and Ultimate cost"
+game_name = "Restoring Spirit"
+source = { Class = { name = "Templar", ability_id = 45212 } }
+channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.05 }]
+check = { field = "value1", scale = -0.01 }
+note = "Record -5."
+
+[[effect]]
+id = 45443
+name = "Balanced Blade: Two Handed cost"
+game_name = "Balanced Blade"
+source = { Passive = { ability_id = 45443 } }
+channels = [{ channel = { CostReductionSkillLine = ["Two Handed", "Multiplicative"] }, value = 0.15 }]
+condition = { WeaponEquipped = "TwoHanded" }
+check = { field = "value1", scale = -0.01 }
+note = "Record -15."
+
+[[effect]]
+id = 45452
+name = "Sword and Board: Weapon and Spell Damage"
+game_name = "Sword and Board"
+source = { Passive = { ability_id = 45452 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.05 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1", scale = 0.01 }
+note = "Record 5: +5 % Weapon and Spell Damage."
+
+[[effect]]
+id = 45453
+name = "Sword and Board: Block Mitigation"
+game_name = "Sword and Board"
+source = { Passive = { ability_id = 45452 } }
+channels = [{ channel = "BlockMitigation", value = 20.0 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1" }
+note = "Percentage points, as the Footman's Fortune row."
+
+[[effect]]
+id = 45471
+name = "Fortress: One Hand and Shield cost"
+game_name = "Fortress"
+source = { Passive = { ability_id = 45471 } }
+channels = [{ channel = { CostReductionSkillLine = ["One Hand and Shield", "Multiplicative"] }, value = 0.15 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1", scale = -0.01 }
+note = "Record -15. The block cost reduction (36 %) is text only: not written."
+
+[[effect]]
+id = 45476
+name = "Focused Killer: Dual Wield damage under 25 % Health"
+game_name = "Focused Killer"
+source = { Passive = { ability_id = 45476 } }
+channels = [{ channel = { DamageDone = [{ SkillLine = "Dual Wield" }, "Multiplicative"] }, value = 0.2 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { TargetHealthBelowPct = 25 }] }
+check = { field = "value1", scale = 0.01 }
+note = "Record 20: +20 % damage with Dual Wield abilities against enemies under 25 % Health. Simulator input."
+
+[[effect]]
+id = 45477
+name = "Ambidextrous: off-hand weapon damage"
+game_name = "Ambidextrous"
+source = { Passive = { ability_id = 45477 } }
+channels = [{ channel = "OffhandWeaponPowerBonus", value = 6.0 }]
+condition = { WeaponEquipped = "DualWield" }
+check = { field = "value1" }
+note = "6 % of the off-hand weapon's damage as Weapon and Spell Damage, in percentage points. The channel is not read by the sheet yet."
+
+[[effect]]
+id = 45478
+name = "Controlled Fury: Dual Wield cost"
+game_name = "Controlled Fury"
+source = { Passive = { ability_id = 45478 } }
+channels = [{ channel = { CostReductionSkillLine = ["Dual Wield", "Multiplicative"] }, value = 0.15 }]
+condition = { WeaponEquipped = "DualWield" }
+check = { field = "value1", scale = -0.01 }
+note = "Record -15."
+
+[[effect]]
+id = 45481
+name = "Ruffian: damage against stunned, immobilised or silenced enemies"
+game_name = "Ruffian"
+source = { Passive = { ability_id = 45481 } }
+channels = [{ channel = { DamageDone = [ { SkillLine = "Dual Wield" } , "Multiplicative"] }, value = 0.15 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { Any = [{ TargetAfflicted = "Stunned" }, { TargetAfflicted = "Immobilized" }, { TargetAfflicted = "Silenced" }] }] }
+check = { field = "value1", scale = 0.01 }
+
+[[effect]]
+id = 45492
+name = "Accuracy: Critical Chance rating (Bow)"
+game_name = "Accuracy"
+source = { Passive = { ability_id = 45492 } }
+channels = [{ channel = "CriticalChance", value = 1314.0 }]
+condition = { WeaponEquipped = "Bow" }
+check = { field = "value1", scale = 219.0 }
+note = "Record 6 is a percentage: 6 % x 219 rating per 1 % = 1314 rating (the engine's 219 per percent, see stats/critical.rs)."
+
+[[effect]]
+id = 45493
+name = "Ranger: Bow cost"
+game_name = "Ranger"
+source = { Passive = { ability_id = 45493 } }
+channels = [{ channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.15 }]
+condition = { WeaponEquipped = "Bow" }
+check = { field = "value1", scale = -0.01 }
+note = "Record -15."
+
+[[effect]]
+id = 45509
+name = "Penetrating Magic: Spell Penetration (Destruction Staff)"
+game_name = "Penetrating Magic"
+source = { Passive = { ability_id = 45509 } }
+channels = [{ channel = { Penetration = "Spell" }, value = 2974.0 }]
+condition = { WeaponEquipped = "DestructionStaff" }
+check = { field = "value1" }
+note = "Destruction Staff abilities ignore 2974 Spell Resistance: counted as Spell Penetration while a staff is in hand."
+
+[[effect]]
+id = 45520
+name = "Cycle of Life: Heavy Attack Magicka"
+game_name = "Cycle of Life"
+source = { Passive = { ability_id = 45520 } }
+channels = [{ channel = { HeavyAttackRestore = "Magicka" }, value = 30.0 }]
+condition = { WeaponEquipped = "RestorationStaff" }
+check = { field = "value1" }
+note = "Fully-charged Heavy Attacks restore 30 % more Magicka: percentage points."
+
+[[effect]]
+id = 45524
+name = "Restoration Master: Restoration Staff healing"
+game_name = "Restoration Master"
+source = { Passive = { ability_id = 45524 } }
+channels = [{ channel = { HealingDone = { SkillLine = "Restoration Staff" } }, value = 5.0 }]
+condition = { WeaponEquipped = "RestorationStaff" }
+check = { field = "value1" }
+note = "Percentage points. Simulator input."
+
+[[effect]]
+id = 45526
+name = "Constitution: Health Recovery (Heavy, per piece)"
+game_name = "Constitution"
+source = { Passive = { ability_id = 45526 } }
+channels = [{ channel = { Recovery = ["Health", "Multiplicative"] }, value = 0.04 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 4, percent tooltip. The Magicka and Stamina restore when damaged (records 58428..58432) is a proc."
+
+[[effect]]
+id = 45528
+name = "Revitalize: Heavy Attack restore (Heavy, per piece)"
+game_name = "Revitalize"
+source = { Passive = { ability_id = 45528 } }
+channels = [{ channel = { HeavyAttackRestore = "Magicka" }, value = 4.0 }, { channel = { HeavyAttackRestore = "Stamina" }, value = 4.0 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 400, the text says 4 %: percentage points more Magicka or Stamina from Heavy Attacks."
+
+[[effect]]
+id = 45529
+name = "Rapid Mending: Healing Received (Heavy, per piece)"
+game_name = "Rapid Mending"
+source = { Passive = { ability_id = 45529 } }
+channels = [{ channel = "HealingTaken", value = 1.0 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 100, the text says 1 %: percentage points."
+
+[[effect]]
+id = 45533
+name = "Resolve: Physical and Spell Resistance (Heavy, per piece)"
+game_name = "Resolve"
+source = { Passive = { ability_id = 45533 } }
+channels = [{ channel = { Armour = "All" }, value = 520.0 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar)."
+
+[[effect]]
+id = 45546
+name = "Juggernaut: Max Health (Heavy, per piece)"
+game_name = "Juggernaut"
+source = { Passive = { ability_id = 45546 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 2, percent tooltip: +2 % Max Health per piece."
+
+[[effect]]
+id = 45557
+name = "Evocation: Magicka Recovery (Light, per piece)"
+game_name = "Evocation"
+source = { Passive = { ability_id = 45557 } }
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.04 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 4 with a percent tooltip (type 96 / 55): +4 % per piece, a fraction in the multiplicative bucket."
+
+[[effect]]
+id = 45559
+name = "Spell Warding: Spell Resistance (Light, per piece)"
+game_name = "Spell Warding"
+source = { Passive = { ability_id = 45559 } }
+channels = [{ channel = { Armour = "Spell" }, value = 1100.0 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar)."
+
+[[effect]]
+id = 45561
+name = "Prodigy: Weapon and Spell Critical rating (Light, per piece)"
+game_name = "Prodigy"
+source = { Passive = { ability_id = 45561 } }
+channels = [{ channel = "CriticalChance", value = 301.0 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Rating, as the record stores it."
+
+[[effect]]
+id = 45562
+name = "Concentration: Physical and Spell Penetration (Light, per piece)"
+game_name = "Concentration"
+source = { Passive = { ability_id = 45562 } }
+channels = [{ channel = { Penetration = "All" }, value = 1423.0 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar)."
+
+[[effect]]
+id = 45564
+name = "Dexterity: Critical Damage and Healing (Medium, per piece)"
+game_name = "Dexterity"
+source = { Passive = { ability_id = 45564 } }
+channels = [{ channel = "CriticalDamage", value = 2.0 }, { channel = "CriticalHealing", value = 2.0 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 200, the text says 2 %: percentage points, like the Shadow mundus."
+
+[[effect]]
+id = 45565
+name = "Wind Walker: Stamina Recovery (Medium, per piece)"
+game_name = "Wind Walker"
+source = { Passive = { ability_id = 45565 } }
+channels = [{ channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.04 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 4, percent tooltip: +4 % per piece."
+
+[[effect]]
+id = 45568
+name = "Improved Sneak: Sneak cost (Medium, per piece)"
+game_name = "Improved Sneak"
+source = { Passive = { ability_id = 45567 } }
+channels = [{ channel = { CostReductionCCA = ["Sneak", "Multiplicative"] }, value = 0.07 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = -0.0001 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record -700 (hundredths): 7 % per piece. The detection area (record 45567, -5 %) is not written: DetectionRadius has no decided unit."
+
+[[effect]]
+id = 45572
+name = "Agility: Weapon and Spell Damage (Medium, per piece)"
+game_name = "Agility"
+source = { Passive = { ability_id = 45572 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.0001 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 200 (hundredths of a percent): the tooltip's number <<1>> is 2 (record 149166), so 2 % per piece."
+
+[[effect]]
+id = 45575
+name = "Acrobatics: Roll Dodge cost (Medium, per piece)"
+game_name = "Acrobatics"
+source = { Passive = { ability_id = 45574 } }
+channels = [{ channel = { CostReductionCCA = ["DodgeRoll", "Multiplicative"] }, value = 0.04 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record 4: Athletics reduces the cost of Roll Dodge by 4 % per piece. Its Sprint speed (300, text only) is not written: no Sprint-only speed channel."
+
+[[effect]]
+id = 56959
+name = "Wind Walker: Stamina cost (Medium, per piece)"
+game_name = "Wind Walker"
+source = { Passive = { ability_id = 45565 } }
+channels = [{ channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Medium", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = -0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record -2: reduces the Stamina cost of abilities by 2 % per piece."
+
+[[effect]]
+id = 85877
+name = "Emerald Moss: Green Balance healing"
+game_name = "Emerald Moss"
+source = { Class = { name = "Warden", ability_id = 85877 } }
+channels = [{ channel = { HealingDone = { SkillLine = "Green Balance" } }, value = 5.0 }]
+condition = { SkillLineSlotted = { skill_line = "Green Balance", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Percentage points per Green Balance ability. Simulator input."
+
+[[effect]]
+id = 86066
+name = "Flourish: Magicka and Stamina Recovery"
+game_name = "Flourish"
+source = { Class = { name = "Warden", ability_id = 86066 } }
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.1 }, { channel = { Recovery = ["Stamina", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 10, percent tooltip."
+
+[[effect]]
+id = 86069
+name = "Advanced Species: Critical Damage (Animal Companions)"
+game_name = "Advanced Species"
+source = { Class = { name = "Warden", ability_id = 86069 } }
+channels = [{ channel = "CriticalDamage", value = 5.0 }]
+condition = { SkillLineSlotted = { skill_line = "Animal Companions", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Percentage points per Animal Companions ability."
+
+[[effect]]
+id = 86190
+name = "Frozen Armor: Armour (Winter's Embrace)"
+game_name = "Frozen Armor"
+source = { Class = { name = "Warden", ability_id = 86190 } }
+channels = [{ channel = { Armour = "All" }, value = 1240.0 }]
+condition = { SkillLineSlotted = { skill_line = "Winter's Embrace", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
+
+[[effect]]
+id = 86196
+name = "Piercing Cold: Block Mitigation"
+game_name = "Piercing Cold"
+source = { Class = { name = "Warden", ability_id = 86196 } }
+channels = [{ channel = "BlockMitigation", value = 8.0 }]
+check = { field = "value1" }
+note = "Percentage points."
+
+[[effect]]
+id = 88656
+name = "Pressure Points: Critical Chance rating (Assassination)"
+game_name = "Pressure Points"
+source = { Class = { name = "Nightblade", ability_id = 88656 } }
+channels = [{ channel = "CriticalChance", value = 438.0 }]
+condition = { SkillLineSlotted = { skill_line = "Assassination", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Record 88656 is the tooltip's number <<1>>: 438 rating (2 %) per Nightblade ability. One effect per skill line."
+
+[[effect]]
+id = 114962
+name = "Evocation: Magicka cost (Light, per piece)"
+game_name = "Evocation"
+source = { Passive = { ability_id = 45557 } }
+channels = [{ channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourPieces = { weight = "Light", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = -0.01 }
+note = "Per piece worn (Additive stacking, stacks = pieces on the active bar). Record -2: reduces the Magicka cost of abilities by 2 % per piece."
+
+[[effect]]
+id = 116194
+name = "Dismember: Physical and Spell Penetration"
+game_name = "Dismember"
+source = { Class = { name = "Necromancer", ability_id = 116194 } }
+channels = [{ channel = { Penetration = "All" }, value = 3271.0 }]
+condition = { SkillLineAbilityActive = { skill_line = "Grave Lord", at_least = 1 } }
+check = { field = "value1" }
+note = "While a Grave Lord ability is active (combat state: conditional)."
+
+[[effect]]
+id = 116201
+name = "Rapid Rot: damage over time"
+game_name = "Rapid Rot"
+source = { Class = { name = "Necromancer", ability_id = 116201 } }
+channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 10. Simulator input."
+
+[[effect]]
+id = 116240
+name = "Disdain Harm: damage over time taken"
+game_name = "Disdain Harm"
+source = { Class = { name = "Necromancer", ability_id = 116240 } }
+channels = [{ channel = { DamageTaken = ["DamageOverTime", "Multiplicative"] }, value = -0.15 }]
+condition = { SkillLineAbilityActive = { skill_line = "Bone Tyrant", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Record -15, while a Bone Tyrant ability is active (combat state: conditional)."
+
+[[effect]]
+id = 116270
+name = "Health Avarice: Healing Received (Bone Tyrant)"
+game_name = "Health Avarice"
+source = { Class = { name = "Necromancer", ability_id = 116270 } }
+channels = [{ channel = "HealingTaken", value = 3.0 }]
+condition = { SkillLineSlotted = { skill_line = "Bone Tyrant", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Percentage points per Bone Tyrant ability."
+
+[[effect]]
+id = 116272
+name = "Last Gasp: Max Health"
+game_name = "Last Gasp"
+source = { Class = { name = "Necromancer", ability_id = 116272 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 2412.0 }]
+check = { field = "value1" }
+
+[[effect]]
+id = 147190
+name = "Deadly Bash: Bash cost"
+game_name = "Deadly Bash"
+source = { Passive = { ability_id = 45469 } }
+channels = [{ channel = { CostReductionCCA = ["Bash", "Multiplicative"] }, value = 0.5 }]
+condition = { WeaponEquipped = "OneHandAndShield" }
+check = { field = "value1", scale = -0.01 }
+note = "Record -50: Bash costs 50 % less. Its +500 Bash damage (record 45469) is a flat number on one ability: not written."
+
+[[effect]]
+id = 184873
+name = "Psychic Lesion: Status Effect damage"
+game_name = "Psychic Lesion"
+source = { Class = { name = "Arcanist", ability_id = 184873 } }
+channels = [{ channel = { DamageDone = ["StatusEffects", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 15. The Status Effect Chance (record 201232, 55) has no decided unit: not written."
+
+[[effect]]
+id = 184887
+name = "Splintered Secrets: Physical and Spell Penetration (Herald of the Tome)"
+game_name = "Splintered Secrets"
+source = { Class = { name = "Arcanist", ability_id = 184887 } }
+channels = [{ channel = { Penetration = "All" }, value = 1240.0 }]
+condition = { SkillLineSlotted = { skill_line = "Herald of the Tome", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
+
+[[effect]]
+id = 184923
+name = "Aegis of the Unseen: Armour"
+game_name = "Aegis of the Unseen"
+source = { Class = { name = "Arcanist", ability_id = 184923 } }
+channels = [{ channel = { Armour = "All" }, value = 3271.0 }]
+condition = { SkillLineAbilityActive = { skill_line = "Soldier of Apocrypha", at_least = 1 } }
+check = { field = "value1" }
+note = "While a beneficial Soldier of Apocrypha ability is active on you (combat state: conditional)."
+
+[[effect]]
+id = 185036
+name = "Wellspring of the Abyss: Health, Magicka and Stamina Recovery (Soldier of Apocrypha)"
+game_name = "Wellspring of the Abyss"
+source = { Class = { name = "Arcanist", ability_id = 185036 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 81.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 81.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 81.0 }]
+condition = { SkillLineSlotted = { skill_line = "Soldier of Apocrypha", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Flat recovery."
+
+[[effect]]
+id = 228526
+name = "Piercing Cold: Frost damage"
+game_name = "Piercing Cold"
+source = { Class = { name = "Warden", ability_id = 86196 } }
+channels = [{ channel = { DamageDone = [{ Type = "Frost" }, "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 228526 is the tooltip's number <<2>>: +15 % Frost damage."
+
+[[effect]]
+id = 2147483801
+name = "Expert Summoner: Max Health with a permanent pet"
+source = { Class = { name = "Sorcerer", ability_id = 45199 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.05 }]
+condition = { SelfState = "PetActive" }
+note = "Synthetic id: the same record 45199 as the Magicka and Stamina effect, which is Always. 5 % Max Health while a permanent combat pet is active."
+
+[[effect]]
+id = 2147483802
+name = "Expert Mage: Weapon and Spell Damage (Dark Magic)"
+source = { Class = { name = "Sorcerer", ability_id = 2147483802 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 108.0 }]
+condition = { SkillLineSlotted = { skill_line = "Dark Magic", at_least = 1 } }
+stacking = "Additive"
+note = "Synthetic id: Expert Mage (45195) for the Dark Magic line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
+
+[[effect]]
+id = 2147483803
+name = "Expert Mage: Weapon and Spell Damage (Daedric Summoning)"
+source = { Class = { name = "Sorcerer", ability_id = 2147483803 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 108.0 }]
+condition = { SkillLineSlotted = { skill_line = "Daedric Summoning", at_least = 1 } }
+stacking = "Additive"
+note = "Synthetic id: Expert Mage (45195) for the Daedric Summoning line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
+
+[[effect]]
+id = 2147483804
+name = "Pressure Points: Critical Chance rating (Shadow)"
+source = { Class = { name = "Nightblade", ability_id = 2147483804 } }
+channels = [{ channel = "CriticalChance", value = 438.0 }]
+condition = { SkillLineSlotted = { skill_line = "Shadow", at_least = 1 } }
+stacking = "Additive"
+note = "Synthetic id: Pressure Points (88656) for the Shadow line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
+
+[[effect]]
+id = 2147483805
+name = "Pressure Points: Critical Chance rating (Siphoning)"
+source = { Class = { name = "Nightblade", ability_id = 2147483805 } }
+channels = [{ channel = "CriticalChance", value = 438.0 }]
+condition = { SkillLineSlotted = { skill_line = "Siphoning", at_least = 1 } }
+stacking = "Additive"
+note = "Synthetic id: Pressure Points (88656) for the Siphoning line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
+
+[[effect]]
+id = 45278
+name = "Martial Training: weapon ability cost (Redguard)"
+game_name = "Martial Training"
+source = { Race = { name = "Redguard", ability_id = 45278 } }
+channels = [{ channel = { CostReductionSkillLine = ["One Hand and Shield", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Two Handed", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Dual Wield", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Destruction Staff", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Restoration Staff", "Multiplicative"] }, value = 0.08 }]
+check = { field = "value1", scale = -0.01 }
+note = "Reduces the cost of weapon abilities by 8 % (record -8): one entry per weapon skill line, no channel of its own. The snare reduction (records 121178..121180) is not written."
+
+# --- Roadmap 2.4 slice 3: world and guild skill-line passives, top rank ---
+# `source = { Passive = { ability_id } }`, like every passive: `Build::to_player` switches the effect on
+# only when `Build.passives` lists that ability id (`grant_rule::passive_effect_rules`). A passive with two numbers is two
+# effects that name the same `ability_id`, so one entry in the build turns both on. Roots: `[world_passives]` in roots.toml.
+
+[[effect]]
+id = 40436
+name = "Mage Adept: Mages Guild cost"
+game_name = "Mage Adept"
+source = { Passive = { ability_id = 40436 } }
+channels = [{ channel = { CostReductionSkillLine = ["Mages Guild", "Multiplicative"] }, value = 0.08 }]
+check = { field = "value1", scale = -0.01 }
+note = "Record -8: reduces the Magicka and Health cost of Mages Guild abilities by 8 %. The channel is per skill line, so it covers both resources."

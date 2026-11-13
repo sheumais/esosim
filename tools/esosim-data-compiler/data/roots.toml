@@ -87,8 +87,20 @@ tags = [156, 474, 97, 298]
 [class]
 tags = [324, 335]
 
-[armour_passives]
-tags = [339]
+[armour]
+tags = [338, 339]
 
-[weapon_passives]
+[weapon]
 tags = [337]
+
+[world]
+tags = [340, 341, 342, 343, 344, 345, 361]
+
+[guild]
+tags = [346, 347, 348, 349, 350, 351, 430, 397, 8]
+skill_line = [130]
+
+[alliance]
+tags = [353, 208, 280, 355, 356]
+
+[special]

@@ -11,8 +11,17 @@ pub enum EffectSource {
     Set { set_id: u16, pieces_required: u8 },
     ChampionPoint { cp_id: u32 },
     Mundus { ability_id: u32 },
-    Race { name: String },
-    Class { name: String },
+    /// A racial passive (top rank). `name` is the race that has it, `ability_id` the passive: every effect written for
+    /// the one passive names the same `ability_id`, so a passive with two numbers (two effects) is one entry in the
+    /// build. Like every passive it counts only when `Build::passives` lists `ability_id`.
+    Race { name: String, ability_id: u32 },
+    /// A class passive (top rank): `name` is the class, `ability_id` and the unlocking as for `Race`.
+    Class { name: String, ability_id: u32 },
+    /// Any other passive of a skill line: armour weight, weapon, world and guild lines (Mages Guild, Fighters Guild,
+    /// Undaunted ...). Nothing is on because of gear or class alone: `Build::to_player` switches it on only when
+    /// `Build::passives` lists `ability_id`, because unlocking it is a choice of the build. Every effect written for
+    /// the one passive names the same `ability_id`, so a passive with two numbers (two effects) is one entry in the
+    /// build; its `condition` (armour pieces, weapon) then decides whether it counts.
     Passive { ability_id: u32 },
     ActiveSkill { ability_id: u32 },
     /// Major/Minor, group buffs, synergies.

@@ -2,7 +2,7 @@ use eso_skill_data::enums::skill_line::SkillLine;
 
 use std::sync::LazyLock;
 
-use esosim_types::{EffectDef, EffectSource, SetBehaviour};
+use esosim_types::{ArmourWeight, Condition, EffectDef, EffectSource, SetBehaviour, Stacking};
 
 use crate::{data::enums::gear::ItemType, entity::player::Player};
 
@@ -101,6 +101,58 @@ pub fn set_effect_rules<'a>(effects: impl IntoIterator<Item = &'a EffectDef>) ->
             condition: GrantCondition::EquippedSetCount { set_id, threshold },
         })
         .collect()
+}
+
+/// Which count gives an effect its stacks: "for each piece of Heavy Armor worn" is
+/// `ArmourPieces`, "for each Sorcerer ability slotted" is `SkillLineSlotted`. Looked for at the top of the
+/// condition and inside an `All`; any other condition is decided when the effects are aggregated.
+fn counted_by(condition: &Condition) -> Option<GrantCondition> {
+    match condition {
+        Condition::ArmourPieces { weight, .. } => Some(GrantCondition::EquippedItemTypeCount(match weight {
+            ArmourWeight::Light => ItemType::Light,
+            ArmourWeight::Medium => ItemType::Medium,
+            ArmourWeight::Heavy => ItemType::Heavy,
+        })),
+        Condition::SkillLineSlotted { skill_line, .. } => Some(GrantCondition::ActiveSkillsFromLine(*skill_line)),
+        Condition::All(parts) => parts.iter().find_map(counted_by),
+        _ => None,
+    }
+}
+
+/// One rule per passive written as an effect (roadmap 2.4) that the build has unlocked. Every passive works the same
+/// way: nothing is on unless `unlocked` (the build's `passives`) holds the passive's `ability_id`. The effects whose
+/// source is `Race { name, .. }` / `Class { name, .. }` also have to be named like the build's race / class, so an id
+/// of another race's or class's passive does nothing; `Passive` (armour-weight, weapon, world and guild passives) has
+/// no such restriction. An unlocked passive still has its `condition` decided when the effects are aggregated.
+///
+/// An `Additive` effect whose condition counts something ("per piece of Heavy Armor", "per Shadow ability
+/// slotted": `ArmourPieces`, `SkillLineSlotted`) is on with one stack per piece or ability on the active bar, so its
+/// `value` is the amount for one; every other effect is on with one stack and keeps its `condition` for the
+/// aggregation. Rules come out in effect id order.
+pub fn passive_effect_rules<'a>(
+    effects: impl IntoIterator<Item = &'a EffectDef>,
+    race: &str,
+    class: &str,
+    unlocked: &[u32],
+) -> Vec<GrantRule> {
+    let mut found: Vec<(u32, GrantCondition)> = effects
+        .into_iter()
+        .filter(|def| match &def.source {
+            EffectSource::Race { name, ability_id } => name == race && unlocked.contains(ability_id),
+            EffectSource::Class { name, ability_id } => name == class && unlocked.contains(ability_id),
+            EffectSource::Passive { ability_id } => unlocked.contains(ability_id),
+            _ => false,
+        })
+        .map(|def| {
+            let condition = match def.stacking {
+                Stacking::Additive => counted_by(&def.condition).unwrap_or(GrantCondition::Always),
+                _ => GrantCondition::Always,
+            };
+            (def.id, condition)
+        })
+        .collect();
+    found.sort_unstable_by_key(|(id, _)| *id);
+    found.into_iter().map(|(effect_id, condition)| GrantRule { effect_id, condition }).collect()
 }
 
 #[cfg(test)]
@@ -240,6 +292,64 @@ mod tests {
         assert!(fires(20, &at(ANSUULS_TORMENT_SET_ID, 3)));
         assert!(fires(20, &at(PERFECTED_ANSUULS_TORMENT_SET_ID, 3)));
         assert!(!fires(10, &at(MOONDANCER_SET_ID, 4)));
+    }
+
+    fn passive(id: u32, source: EffectSource, stacking: Stacking, condition: Condition) -> EffectDef {
+        EffectDef { source, stacking, condition, ..set_effect(id, 0, 0) }
+    }
+
+    /// Roadmap 2.4: a passive is on only when the build unlocked it (lists its `ability_id`); a race / class passive
+    /// also has to be the build's own. A per-piece or per-slotted-ability effect gets one stack per piece or ability
+    /// on the active bar.
+    #[test]
+    fn a_counted_passive_gets_one_stack_per_piece_or_slotted_ability() {
+        let heavy = Condition::ArmourPieces { weight: ArmourWeight::Heavy, at_least: 1 };
+        let shadow = Condition::SkillLineSlotted { skill_line: SkillLine::Shadow, at_least: 1 };
+        let class = |name: &str, ability_id| EffectSource::Class { name: name.into(), ability_id };
+        let race = |name: &str, ability_id| EffectSource::Race { name: name.into(), ability_id };
+        let defs = [
+            passive(1, EffectSource::Passive { ability_id: 1 }, Stacking::Additive, heavy.clone()),
+            passive(2, class("Nightblade", 2), Stacking::Additive, shadow.clone()),
+            // a count inside an All is found; any other condition is left to the aggregation
+            passive(3, class("Nightblade", 3), Stacking::Additive, Condition::All(vec![Condition::OnBar(esosim_types::Bar::Front), shadow])),
+            passive(4, EffectSource::Passive { ability_id: 4 }, Stacking::Unique, heavy),
+            passive(5, race("Orc", 5), Stacking::Unique, Condition::Always),
+            // another race / class, and an effect that is not a passive at all
+            passive(6, race("Breton", 6), Stacking::Unique, Condition::Always),
+            passive(7, class("Templar", 7), Stacking::Unique, Condition::Always),
+            passive(8, EffectSource::Food, Stacking::Unique, Condition::Always),
+            // a world / guild passive: two effects of one ability, on only when the build lists the ability
+            passive(9, EffectSource::Passive { ability_id: 90 }, Stacking::Unique, Condition::Always),
+            passive(10, EffectSource::Passive { ability_id: 90 }, Stacking::Unique, Condition::Always),
+            passive(11, EffectSource::Passive { ability_id: 91 }, Stacking::Unique, Condition::Always),
+            // a racial passive of two effects: one ability id, so one entry turns both on
+            passive(12, race("Orc", 5), Stacking::Unique, Condition::Always),
+        ];
+        let ids = |race: &str, class: &str, unlocked: &[u32]| {
+            passive_effect_rules(&defs, race, class, unlocked).iter().map(|r| r.effect_id).collect::<Vec<_>>()
+        };
+        assert!(ids("Orc", "Nightblade", &[]).is_empty(), "nothing is on until it is unlocked");
+        assert_eq!(ids("Orc", "Nightblade", &[1, 2, 3, 4, 5]), [1, 2, 3, 4, 5, 12]);
+        assert_eq!(ids("Orc", "Nightblade", &[90]), [9, 10]);
+        assert_eq!(ids("Orc", "Nightblade", &[91, 90]), [9, 10, 11]);
+        assert_eq!(ids("Orc", "Nightblade", &[6, 7, 8]), Vec::<u32>::new(), "another race's or class's passive, and a food");
+        assert_eq!(ids("Breton", "Templar", &[1, 4, 5, 6, 7]), [1, 4, 6, 7]);
+        let rules = passive_effect_rules(&defs, "Orc", "Nightblade", &[1, 2, 3, 4, 5]);
+
+        let mut player = Player::new();
+        let heavy_piece = GearPiece::new(ItemType::Heavy, 66, None, ItemQuality::Legendary, None, None);
+        for slot in [GearSlot::Chest, GearSlot::Legs, GearSlot::Hands] {
+            player.set_gear_piece(slot, heavy_piece.clone());
+        }
+        player.set_skills(false, vec![36590, 36594]);
+        player.ability_skill_lines.insert(36590, SkillLine::Shadow);
+        player.ability_skill_lines.insert(36594, SkillLine::Shadow);
+        let stacks = |id: u32| rules.iter().find(|r| r.effect_id == id).and_then(|r| r.evaluate(&player));
+        assert_eq!((stacks(1), stacks(2), stacks(3)), (Some(3), Some(2), Some(2)));
+        assert_eq!((stacks(4), stacks(5)), (Some(1), Some(1)), "not counted: one stack, the condition decides");
+        // nothing worn, nothing slotted: the counted rules do not fire
+        let empty = Player::new();
+        assert!(rules[0].evaluate(&empty).is_none() && rules[1].evaluate(&empty).is_none());
     }
 
     #[test]

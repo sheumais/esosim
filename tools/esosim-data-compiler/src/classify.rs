@@ -864,7 +864,7 @@ use esosim_types::{AggKind::{Additive, Multiplicative}, Channel::Resource, Resou
         assert_eq!(chans("reduces the cost of sneak by @"), ["CostReductionCCA(Sneak, Additive)"]);
         assert_eq!(chans("increases the amount of damage you block by @"), ["BlockMitigation"]);
         assert_eq!(chans("increases your damage done to dungeon, trial, and arena monsters by @"), ["DamageDone(Monsters, Multiplicative)"]);
-        assert_eq!(chans("increases your healing with restoration staff spells by @"), ["HealingDoneSkillLine(RestorationStaff)"]);
+        assert_eq!(chans("increases your healing with restoration staff spells by @"), ["HealingDone(SkillLine(RestorationStaff))"]);
     }
 
     #[test]

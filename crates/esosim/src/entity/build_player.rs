@@ -11,14 +11,18 @@
 //! 5. mundus stones
 //! 6. consumables (`Build::food`, `Build::potion`)
 //! 7. buffs the group provides (`Build::external_buffs`)
-//! 8. unlocked passives (`Build::passives`)
-//! 9. race and class passives: every effect whose source is `EffectSource::Race` / `Class` named like the
-//!    build's race / class (roadmap 2.4); only the top rank of each is written, which is what a character at
-//!    the top of the line has
+//! 8. passives (roadmap 2.4), switched on by `passive_effect_rules`. Every passive works one way: it is on only when
+//!    `Build::passives` lists its ability id, so nothing is on because of gear, race or class alone. That holds for
+//!    racial (`EffectSource::Race`), class (`Class`), armour-weight, weapon, world and guild (`Passive`) passives; a
+//!    race or class passive must also be the build's own. Only the top rank of each is written, which is what a
+//!    character at the top of the line has. "Per piece worn" and "per ability slotted" are stacks
+//!    (`Stacking::Additive` with an `ArmourPieces` / `SkillLineSlotted` condition); a weapon passive is gated by
+//!    `WeaponEquipped`, so a bar swap changes which of them count.
 //! Steps 3 to 8 are effects: each is switched on in `Player::active_effects` and aggregated by
 //! `recompute`, which decides their build-time conditions with the player as the context (1.2).
-//! Not gathered yet, because there is no data for them: class, weapon and armour passives (2.4: racials are
-//! in), bar abilities that give stats (2.4), debuffs on the enemy (2.6, 2.9).
+//! Not gathered yet, because there is no data for them: the world and guild passives other than Mage Adept (they need a
+//! compile with the `world_passives` roots, roadmap 2.4), bar abilities that give stats (2.4), debuffs on the enemy
+//! (2.6, 2.9).
 //!
 //! The player is on the front bar; `Player::active_bar` switches it and `recompute` again.
 //!
@@ -27,10 +31,10 @@
 //! [`Build::conditional_effects`] lists those, with their condition as text; [`Build::sheet_against`]
 //! is the second sheet, the same build against an [`Enemy`], where the target-aware effects count.
 
-use esosim_types::{EffectSource, TargetKind};
+use esosim_types::TargetKind;
 
 use crate::data::bundle::Bundle;
-use crate::engine::grant_rule::{GrantRule, all_grant_rules, set_effect_rules};
+use crate::engine::grant_rule::{GrantRule, all_grant_rules, passive_effect_rules, set_effect_rules};
 use crate::engine::registry::EffectRegistry;
 use crate::entity::build::Build;
 use crate::entity::condition_context::TargetContext;
@@ -43,7 +47,8 @@ use crate::stats::sheet::{StatContext, StatSheet, derive_sheet};
 struct Prepared {
     player: Player,
     registry: EffectRegistry,
-    /// Set bonuses written as effects (class 3, roadmap 2.2); they depend on the bundle in use.
+    /// Set bonuses written as effects (class 3, roadmap 2.2) and the passives written as effects (roadmap 2.4); they
+    /// depend on the bundle in use, and the passives on the build's race and class.
     set_effects: Vec<GrantRule>,
 }
 
@@ -122,20 +127,8 @@ impl Build {
         player.active_effects.apply_champion_points(bundle, &self.champion);
         player.set_mundus(bundle, &self.mundus);
         // an id the bundle has no effect for is skipped when aggregating
-        for id in self.food.iter().chain(&self.potion).chain(&self.external_buffs).chain(&self.passives) {
+        for id in self.food.iter().chain(&self.potion).chain(&self.external_buffs) {
             player.active_effects.set(*id, 1);
-        }
-        // race and class passives (roadmap 2.4): the effects written for this race and this class, by name
-        let (race, class) = (format!("{:?}", self.race), format!("{:?}", self.class));
-        for def in bundle.effects.values() {
-            let named = match &def.source {
-                EffectSource::Race { name } => *name == race,
-                EffectSource::Class { name } => *name == class,
-                _ => false,
-            };
-            if named {
-                player.active_effects.set(def.id, 1);
-            }
         }
         // what the target gives the player (the trial dummy's buffs); the build alone does not have them
         if let Some(target) = target {
@@ -146,7 +139,11 @@ impl Build {
 
         // set bonuses written as effects (class 3, roadmap 2.2) are switched on by the set they name
         let registry = EffectRegistry::from_bundle(bundle);
-        let set_effects = set_effect_rules(bundle.effects.values());
+        let mut set_effects = set_effect_rules(bundle.effects.values());
+        // passives (roadmap 2.4): the effects of the passives the build unlocked (`Build::passives`), a race or class
+        // one only if it is this race's or class's; a per-piece or per-slotted-ability one gets its count as stacks
+        let (race, class) = (format!("{:?}", self.race), format!("{:?}", self.class));
+        set_effects.extend(passive_effect_rules(bundle.effects.values(), &race, &class, &self.passives));
         player.recompute_with(&registry, all_grant_rules().into_iter().chain(&set_effects));
         Prepared { player, registry, set_effects }
     }
@@ -491,8 +488,10 @@ mod tests {
         assert_eq!(wearing(ARMOR_OF_THE_SEDUCER_SET_ID, 4, None).channels.get_multiplicative_bps(percent), 0);
         let willow = wearing(WILLOWS_PATH_SET_ID, 5, None);
         for r in [Health, Magicka, Stamina] {
+            // the set's own share: the build's class and armour passives give Recovery too (roadmap 2.4)
             let ch = Channel::Recovery(r, crate::engine::effect::AggKind::Multiplicative);
-            assert_eq!(willow.channels.get_multiplicative_bps(ch), 1800, "{r:?}");
+            let from_set: f64 = willow.explain(ch).into_iter().filter(|(s, _)| matches!(s, EffectSource::Set { .. })).map(|(_, v)| v).sum();
+            assert!((from_set - 0.18).abs() < 1e-9, "{r:?}: {from_set}");
         }
     }
 
@@ -572,6 +571,107 @@ mod tests {
         assert_eq!(from_set(&p, Channel::Power(DamageDoneContext::All, Additive), SET, 5), 0.0);
     }
 
+    /// What one source gives on a channel, summed over its effects.
+    fn from_source(p: &Player, channel: Channel, source: EffectSource) -> f64 {
+        p.explain(channel).into_iter().filter(|(s, _)| *s == source).map(|(_, v)| v).sum()
+    }
+
+    /// The ability id of every passive in the bundle (race, class, armour, weapon, world, guild): a build that has
+    /// unlocked all of them. Whose they are is still decided by the race and class of the build.
+    fn every_passive(bundle: &Bundle) -> Vec<u32> {
+        let mut ids: Vec<u32> = bundle
+            .effects
+            .values()
+            .filter_map(|d| match d.source {
+                EffectSource::Race { ability_id, .. } | EffectSource::Class { ability_id, .. } | EffectSource::Passive { ability_id } => Some(ability_id),
+                _ => None,
+            })
+            .collect();
+        ids.sort_unstable();
+        ids.dedup();
+        ids
+    }
+
+    /// Roadmap 2.4: with no passive unlocked, no passive is on, whatever the build wears, plays or is.
+    #[test]
+    fn no_passive_is_on_until_the_build_unlocks_it() {
+        use crate::data::tables::set_ids::ANSUULS_TORMENT_SET_ID as SET;
+        let bundle = Bundle::embedded();
+        let mut b = wearing_build(SET, 5, Some(ItemType::Sword));
+        b.front_bar = (0..3).filter_map(|i| bundle.abilities_in_skill_line(&eso_skill_data::enums::skill_line::SkillLine::Shadow).get(i).copied()).collect();
+        let passive_source = |s: &EffectSource| matches!(s, EffectSource::Race { .. } | EffectSource::Class { .. } | EffectSource::Passive { .. });
+        let none = b.to_player(bundle);
+        assert!(!none.sources.iter().any(|(s, _)| passive_source(s)), "nothing is unlocked");
+        b.passives = every_passive(bundle);
+        let all = b.to_player(bundle);
+        assert!(all.sources.iter().any(|(s, _)| passive_source(s)), "unlocking them switches them on");
+    }
+
+    /// Roadmap 2.4 slice 2: armour-weight passives count the pieces worn, class passives belong to the build's class,
+    /// "per ability slotted" counts the active bar, and a weapon passive needs its weapon in hand. All of them are
+    /// unlocked here (`every_passive`); a passive that is not listed is not on.
+    #[test]
+    fn armour_class_and_weapon_passives_reach_the_sheet_with_their_counts() {
+        use crate::data::tables::set_ids::ANSUULS_TORMENT_SET_ID as SET;
+        use crate::engine::effect::{AggKind::{Additive, Multiplicative}, ResistableDamageType::All as AllTypes, ResourceKind::Health};
+        use eso_skill_data::enums::skill_line::SkillLine;
+        let bundle = Bundle::embedded();
+        let unlocked = every_passive(bundle);
+        // `wearing` and `wearing_build` with every passive unlocked
+        let worn_build = |set, pieces, weapon| {
+            let mut b = wearing_build(set, pieces, weapon);
+            b.passives = unlocked.clone();
+            b
+        };
+        let worn = |set, pieces, weapon| worn_build(set, pieces, weapon).to_player(bundle);
+        let near = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        let armour = Channel::Armour(AllTypes);
+        let passive = |ability_id| EffectSource::Passive { ability_id };
+
+        // armour weight: Resolve (45533) is 520 per Heavy piece, Juggernaut (45546) 2 % Max Health per piece, and the
+        // Light and Medium passives give nothing to a build in Heavy
+        let five = worn(SET, 5, None);
+        assert_eq!(from_source(&five, armour, passive(45533)), 2600.0);
+        assert!(near(from_source(&five, Channel::Resource(Health, Multiplicative), passive(45546)), 0.10));
+        assert_eq!(from_source(&five, Channel::CriticalChance, passive(45561)), 0.0, "Prodigy is a Light passive");
+        assert_eq!(from_source(&worn(SET, 4, None), armour, passive(45533)), 2080.0);
+        assert_eq!(from_source(&worn(SET, 0, None), armour, passive(45533)), 0.0);
+
+        // class: a Nightblade has Hemorrhage (+10 Critical Damage) and Refreshing Shadows (+15 % Recovery), a Templar
+        // has Piercing Spear (+12) and neither of those
+        let nightblade = |ability_id| EffectSource::Class { name: "Nightblade".into(), ability_id };
+        let templar = |ability_id| EffectSource::Class { name: "Templar".into(), ability_id };
+        let recovery = Channel::Recovery(Health, Multiplicative);
+        assert_eq!(from_source(&five, Channel::CriticalDamage, nightblade(45060)), 10.0);
+        assert!(near(from_source(&five, recovery, nightblade(45103)), 0.15));
+        let mut b = worn_build(SET, 5, None);
+        b.class = PlayerClass::Templar;
+        let p = b.to_player(bundle);
+        assert_eq!(from_source(&p, Channel::CriticalDamage, templar(44046)), 12.0);
+        assert_eq!((from_source(&p, Channel::CriticalDamage, nightblade(45060)), from_source(&p, recovery, nightblade(45103))), (0.0, 0.0));
+
+        // per ability slotted: Dark Vigor (45084) is +5 % Max Health for each Shadow ability on the active bar
+        let shadow: Vec<u32> = bundle.abilities_in_skill_line(&SkillLine::Shadow).iter().copied().take(3).collect();
+        assert_eq!(shadow.len(), 3);
+        let max_health = Channel::Resource(Health, Multiplicative);
+        let mut b = worn_build(SET, 0, None);
+        b.front_bar = shadow[..2].to_vec();
+        b.back_bar = shadow[2..].to_vec();
+        let mut p = b.to_player(bundle);
+        assert!(near(from_source(&p, max_health, nightblade(45084)), 0.10), "two on the front bar");
+        p.active_bar = crate::entity::player::ActiveBar::Backup;
+        let registry = EffectRegistry::from_bundle(bundle);
+        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &unlocked)));
+        assert!(near(from_source(&p, max_health, nightblade(45084)), 0.05), "one on the backup bar");
+
+        // weapon: Sword and Board (45452) is +5 % Weapon and Spell Damage with a sword and shield, not with a sword alone
+        let power = Channel::Power(crate::engine::effect::DamageDoneContext::All, Multiplicative);
+        let mut b = worn_build(SET, 0, Some(ItemType::Sword));
+        assert_eq!(from_source(&b.to_player(bundle), power, passive(45452)), 0.0);
+        b.gear.set_gear_piece(GearSlot::OffHand, GearPiece::new(ItemType::Shield, 66, None, Legendary, None, None));
+        assert!(near(from_source(&b.to_player(bundle), power, passive(45452)), 0.05));
+    }
+
     /// Roadmap 2.4: a build gets the racial passives of its race and no other race's, each says where it
     /// came from, and Spell Attunement's doubling (a combat state) is listed as conditional, not added.
     #[test]
@@ -580,24 +680,54 @@ mod tests {
         use esosim_types::Race;
         let bundle = Bundle::embedded();
         let stamina = Channel::Resource(Stamina, Additive);
+        let unlocked = every_passive(bundle);
         let of = |race: Race| {
             let mut b = build();
             b.race = race;
+            b.passives = unlocked.clone();
             b.to_player(bundle)
         };
         for (race, expected) in [(Race::Orc, 1000), (Race::Redguard, 2000), (Race::Nord, 1500), (Race::Imperial, 2000), (Race::Dunmer, 1910), (Race::Altmer, 0)] {
             assert_eq!(of(race).channels.get(stamina), expected, "{race:?}");
         }
         let orc = of(Race::Orc);
-        assert!(orc.explain(stamina).contains(&(EffectSource::Race { name: "Orc".into() }, 1000.0)));
+        assert!(orc.explain(stamina).contains(&(EffectSource::Race { name: "Orc".into(), ability_id: 45309 }, 1000.0)));
         // two numbers in one tooltip are two effects: Argonian Resistance is Max Health and Disease/Poison resistance
         assert_eq!(of(Race::Argonian).channels.get(Channel::Resource(crate::engine::effect::ResourceKind::Health, Additive)), 1000);
 
+        // nothing is on until it is unlocked, and an id of another race's passive does nothing
+        let mut b = build();
+        b.race = Race::Orc;
+        assert_eq!(b.to_player(bundle).channels.get(stamina), 0, "an Orc who has unlocked nothing");
+        b.passives = vec![45309];
+        assert_eq!(b.to_player(bundle).channels.get(stamina), 1000, "Brawny alone");
+        b.race = Race::Dunmer;
+        assert_eq!(b.to_player(bundle).channels.get(stamina), 0, "Brawny is not a Dunmer passive");
+
         let mut b = build();
         b.race = Race::Breton;
+        b.passives = unlocked.clone();
         assert_eq!(b.to_player(bundle).channels.get(Channel::Armour(Spell)), 2310, "the base bonus; the doubling is not in the sheet");
+        // Spell Attunement is one passive of three effects: the one entry (45262) is all a build lists for it
+        b.passives = vec![45262];
         let listed = b.conditional_effects(bundle, None);
         assert!(listed.iter().any(|e| e.id == 121208), "{listed:?}");
+    }
+
+    /// Roadmap 2.4 slice 3: a world / guild passive is a passive like any other. Mage Adept (40436) cuts the cost of
+    /// Mages Guild abilities by 8 % and counts only when the build lists it; it is the same for any race and class.
+    #[test]
+    fn a_guild_passive_counts_only_when_the_build_lists_it() {
+        use crate::engine::effect::AggKind::Multiplicative;
+        use eso_skill_data::enums::skill_line::SkillLine;
+        const MAGE_ADEPT: u32 = 40436;
+        let bundle = Bundle::embedded();
+        let cost = Channel::CostReductionSkillLine(SkillLine::MagesGuild, Multiplicative);
+        let source = EffectSource::Passive { ability_id: MAGE_ADEPT };
+        let mut b = build();
+        assert_eq!(from_source(&b.to_player(bundle), cost, source.clone()), 0.0, "the passive is not unlocked");
+        b.passives = vec![MAGE_ADEPT];
+        assert!((from_source(&b.to_player(bundle), cost, source) - 0.08).abs() < 1e-9);
     }
 
     #[test]

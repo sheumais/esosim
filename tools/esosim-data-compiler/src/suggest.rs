@@ -77,14 +77,16 @@ fn source_line(category: RootCategory, id: u32) -> String {
     match category {
         RootCategory::Buffs => format!("source = {{ Buff = {{ ability_id = {id} }} }}"),
         RootCategory::Mundus => format!("source = {{ Mundus = {{ ability_id = {id} }} }}"),
-        // a star is not described by its ability (`cp_id` is the star id, which only cp.jsonl knows)
         RootCategory::Cp => format!("# champion points are written in cp_effects.toml (by star id), not here; ability {id}"),
         RootCategory::Skills => format!("source = {{ ActiveSkill = {{ ability_id = {id} }} }} # or Passive"),
-        RootCategory::Racial => "source = { Race = { name = \"TODO\" } }".to_string(),
+        RootCategory::Racial => format!("source = {{ Race = {{ name = \"TODO\", ability_id = {id} }} }}"),
         RootCategory::Consumables => "source = \"Food\" # or \"Potion\"".to_string(),
         RootCategory::Sets => "source = { Set = { set_id = 0, pieces_required = 0 } } # TODO: set id and piece count".to_string(),
-        RootCategory::Class => "source = { Class = { name = \"TODO\" } }".to_string(),
-        RootCategory::ArmourPassives | RootCategory::WeaponPassives => format!("source = {{ Passive = {{ ability_id = {id} }} }}"),
+        RootCategory::Class => format!("source = {{ Class = {{ name = \"TODO\", ability_id = {id} }} }}"),
+        RootCategory::Armour | RootCategory::Weapon => format!("source = {{ Passive = {{ ability_id = {id} }} }}"),
+        // like every passive: on only when the build lists the ability; a second number of the same passive keeps this ability id
+        RootCategory::World => format!("source = {{ Passive = {{ ability_id = {id} }} }}"),
+        _ => format!(""),
     }
 }
 
@@ -284,6 +286,6 @@ mod tests {
         let a = ability(CLASSIFIED);
         assert!(skeleton(&a, RootCategory::Mundus).contains("Mundus = { ability_id = 76617 }"));
         assert!(skeleton(&a, RootCategory::Cp).contains("cp_effects.toml"));
-        assert!(skeleton(&a, RootCategory::Racial).contains("Race = { name = \"TODO\" }"));
+        assert!(skeleton(&a, RootCategory::Racial).contains("Race = { name = \"TODO\", ability_id ="));
     }
 }
