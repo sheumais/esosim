@@ -2,7 +2,7 @@ use eso_skill_data::enums::skill_line::SkillLine;
 
 use std::sync::LazyLock;
 
-use esosim_types::{ArmourWeight, Condition, EffectDef, EffectSource, SetBehaviour, Stacking};
+use esosim_types::{ArmourWeight, Condition, EffectDef, EffectSource, SetBehaviour, Stacking, WeaponType};
 
 use crate::{data::enums::gear::ItemType, entity::player::Player};
 
@@ -10,6 +10,13 @@ use crate::{data::enums::gear::ItemType, entity::player::Player};
 pub enum GrantCondition {
     EquippedItemTypeCount(ItemType),
     ActiveSkillsFromLine(SkillLine),
+    /// One stack per ability on the active bar from any of the build's own class lines (`Player::class`): "for each
+    /// Sorcerer ability slotted" is one count over the three lines.
+    ActiveClassSkills,
+    /// One stack per armour weight worn (Heavy, Medium, Light), 0 to 3: "per type of armour".
+    DistinctArmourWeights,
+    /// One stack per weapon of the type in the hands of the active bar: "each axe" is 0, 1 or 2.
+    WeaponsOfType(WeaponType),
     EquippedSetCount { set_id: u16, threshold: u8 },
     Always,
 }
@@ -27,6 +34,12 @@ impl GrantRule {
                 player.get_number_of_equipped_item_type(&t) as u32,
             GrantCondition::ActiveSkillsFromLine(l) =>
                 player.get_number_of_active_skills_from_skill_line(&l) as u32,
+            GrantCondition::ActiveClassSkills =>
+                player.get_number_of_active_class_skills().unwrap_or(0) as u32,
+            GrantCondition::DistinctArmourWeights =>
+                player.get_number_of_distinct_armour_weights() as u32,
+            GrantCondition::WeaponsOfType(t) =>
+                player.get_number_of_weapons_of_type(t) as u32,
             GrantCondition::EquippedSetCount { set_id, threshold } =>
                 (player.get_number_of_equipped_set(set_id) >= threshold) as u32,
             GrantCondition::Always => 1,
@@ -103,8 +116,9 @@ pub fn set_effect_rules<'a>(effects: impl IntoIterator<Item = &'a EffectDef>) ->
         .collect()
 }
 
-/// Which count gives an effect its stacks: "for each piece of Heavy Armor worn" is
-/// `ArmourPieces`, "for each Sorcerer ability slotted" is `SkillLineSlotted`. Looked for at the top of the
+/// Which count gives an effect its stacks: "for each piece of Heavy Armor worn" is `ArmourPieces`, "per type of armour
+/// worn" is `ArmourWeightsWorn`, "for each Shadow ability slotted" is `SkillLineSlotted` and "for each Sorcerer ability
+/// slotted" is `ClassAbilitiesSlotted`. Looked for at the top of the
 /// condition and inside an `All`; any other condition is decided when the effects are aggregated.
 fn counted_by(condition: &Condition) -> Option<GrantCondition> {
     match condition {
@@ -114,6 +128,9 @@ fn counted_by(condition: &Condition) -> Option<GrantCondition> {
             ArmourWeight::Heavy => ItemType::Heavy,
         })),
         Condition::SkillLineSlotted { skill_line, .. } => Some(GrantCondition::ActiveSkillsFromLine(*skill_line)),
+        Condition::ArmourWeightsWorn { .. } => Some(GrantCondition::DistinctArmourWeights),
+        Condition::ClassAbilitiesSlotted { .. } => Some(GrantCondition::ActiveClassSkills),
+        Condition::WeaponTypeEquipped { weapon, .. } => Some(GrantCondition::WeaponsOfType(*weapon)),
         Condition::All(parts) => parts.iter().find_map(counted_by),
         _ => None,
     }
@@ -126,9 +143,12 @@ fn counted_by(condition: &Condition) -> Option<GrantCondition> {
 /// no such restriction. An unlocked passive still has its `condition` decided when the effects are aggregated.
 ///
 /// An `Additive` effect whose condition counts something ("per piece of Heavy Armor", "per Shadow ability
-/// slotted": `ArmourPieces`, `SkillLineSlotted`) is on with one stack per piece or ability on the active bar, so its
+/// slotted": `ArmourPieces`, `SkillLineSlotted`) is on with one stack per piece, weight or ability on the active bar, so its
 /// `value` is the amount for one; every other effect is on with one stack and keeps its `condition` for the
 /// aggregation. Rules come out in effect id order.
+///
+/// The counts are `ArmourPieces` (pieces of one weight), `ArmourWeightsWorn` (how many weights), `SkillLineSlotted` (one
+/// line) and `ClassAbilitiesSlotted` (the build's three class lines together).
 pub fn passive_effect_rules<'a>(
     effects: impl IntoIterator<Item = &'a EffectDef>,
     race: &str,
@@ -350,6 +370,116 @@ mod tests {
         // nothing worn, nothing slotted: the counted rules do not fire
         let empty = Player::new();
         assert!(rules[0].evaluate(&empty).is_none() && rules[1].evaluate(&empty).is_none());
+    }
+
+    fn line_named(name: &str) -> SkillLine {
+        (0u32..4096).filter_map(|i| SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap()
+    }
+
+    /// Roadmap 2.4: "each axe" is a count of the weapons of one type in the hands of the active bar.
+    #[test]
+    fn weapons_of_a_type_are_counted_as_stacks() {
+        let each_axe = Condition::All(vec![
+            Condition::WeaponEquipped(esosim_types::WeaponKind::DualWield),
+            Condition::WeaponTypeEquipped { weapon: WeaponType::Axe, at_least: 1 },
+        ]);
+        let defs = [
+            passive(1, EffectSource::Passive { ability_id: 1 }, Stacking::Additive, each_axe.clone()),
+            passive(2, EffectSource::Passive { ability_id: 1 }, Stacking::Unique, each_axe),
+        ];
+        let rules = passive_effect_rules(&defs, "Dunmer", "Nightblade", &[1]);
+        let stacks = |player: &Player, id: u32| rules.iter().find(|r| r.effect_id == id).and_then(|r| r.evaluate(player));
+        let piece = |t| GearPiece::new(t, 66, None, ItemQuality::Legendary, None, None);
+        let mut player = Player::new();
+        assert_eq!(stacks(&player, 1), None);
+        player.set_gear_piece(GearSlot::MainHand, piece(ItemType::Axe));
+        assert_eq!(stacks(&player, 1), Some(1));
+        player.set_gear_piece(GearSlot::OffHand, piece(ItemType::Axe));
+        assert_eq!(stacks(&player, 1), Some(2));
+        assert_eq!(stacks(&player, 2), Some(1), "not counted: one stack, the condition decides");
+    }
+
+    /// Roadmap 2.4: "per type of armour worn" and "per class ability slotted" are counts of their own.
+    #[test]
+    fn distinct_weights_and_class_abilities_are_counted_as_stacks() {
+        let weights = Condition::ArmourWeightsWorn { at_least: 1 };
+        let class = Condition::ClassAbilitiesSlotted { at_least: 1 };
+        let nightblade = |ability_id| EffectSource::Class { name: "Nightblade".into(), ability_id };
+        let defs = [
+            passive(1, EffectSource::Passive { ability_id: 1 }, Stacking::Additive, weights.clone()),
+            passive(2, nightblade(2), Stacking::Additive, class.clone()),
+            // inside an All; and not counted when the effect is not Additive
+            passive(3, nightblade(3), Stacking::Additive, Condition::All(vec![Condition::OnBar(esosim_types::Bar::Front), class.clone()])),
+            passive(4, nightblade(4), Stacking::Unique, class),
+            passive(5, EffectSource::Passive { ability_id: 5 }, Stacking::Unique, weights),
+        ];
+        let rules = passive_effect_rules(&defs, "Dunmer", "Nightblade", &[1, 2, 3, 4, 5]);
+        assert_eq!(rules.iter().map(|r| r.effect_id).collect::<Vec<_>>(), [1, 2, 3, 4, 5]);
+
+        let mut player = Player::new();
+        player.class = Some(esosim_types::PlayerClass::Nightblade);
+        let stacks = |player: &Player, id: u32| rules.iter().find(|r| r.effect_id == id).and_then(|r| r.evaluate(player));
+        // nothing worn, nothing slotted: neither counted rule fires
+        assert_eq!((stacks(&player, 1), stacks(&player, 2)), (None, None));
+
+        // heavy x3 and a medium head: two weights, however many pieces
+        let piece = |t| GearPiece::new(t, 66, None, ItemQuality::Legendary, None, None);
+        for slot in [GearSlot::Chest, GearSlot::Legs, GearSlot::Hands] {
+            player.set_gear_piece(slot, piece(ItemType::Heavy));
+        }
+        player.set_gear_piece(GearSlot::Head, piece(ItemType::Medium));
+        assert_eq!(stacks(&player, 1), Some(2));
+        player.set_gear_piece(GearSlot::Feet, piece(ItemType::Light));
+        assert_eq!(stacks(&player, 1), Some(3));
+        assert_eq!(stacks(&player, 5), Some(1), "not counted: one stack, the condition decides");
+
+        // Shadow, Assassination and Siphoning abilities are one count; a Sorcerer line and a guild line are not
+        player.set_skills(false, vec![1, 2, 3, 4, 5]);
+        player.ability_skill_lines.extend([
+            (1, line_named("Shadow")),
+            (2, line_named("Assassination")),
+            (3, line_named("Siphoning")),
+            (4, line_named("Storm Calling")),
+            (5, SkillLine::MagesGuild),
+        ]);
+        assert_eq!((stacks(&player, 2), stacks(&player, 3), stacks(&player, 4)), (Some(3), Some(3), Some(1)));
+        player.class = Some(esosim_types::PlayerClass::Sorcerer);
+        assert_eq!(stacks(&player, 2), Some(1));
+        player.class = None;
+        assert_eq!(stacks(&player, 2), None, "no class, nothing counted");
+    }
+
+    /// Roadmap 2.4, gap "a skill that gives its buff from either bar": an effect conditioned on
+    /// `AbilitySlottedAnyBar` is on whichever bar is active, where `AbilitySlotted` follows the active bar only.
+    #[test]
+    fn a_buff_from_either_bar_survives_a_bar_swap() {
+        use crate::engine::registry::EffectRegistry;
+        use crate::entity::player::ActiveBar;
+        use esosim_types::{Channel, ChannelValue};
+        const SKILL: u32 = 24163;
+        let buff = |id, condition| EffectDef {
+            channels: vec![ChannelValue { channel: Channel::CriticalChance, value: 100.0, value_per_stack: 0.0 }],
+            ..passive(id, EffectSource::Passive { ability_id: id }, Stacking::Unique, condition)
+        };
+        let defs = [
+            buff(1, Condition::AbilitySlottedAnyBar { ability_id: SKILL }),
+            buff(2, Condition::AbilitySlotted { ability_id: SKILL }),
+        ];
+        let rules = passive_effect_rules(&defs, "Dunmer", "Nightblade", &[1, 2]);
+        let registry = EffectRegistry::from_defs(defs.iter().cloned());
+        // the skill is on the back bar only: effect 1 counts on both bars, effect 2 only while the back bar is active
+        let crit = |player: &mut Player| {
+            player.recompute_with(&registry, &rules);
+            player.explain(Channel::CriticalChance).into_iter().map(|(_, v)| v).sum::<f64>()
+        };
+        let mut player = Player::new();
+        player.set_skills(true, vec![SKILL]);
+        assert_eq!(crit(&mut player), 100.0, "front bar active: only the either-bar buff");
+        player.active_bar = ActiveBar::Backup;
+        assert_eq!(crit(&mut player), 200.0, "back bar active: both");
+        player.active_bar = ActiveBar::Front;
+        player.set_skills(true, vec![]);
+        assert_eq!(crit(&mut player), 0.0, "on no bar: neither");
     }
 
     #[test]

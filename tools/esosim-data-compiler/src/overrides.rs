@@ -80,14 +80,9 @@ pub struct Override {
     pub check: Option<ValueCheck>,
 }
 
-impl Override {
-    /// Synthetic ids (no ability behind them) start here; they are not looked up in the bundle.
-    pub const SYNTHETIC_ID_START: u32 = 0x8000_0000;
-
-    pub fn is_synthetic(&self) -> bool {
-        self.def.id >= Self::SYNTHETIC_ID_START
-    }
-}
+/// Ids from here up cannot be an ability's. Nothing may use them: an effect with no ability behind it is a gap in
+/// the architecture, to be flagged in the roadmap, not given an invented id.
+const NO_ABILITY_HAS_AN_ID_FROM: u32 = 0x8000_0000;
 
 /// Parse `overrides.toml`, sorted by id. Rejects duplicate ids, unknown fields, an empty
 /// `channels` list and a `check` that points at nothing.
@@ -99,6 +94,9 @@ pub fn parse(text: &str) -> Result<Vec<Override>, String> {
         let at = |msg: &str| format!("overrides.toml: effect {} (`{}`): {msg}", r.id, r.name);
         if !seen.insert(r.id) {
             return Err(at("duplicate id"));
+        }
+        if r.id >= NO_ABILITY_HAS_AN_ID_FROM {
+            return Err(at("synthetic ids are not allowed: write the effect against the ability record it comes from, or flag the gap in the roadmap"));
         }
         if r.channels.is_empty() {
             return Err(at("has no channels"));
@@ -215,9 +213,8 @@ note = "Red CP"
     }
 
     #[test]
-    fn synthetic_ids_are_recognised() {
-        let v = parse(&SAMPLE.replace("id = 142035", "id = 2147483650")).unwrap();
-        assert!(v.iter().any(Override::is_synthetic));
-        assert!(!v.iter().all(Override::is_synthetic));
+    fn synthetic_ids_are_refused() {
+        let err = parse(&SAMPLE.replace("id = 142035", "id = 2147483650")).unwrap_err();
+        assert!(err.contains("synthetic ids are not allowed"), "{err}");
     }
 }

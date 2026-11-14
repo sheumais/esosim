@@ -74,7 +74,13 @@ impl Channel {
             | DetectionRadius
             | MountSpeed
             | ResurrectionSpeed
-            | StatusEffectDuration => Bucket::Additive,
+            | StatusEffectDuration
+            | SwimmingSpeed
+            | GoldGain
+            | AlliancePointGain
+            | InspirationGain
+            | SneakEntryTime
+            | DurationSkillLine(_) => Bucket::Additive,
         }
     }
 }

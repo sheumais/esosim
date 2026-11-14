@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use esosim_types::{CpLoadout, MundusLoadout, PlayerClass, Race};
+use esosim_types::{CpLoadout, Location, MundusLoadout, PlayerClass, Race};
 
 use crate::entity::{enemy::EnemyPreset, gear::Loadout};
 use crate::stats::sheet::Attributes;
@@ -44,6 +44,10 @@ pub struct Build {
     /// be the build's own. Its own condition (armour pieces, weapon) then decides whether it counts.
     #[serde(default)]
     pub passives: Vec<u32>,
+    /// Where the character is: not in a PvP area, in one, or near a Keep (Combat Medic, Battle Resurrection).
+    /// `None` = not said, which leaves the location conditions undecided (such an effect is listed as conditional).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub location: Option<Location>,
     #[serde(default)]
     pub enemy: EnemyPreset,
 }
@@ -87,6 +91,7 @@ mod tests {
             potion: None,
             external_buffs: vec![5],
             passives: vec![],
+            location: None,
             enemy: EnemyPreset::Custom { max_health: 21_000_000.0, resistance: 18_200, debuffs: vec![61743] },
         }
     }
@@ -104,5 +109,14 @@ mod tests {
         assert_eq!(build.gear, Loadout::default());
         assert_eq!(build.enemy, EnemyPreset::TrialDummy);
         assert!(build.front_bar.is_empty() && build.food.is_none());
+        assert_eq!(build.location, None);
+    }
+
+    #[test]
+    fn a_location_is_optional_and_survives_json() {
+        let mut build = sample();
+        assert!(!build.to_json().unwrap().contains("location"), "not said, not written");
+        build.location = Some(Location::NearKeep);
+        assert_eq!(Build::from_json(&build.to_json().unwrap()).unwrap(), build);
     }
 }

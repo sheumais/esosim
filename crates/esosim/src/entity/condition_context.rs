@@ -4,13 +4,14 @@
 //! build itself decides, on the **active bar**: set pieces, armour weights, slotted skill lines
 //! and abilities, the bar, the weapon setup and the class. Everything combat-time (health, buffs,
 //! posture, a target) is left at the trait default, `None`, so such an effect shows as
-//! "conditional" and the calculator leaves it out.
+//! "conditional" and the calculator leaves it out. Where the character is (`Player::location`, from
+//! `Build::location`) is answered only once the build says; until then it is `None` too.
 //!
 //! [`TargetContext`] is the target-aware second pass: the same player plus an [`Enemy`], which
 //! additionally answers the target's health and debuffs and, when the caller says what the target
 //! is, `TargetIs`. The simulator (Stage 5) will implement the trait over live state instead.
 
-use esosim_types::{ArmourWeight, Bar, ConditionContext, PlayerClass, TargetKind, WeaponKind};
+use esosim_types::{ArmourWeight, Bar, ConditionContext, Location, PlayerClass, TargetKind, WeaponKind, WeaponType};
 use eso_skill_data::enums::skill_line::SkillLine;
 
 use crate::data::enums::gear::{GearSlot, ItemType};
@@ -36,6 +37,14 @@ impl Player {
         (self.gear.get_gear_piece(&main), self.gear.get_gear_piece(&off))
     }
 
+    /// How many weapons of `weapon` type are in the main and off hand of the active bar (`Condition::WeaponTypeEquipped`,
+    /// `GrantCondition::WeaponsOfType`). A one-handed and a two-handed sword are both swords, a two-handed weapon is one
+    /// weapon however much it counts towards set pieces, and a shield, a poison or an empty hand is none.
+    pub fn get_number_of_weapons_of_type(&self, weapon: WeaponType) -> u8 {
+        let (main, off) = self.active_hands();
+        [main, off].into_iter().flatten().filter(|piece| weapon_type_of(piece.item_type) == Some(weapon)).count() as u8
+    }
+
     /// The weapon setup on the active bar, named as the weapon skill lines name it. `None` when no
     /// setup is complete: an empty main hand, or a one-handed weapon with nothing (or a poison) in
     /// the off hand, which neither One Hand and Shield nor Dual Wield passives count.
@@ -54,6 +63,20 @@ impl Player {
             ItemType::HealingStaff => Some(WeaponKind::RestorationStaff),
             _ => None,
         }
+    }
+}
+
+/// The weapon type of an item, `None` for everything that is not a sword, axe, mace, dagger or Destruction Staff.
+fn weapon_type_of(item: ItemType) -> Option<WeaponType> {
+    match item {
+        ItemType::Sword | ItemType::TwoHandedSword => Some(WeaponType::Sword),
+        ItemType::Axe | ItemType::TwoHandedAxe => Some(WeaponType::Axe),
+        ItemType::Mace | ItemType::TwoHandedMace => Some(WeaponType::Mace),
+        ItemType::Dagger => Some(WeaponType::Dagger),
+        ItemType::FireStaff => Some(WeaponType::FireStaff),
+        ItemType::FrostStaff => Some(WeaponType::FrostStaff),
+        ItemType::LightningStaff => Some(WeaponType::LightningStaff),
+        _ => None,
     }
 }
 
@@ -92,6 +115,11 @@ impl ConditionContext for Player {
         Some(self.weapon_setup() == Some(kind))
     }
 
+    /// The hands of the active bar are known, so this is never unknown.
+    fn weapons_of_type(&self, weapon: WeaponType) -> Option<u8> {
+        Some(self.get_number_of_weapons_of_type(weapon))
+    }
+
     /// `None` until `Player::class` is set.
     fn class(&self) -> Option<PlayerClass> {
         self.class
@@ -100,6 +128,35 @@ impl ConditionContext for Player {
     /// The build either names a food or it does not, so this is never unknown.
     fn food_active(&self) -> Option<bool> {
         Some(self.food.is_some())
+    }
+
+    /// How many of Heavy, Medium and Light have a piece worn: never unknown.
+    fn armour_weights_worn(&self) -> Option<u8> {
+        Some(self.get_number_of_distinct_armour_weights())
+    }
+
+    /// Unknown (`None`) while the class is not set, and, as for `skill_line_slotted`, while the abilities on the bar
+    /// have no skill line recorded.
+    fn class_abilities_slotted(&self) -> Option<u8> {
+        if self.ability_skill_lines.is_empty() && !self.active_bar_abilities().is_empty() {
+            return None;
+        }
+        self.get_number_of_active_class_skills()
+    }
+
+    /// Both bars are known to the player, so this is never unknown.
+    fn ability_slotted_any_bar(&self, ability_id: u32) -> Option<bool> {
+        Some(self.is_ability_slotted_on_either_bar(ability_id))
+    }
+
+    /// `None` until the build says where the character is (`Player::location`).
+    fn in_pvp_area(&self) -> Option<bool> {
+        self.location.map(Location::in_pvp_area)
+    }
+
+    /// `None` until the build says where the character is (`Player::location`).
+    fn near_keep(&self) -> Option<bool> {
+        self.location.map(Location::near_keep)
     }
 }
 
@@ -127,8 +184,14 @@ impl ConditionContext for TargetContext<'_> {
     fn ability_slotted(&self, ability_id: u32) -> Option<bool> { self.player.ability_slotted(ability_id) }
     fn on_bar(&self, bar: Bar) -> Option<bool> { self.player.on_bar(bar) }
     fn weapon_equipped(&self, kind: WeaponKind) -> Option<bool> { self.player.weapon_equipped(kind) }
+    fn weapons_of_type(&self, weapon: WeaponType) -> Option<u8> { self.player.weapons_of_type(weapon) }
     fn class(&self) -> Option<PlayerClass> { self.player.class() }
     fn food_active(&self) -> Option<bool> { self.player.food_active() }
+    fn armour_weights_worn(&self) -> Option<u8> { self.player.armour_weights_worn() }
+    fn class_abilities_slotted(&self) -> Option<u8> { self.player.class_abilities_slotted() }
+    fn ability_slotted_any_bar(&self, ability_id: u32) -> Option<bool> { self.player.ability_slotted_any_bar(ability_id) }
+    fn in_pvp_area(&self) -> Option<bool> { self.player.in_pvp_area() }
+    fn near_keep(&self) -> Option<bool> { self.player.near_keep() }
 
     fn target_debuff_active(&self, id: u32) -> Option<bool> {
         Some(self.enemy.active_effects.has(id))
@@ -293,7 +356,6 @@ mod tests {
             Condition::SelfAfflicted(Affliction::Stunned),
             Condition::TargetAfflicted(Affliction::Snared),
             Condition::InForm(Form::Werewolf),
-            Condition::InPvpArea,
             Condition::TargetIs(TargetKind::Monster),
             Condition::SkillLineAbilityActive { skill_line: SkillLine::Support, at_least: 1 },
             Condition::RecentlyOccurred { event: TriggerEvent::Kill, within_ms: 2000 },
@@ -306,6 +368,98 @@ mod tests {
         let mixed = |first| Condition::All(vec![first, Condition::InCombat]);
         assert_eq!(holds(mixed(Condition::OnBar(Bar::Front)), &p), None);
         assert_eq!(holds(mixed(Condition::OnBar(Bar::Backup)), &p), Some(false));
+    }
+
+    #[test]
+    fn the_location_is_unknown_until_the_build_says_and_a_keep_is_a_pvp_area() {
+        let mut p = player();
+        for c in [Condition::InPvpArea, Condition::NearKeep] {
+            assert!(c.is_build_time());
+            assert_eq!(holds(c, &p), None);
+        }
+        let asks = |p: &Player| (holds(Condition::InPvpArea, p), holds(Condition::NearKeep, p));
+        p.location = Some(Location::Pve);
+        assert_eq!(asks(&p), (Some(false), Some(false)));
+        p.location = Some(Location::PvpArea);
+        assert_eq!(asks(&p), (Some(true), Some(false)));
+        p.location = Some(Location::NearKeep);
+        assert_eq!(asks(&p), (Some(true), Some(true)));
+        // the target pass keeps the player's answer
+        let enemy = dummy(0.0, 0.0, None);
+        let ctx = TargetContext::new(&p, &enemy, &[]);
+        assert_eq!(Condition::NearKeep.evaluate(&ctx), Some(true));
+        assert_eq!(Condition::InPvpArea.evaluate(&ctx), Some(true));
+    }
+
+    #[test]
+    fn armour_weights_are_counted_by_type() {
+        let p = player(); // three heavy pieces and a medium head
+        let weights = |n| Condition::ArmourWeightsWorn { at_least: n };
+        assert_eq!(holds(weights(2), &p), Some(true));
+        assert_eq!(holds(weights(3), &p), Some(false));
+        assert!(weights(1).is_build_time());
+        let enemy = dummy(0.0, 0.0, None);
+        assert_eq!(weights(2).evaluate(&TargetContext::new(&p, &enemy, &[])), Some(true));
+    }
+
+    #[test]
+    fn class_abilities_are_counted_over_the_whole_class_on_the_active_bar() {
+        let line = |name: &str| (0u32..4096).filter_map(|i| SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap();
+        let mut p = player(); // a Necromancer
+        p.ability_skill_lines = [(10, line("Bone Tyrant")), (11, line("Grave Lord")), (20, line("Living Death")), (21, SkillLine::Support)].into();
+        p.backup_abilities = vec![20, 21];
+        let slotted = |n| Condition::ClassAbilitiesSlotted { at_least: n };
+        assert_eq!(holds(slotted(2), &p), Some(true));
+        assert_eq!(holds(slotted(3), &p), Some(false));
+        p.active_bar = ActiveBar::Backup;
+        assert_eq!(holds(slotted(1), &p), Some(true));
+        assert_eq!(holds(slotted(2), &p), Some(false), "the guild-line ability on the back bar does not count");
+        // unknown, as for a skill line, while the bar has abilities and no line is known; unknown with no class
+        let mut loading = Player::new();
+        loading.class = Some(PlayerClass::Necromancer);
+        loading.primary_abilities = vec![10];
+        assert_eq!(holds(slotted(1), &loading), None);
+        assert_eq!(holds(slotted(1), &Player::new()), None);
+        loading.primary_abilities.clear();
+        assert_eq!(holds(slotted(1), &loading), Some(false));
+    }
+
+    #[test]
+    fn weapons_are_counted_by_type_on_the_active_bar() {
+        let mut p = player(); // a sword and a dagger on the front bar, a bow on the back bar
+        let has = |weapon, at_least| Condition::WeaponTypeEquipped { weapon, at_least };
+        assert_eq!(holds(has(WeaponType::Sword, 1), &p), Some(true));
+        assert_eq!(holds(has(WeaponType::Sword, 2), &p), Some(false));
+        assert_eq!(holds(has(WeaponType::Dagger, 1), &p), Some(true));
+        assert_eq!(holds(has(WeaponType::Axe, 1), &p), Some(false));
+        // each hand counts
+        p.set_gear_piece(GearSlot::OffHand, piece(ItemType::Sword, None));
+        assert_eq!(p.get_number_of_weapons_of_type(WeaponType::Sword), 2);
+        assert_eq!(p.get_number_of_weapons_of_type(WeaponType::Dagger), 0);
+        // a two-handed sword is one sword, and the other bar is not asked
+        p.set_gear_piece(GearSlot::MainHand, piece(ItemType::TwoHandedSword, None));
+        p.set_gear_piece(GearSlot::OffHand, piece(ItemType::Shield, None));
+        assert_eq!(p.get_number_of_weapons_of_type(WeaponType::Sword), 1);
+        p.active_bar = ActiveBar::Backup; // a bow is none of the types
+        assert_eq!(p.get_number_of_weapons_of_type(WeaponType::Sword), 0);
+        // the target pass hands the answer through
+        let enemy = dummy(0.0, 0.0, None);
+        p.active_bar = ActiveBar::Front;
+        assert_eq!(has(WeaponType::Sword, 1).evaluate(&TargetContext::new(&p, &enemy, &[])), Some(true));
+    }
+
+    #[test]
+    fn a_skill_can_be_found_on_either_bar() {
+        let mut p = player(); // 10, 11 on the front bar, 20, 21 on the back bar, front active
+        let anywhere = |id| Condition::AbilitySlottedAnyBar { ability_id: id };
+        assert_eq!(holds(anywhere(10), &p), Some(true));
+        assert_eq!(holds(anywhere(20), &p), Some(true), "on the back bar, still found");
+        assert_eq!(holds(Condition::AbilitySlotted { ability_id: 20 }, &p), Some(false), "the active-bar question is unchanged");
+        assert_eq!(holds(anywhere(99), &p), Some(false));
+        p.active_bar = ActiveBar::Backup;
+        assert_eq!(holds(anywhere(10), &p), Some(true), "a bar swap does not lose it");
+        let enemy = dummy(0.0, 0.0, None);
+        assert_eq!(anywhere(10).evaluate(&TargetContext::new(&p, &enemy, &[])), Some(true));
     }
 
     fn dummy(max_health: f64, current_health: f64, debuff: Option<(u32, u32)>) -> Enemy {

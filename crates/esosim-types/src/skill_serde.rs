@@ -32,6 +32,11 @@ fn find<T, I>(ids: impl Iterator<Item = I>, from_id: impl Fn(I) -> Option<T>, na
 by_name!(mechanic, eso_skill_data::enums::mechanic::Mechanic, u8, 0u8..=u8::MAX, "mechanic");
 by_name!(skill_line, eso_skill_data::enums::skill_line::SkillLine, u32, 0u32..4096, "skill line");
 
+/// The skill line the game calls `name` ("Storm Calling"), or `None` when `eso_skill_data` has no line of that name.
+pub fn skill_line_named(name: &str) -> Option<eso_skill_data::enums::skill_line::SkillLine> {
+    find(0u32..4096, |i| eso_skill_data::enums::skill_line::SkillLine::from_id(&i), |v| v.as_str(), name)
+}
+
 #[cfg(test)]
 mod tests {
     use eso_skill_data::enums::{mechanic::Mechanic, skill_line::SkillLine};

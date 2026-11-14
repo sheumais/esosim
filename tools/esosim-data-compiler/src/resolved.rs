@@ -213,10 +213,11 @@ pub enum RootCategory {
     Guild,
     Alliance,
     Special,
+    ClassMastery,
 }
 
 impl RootCategory {
-    pub const ALL: [RootCategory; 14] = [
+    pub const ALL: [RootCategory; 15] = [
         RootCategory::Skills,
         RootCategory::Sets,
         RootCategory::Cp,
@@ -231,6 +232,7 @@ impl RootCategory {
         RootCategory::Guild,
         RootCategory::Alliance,
         RootCategory::Special,
+        RootCategory::ClassMastery,
     ];
 
     /// The name used in `roots.toml` and in `categories`.
@@ -250,6 +252,7 @@ impl RootCategory {
             RootCategory::Guild => "guild",
             RootCategory::Alliance => "alliance",
             RootCategory::Special => "special",
+            RootCategory::ClassMastery => "class_mastery",
         }
     }
 

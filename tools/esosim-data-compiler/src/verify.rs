@@ -180,46 +180,44 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
             r.errors.push(format!("{who}: the id is also written by hand in {file}; the effect would count twice"));
         }
 
-        if !o.is_synthetic() {
-            match by_id.get(&o.def.id) {
-                None => r.errors.push(format!(
-                    "{who}: ability {} is not in the bundle (removed or renumbered by a patch?)",
-                    o.def.id
-                )),
-                Some(a) => {
-                    if !same_name(&a.name, &o.game_name) {
-                        r.errors.push(format!(
-                            "{who}: the game calls ability {} `{}`, the override says `{}`",
-                            o.def.id, a.name, o.game_name
-                        ));
-                    }
-                    if let Some(check) = &o.check {
-                        // `overrides::parse` already made sure the field name and channel index are valid
-                        let minus = match check.minus {
-                            None => Some(0.0),
-                            Some(other) => {
-                                let v = by_id.get(&other).and_then(|m| record_value(m, &check.field));
-                                if v.is_none() {
-                                    r.errors.push(format!("{who}: check.minus names ability {other}, which is not in the bundle"));
-                                }
-                                v
+        match by_id.get(&o.def.id) {
+            None => r.errors.push(format!(
+                "{who}: ability {} is not in the bundle (removed or renumbered by a patch?)",
+                o.def.id
+            )),
+            Some(a) => {
+                if !same_name(&a.name, &o.game_name) {
+                    r.errors.push(format!(
+                        "{who}: the game calls ability {} `{}`, the override says `{}`",
+                        o.def.id, a.name, o.game_name
+                    ));
+                }
+                if let Some(check) = &o.check {
+                    // `overrides::parse` already made sure the field name and channel index are valid
+                    let minus = match check.minus {
+                        None => Some(0.0),
+                        Some(other) => {
+                            let v = by_id.get(&other).and_then(|m| record_value(m, &check.field));
+                            if v.is_none() {
+                                r.errors.push(format!("{who}: check.minus names ability {other}, which is not in the bundle"));
                             }
-                        };
-                        if let (Some(expected), Some(cv)) = (
-                            record_value(a, &check.field).zip(minus).map(|(v, m)| (v - m) * check.scale),
-                            o.def.channels.get(check.channel),
-                        ) {
-                            if (cv.value - expected).abs() > 1e-6 * expected.abs().max(1.0) {
-                                r.errors.push(format!(
-                                    "{who}: channel {} has value {} but the record's {} is {} (x {} = {})",
-                                    check.channel,
-                                    cv.value,
-                                    check.field,
-                                    record_value(a, &check.field).unwrap_or(0.0),
-                                    check.scale,
-                                    expected
-                                ));
-                            }
+                            v
+                        }
+                    };
+                    if let (Some(expected), Some(cv)) = (
+                        record_value(a, &check.field).zip(minus).map(|(v, m)| (v - m) * check.scale),
+                        o.def.channels.get(check.channel),
+                    ) {
+                        if (cv.value - expected).abs() > 1e-6 * expected.abs().max(1.0) {
+                            r.errors.push(format!(
+                                "{who}: channel {} has value {} but the record's {} is {} (x {} = {})",
+                                check.channel,
+                                cv.value,
+                                check.field,
+                                record_value(a, &check.field).unwrap_or(0.0),
+                                check.scale,
+                                expected
+                            ));
                         }
                     }
                 }
@@ -248,7 +246,7 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
                     problems.push(format!("its condition asks about buff {id}, which is not in the bundle or any effect file"));
                 }
             }
-            Condition::AbilitySlotted { ability_id } => {
+            Condition::AbilitySlotted { ability_id } | Condition::AbilitySlottedAnyBar { ability_id } => {
                 if !by_id.contains_key(ability_id) {
                     problems.push(format!("its condition needs ability {ability_id}, which is not in the bundle"));
                 }
@@ -429,11 +427,12 @@ mod tests {
 
     #[test]
     fn referenced_ids_must_exist() {
-        let cond = "condition = { All = [{ SelfBuffActive = 99 }, { SetPieces = { set_id = 7, at_least = 5 } }, { AbilitySlotted = { ability_id = 98 } }] }\n";
+        let cond = "condition = { All = [{ SelfBuffActive = 99 }, { SetPieces = { set_id = 7, at_least = 5 } }, { AbilitySlotted = { ability_id = 98 } }, { AbilitySlottedAnyBar = { ability_id = 97 } }] }\n";
         let r = run(ABILITIES, &effect(cond), ROOTS);
         assert!(has_error(&r, "asks about buff 99"), "{:?}", r.errors);
         assert!(has_error(&r, "pieces of set 7"), "{:?}", r.errors);
         assert!(has_error(&r, "needs ability 98"), "{:?}", r.errors);
+        assert!(has_error(&r, "needs ability 97"), "{:?}", r.errors);
         // a buff that is in the bundle, a set that exists, and a buff another effect file defines are fine
         let ok = "condition = { All = [{ SelfBuffActive = 61746 }, { SetPieces = { set_id = 19, at_least = 5 } }] }\n";
         assert!(run(ABILITIES, &effect(ok), ROOTS).ok());
@@ -453,9 +452,9 @@ mod tests {
     }
 
     #[test]
-    fn synthetic_ids_are_not_looked_up() {
+    fn a_synthetic_id_fails() {
         let toml = "[[effect]]\nid = 2147483700\nname = \"Synthetic\"\nsource = \"Food\"\nchannels = [{ channel = \"CriticalChance\", value = 1.0 }]\n";
-        assert!(run(ABILITIES, toml, ROOTS).ok());
+        assert!(has_error(&run(ABILITIES, toml, ROOTS), "synthetic ids are not allowed"));
     }
 
     #[test]

@@ -23,7 +23,9 @@ use crate::channel::ResourceKind;
 use crate::trigger::TriggerEvent;
 use eso_skill_data::enums::skill_line::SkillLine;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt;
+use std::sync::LazyLock;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ArmourWeight {
@@ -49,6 +51,21 @@ pub enum WeaponKind {
     RestorationStaff,
 }
 
+/// The type of one weapon, as the weapon passives name it ("each axe", "swords", "Inferno Staves"). A two-handed sword
+/// is a sword like a one-handed one; a shield and a bow are not here.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum WeaponType {
+    Sword,
+    Axe,
+    Mace,
+    Dagger,
+    /// An Inferno Staff.
+    FireStaff,
+    /// An Ice Staff.
+    FrostStaff,
+    LightningStaff,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PlayerClass {
     Dragonknight,
@@ -58,6 +75,66 @@ pub enum PlayerClass {
     Necromancer,
     Templar,
     Arcanist,
+}
+
+impl PlayerClass {
+    /// The names of the class's three own skill lines, as `SkillLine::as_str` writes them. Weapon, armour, guild,
+    /// world, Alliance War and racial lines are not the class's own.
+    pub fn skill_line_names(self) -> [&'static str; 3] {
+        match self {
+            PlayerClass::Dragonknight => ["Ardent Flame", "Draconic Power", "Earthen Heart"],
+            PlayerClass::Sorcerer => ["Dark Magic", "Daedric Summoning", "Storm Calling"],
+            PlayerClass::Nightblade => ["Assassination", "Shadow", "Siphoning"],
+            PlayerClass::Warden => ["Animal Companions", "Green Balance", "Winter's Embrace"],
+            PlayerClass::Necromancer => ["Bone Tyrant", "Grave Lord", "Living Death"],
+            PlayerClass::Templar => ["Aedric Spear", "Dawn's Wrath", "Restoring Light"],
+            PlayerClass::Arcanist => ["Herald of the Tome", "Soldier of Apocrypha", "Curative Runeforms"],
+        }
+    }
+
+    /// The class's own skill lines (`Condition::ClassAbilitiesSlotted` counts the abilities of these). Looked up by
+    /// name among the lines `eso_skill_data` knows, once; a name it does not know is left out, and a test pins that
+    /// every class has all three.
+    pub fn skill_lines(self) -> &'static [SkillLine] {
+        static LINES: LazyLock<HashMap<PlayerClass, Vec<SkillLine>>> = LazyLock::new(|| {
+            use PlayerClass::*;
+            [Dragonknight, Sorcerer, Nightblade, Warden, Necromancer, Templar, Arcanist]
+                .into_iter()
+                .map(|class| {
+                    let lines = class
+                        .skill_line_names()
+                        .into_iter()
+                        .filter_map(crate::skill_serde::skill_line_named)
+                        .collect();
+                    (class, lines)
+                })
+                .collect()
+        });
+        LINES.get(&self).map(Vec::as_slice).unwrap_or(&[])
+    }
+}
+
+/// Where the character is, for the conditions that depend on it ("when you are near a Keep", "in a PvP area"). The
+/// build chooses it (`Build::location`); a build that does not say leaves every location condition undecided, which
+/// is what it was before there was a way to say.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Location {
+    /// Not in a PvP area: dungeons, trials, overland.
+    Pve,
+    /// In a PvP area (Cyrodiil, Imperial City, battlegrounds) but not near a Keep.
+    PvpArea,
+    /// Near a Keep in a PvP area. This is also "in a PvP area".
+    NearKeep,
+}
+
+impl Location {
+    pub fn in_pvp_area(self) -> bool {
+        !matches!(self, Location::Pve)
+    }
+
+    pub fn near_keep(self) -> bool {
+        matches!(self, Location::NearKeep)
+    }
 }
 
 /// What you are doing or have up, for the conditions that are just a yes/no about yourself.
@@ -162,6 +239,29 @@ pub enum Condition {
         at_least: u8,
     },
     RecentlyOccurred { event: TriggerEvent, within_ms: u32 },
+    /// "when you are near a Keep" (Combat Medic): decided by `Build::location`.
+    NearKeep,
+    /// "per type of armour worn": how many of the three weights (Heavy, Medium, Light) have at least one piece on
+    /// the active bar's gear, 0 to 3 (Undaunted Mettle). `ArmourPieces` counts pieces of one weight; this counts
+    /// weights.
+    ArmourWeightsWorn { at_least: u8 },
+    /// "for each Sorcerer / Nightblade ability slotted": the abilities on the active bar from all three skill lines
+    /// of the character's own class (`PlayerClass::skill_lines`), in one number (Expert Mage, Pressure Points).
+    /// Weapon, guild, world and Alliance War lines do not count; what is on the bar counts, an ultimate included.
+    ClassAbilitiesSlotted { at_least: u8 },
+    /// The ability is slotted on either bar, not only the active one: for the skills that give their buff from
+    /// whichever bar they are on (Dark Cloak, Bound Aegis). Which skills do is game data and is listed by hand.
+    AbilitySlottedAnyBar { ability_id: u32 },
+    /// How many weapons of one type are in the hands on the active bar: a one-handed sword in each hand is two, a
+    /// two-handed sword is one (Twin Blade and Blunt: "each axe"; Heavy Weapons: "swords"; Ancient Knowledge: the staff).
+    WeaponTypeEquipped { weapon: WeaponType, at_least: u8 },
+    /// The target is this many metres away or closer (Vinedusk Training: "enemies 15 meters or closer"); "further than"
+    /// is `Not` of it. Combat-time: the calculator has no distance and lists the effect as conditional.
+    TargetWithinMeters(u8),
+    /// You are flanking the target (Master Assassin). Combat-time.
+    TargetFlanked,
+    /// You have a negative effect on you (Curative Curse). Combat-time.
+    SelfDebuffed,
 }
 
 /// What the evaluator knows. Every method defaults to "unknown", so a context only
@@ -177,6 +277,17 @@ pub trait ConditionContext {
     fn class(&self) -> Option<PlayerClass> { None }
     /// Whether the build has a food or drink buff on.
     fn food_active(&self) -> Option<bool> { None }
+    /// Distinct armour weights worn (0 to 3).
+    fn armour_weights_worn(&self) -> Option<u8> { None }
+    /// Abilities on the active bar that belong to the character's own class lines.
+    fn class_abilities_slotted(&self) -> Option<u8> { None }
+    /// Whether the ability is slotted on either bar. There is no default from `ability_slotted`: an ability that is
+    /// not on the active bar may well be on the other.
+    fn ability_slotted_any_bar(&self, _ability_id: u32) -> Option<bool> { None }
+    /// Whether the character is near a Keep (`Build::location`).
+    fn near_keep(&self) -> Option<bool> { None }
+    /// How many weapons of the type are in the hands on the active bar.
+    fn weapons_of_type(&self, _weapon: WeaponType) -> Option<u8> { None }
 
     // --- combat-time ---
     fn self_buff_active(&self, _id: u32) -> Option<bool> { None }
@@ -211,6 +322,12 @@ pub trait ConditionContext {
     fn skill_line_active(&self, _line: SkillLine) -> Option<u8> { None }
     /// Milliseconds since `event` last happened; `Some(u32::MAX)` = it has not happened.
     fn ms_since(&self, _event: TriggerEvent) -> Option<u32> { None }
+    /// Distance to the target in metres.
+    fn target_distance(&self) -> Option<f32> { None }
+    /// Whether you are flanking the target.
+    fn target_flanked(&self) -> Option<bool> { None }
+    /// Whether you have a negative effect on you.
+    fn self_debuffed(&self) -> Option<bool> { None }
 }
 
 /// Knows nothing: only `Always` (and combinations that reduce to it) evaluate.
@@ -260,7 +377,13 @@ impl Condition {
             | Condition::OnBar(_)
             | Condition::WeaponEquipped(_)
             | Condition::ClassIs(_)
-            | Condition::FoodActive => true,
+            | Condition::FoodActive
+            | Condition::InPvpArea
+            | Condition::NearKeep
+            | Condition::ArmourWeightsWorn { .. }
+            | Condition::ClassAbilitiesSlotted { .. }
+            | Condition::AbilitySlottedAnyBar { .. }
+            | Condition::WeaponTypeEquipped { .. } => true,
             Condition::All(v) | Condition::Any(v) => v.iter().all(Condition::is_build_time),
             Condition::Not(c) => c.is_build_time(),
             Condition::SelfBuffActive(_)
@@ -278,10 +401,12 @@ impl Condition {
             | Condition::SelfAfflicted(_)
             | Condition::TargetAfflicted(_)
             | Condition::InForm(_)
-            | Condition::InPvpArea
             | Condition::TargetIs(_)
             | Condition::SkillLineAbilityActive { .. }
-            | Condition::RecentlyOccurred { .. } => false,
+            | Condition::RecentlyOccurred { .. }
+            | Condition::TargetWithinMeters(_)
+            | Condition::TargetFlanked
+            | Condition::SelfDebuffed => false,
         }
     }
 
@@ -357,6 +482,14 @@ impl Condition {
             Condition::RecentlyOccurred { event, within_ms } => {
                 ctx.ms_since(*event).map(|ms| ms <= *within_ms)
             }
+            Condition::NearKeep => ctx.near_keep(),
+            Condition::ArmourWeightsWorn { at_least } => ctx.armour_weights_worn().map(|n| n >= *at_least),
+            Condition::ClassAbilitiesSlotted { at_least } => ctx.class_abilities_slotted().map(|n| n >= *at_least),
+            Condition::AbilitySlottedAnyBar { ability_id } => ctx.ability_slotted_any_bar(*ability_id),
+            Condition::WeaponTypeEquipped { weapon, at_least } => ctx.weapons_of_type(*weapon).map(|n| n >= *at_least),
+            Condition::TargetWithinMeters(m) => ctx.target_distance().map(|d| d <= f32::from(*m)),
+            Condition::TargetFlanked => ctx.target_flanked(),
+            Condition::SelfDebuffed => ctx.self_debuffed(),
         }
     }
 
@@ -447,6 +580,18 @@ impl fmt::Display for Condition {
             Condition::RecentlyOccurred { event, within_ms } => {
                 write!(f, "within {} ms of when {event}", within_ms)
             }
+            Condition::NearKeep => f.write_str("near a Keep"),
+            Condition::ArmourWeightsWorn { at_least } => write!(f, "{at_least} or more types of armour worn"),
+            Condition::ClassAbilitiesSlotted { at_least } => {
+                write!(f, "{at_least} or more abilities of your class slotted")
+            }
+            Condition::AbilitySlottedAnyBar { ability_id } => write!(f, "ability {ability_id} slotted on either bar"),
+            Condition::WeaponTypeEquipped { weapon, at_least } => {
+                write!(f, "{at_least} or more {} wielded", format!("{weapon:?}").to_lowercase())
+            }
+            Condition::TargetWithinMeters(m) => write!(f, "the target is {m} m away or closer"),
+            Condition::TargetFlanked => f.write_str("flanking the target"),
+            Condition::SelfDebuffed => f.write_str("you have a negative effect on you"),
         }
     }
 }
@@ -539,7 +684,39 @@ mod tests {
             Condition::TargetIs(TargetKind::Monster),
             Condition::SkillLineAbilityActive { skill_line: SkillLine::BoneTyrant, at_least: 1 },
             Condition::RecentlyOccurred { event: TriggerEvent::Kill, within_ms: 2000 },
+            Condition::NearKeep,
+            Condition::ArmourWeightsWorn { at_least: 2 },
+            Condition::ClassAbilitiesSlotted { at_least: 3 },
+            Condition::AbilitySlottedAnyBar { ability_id: 9 },
+            Condition::WeaponTypeEquipped { weapon: WeaponType::Axe, at_least: 2 },
+            Condition::TargetWithinMeters(15),
+            Condition::TargetFlanked,
+            Condition::SelfDebuffed,
         ]
+    }
+
+    /// The conditions the build alone decides, by name, so adding a variant forces a decision here.
+    fn is_build_time_by_hand(c: &Condition) -> bool {
+        matches!(
+            c,
+            Condition::Always
+                | Condition::All(_)
+                | Condition::Any(_)
+                | Condition::SetPieces { .. }
+                | Condition::ArmourPieces { .. }
+                | Condition::SkillLineSlotted { .. }
+                | Condition::AbilitySlotted { .. }
+                | Condition::OnBar(_)
+                | Condition::WeaponEquipped(_)
+                | Condition::ClassIs(_)
+                | Condition::FoodActive
+                | Condition::InPvpArea
+                | Condition::NearKeep
+                | Condition::ArmourWeightsWorn { .. }
+                | Condition::ClassAbilitiesSlotted { .. }
+                | Condition::AbilitySlottedAnyBar { .. }
+                | Condition::WeaponTypeEquipped { .. }
+        )
     }
 
     #[test]
@@ -565,11 +742,13 @@ mod tests {
 
     #[test]
     fn build_time_versus_combat_time() {
-        let build: Vec<bool> = every_variant().iter().map(Condition::is_build_time).collect();
-        // Always, All([]), Any([]), Not(InCombat), then the build-time block, then combat-time
-        assert_eq!(&build[..4], &[true, true, true, false]);
-        assert!(build[4..12].iter().all(|b| *b), "set, armour, line slotted, ability slotted, bar, weapon, class, food");
-        assert!(build[12..].iter().all(|b| !*b), "everything after the food is combat-time");
+        for c in every_variant() {
+            // `Not(InCombat)` is the one wrapper in the list that is combat-time
+            let want = is_build_time_by_hand(&c);
+            assert_eq!(c.is_build_time(), want, "{c:?}");
+        }
+        // the location is chosen with the build, so it is a build-time question now
+        assert!(Condition::InPvpArea.is_build_time() && Condition::NearKeep.is_build_time());
         assert!(Condition::All(vec![Condition::WeaponEquipped(WeaponKind::Bow), Condition::OnBar(Bar::Front)]).is_build_time());
         assert!(!Condition::All(vec![Condition::WeaponEquipped(WeaponKind::Bow), Condition::InCombat]).is_build_time());
     }
@@ -598,6 +777,10 @@ mod tests {
         fn target_afflicted(&self, a: Affliction) -> Option<bool> { Some(a == Affliction::Snared) }
         fn in_form(&self, f: Form) -> Option<bool> { Some(f == Form::Werewolf) }
         fn in_pvp_area(&self) -> Option<bool> { Some(false) }
+        fn near_keep(&self) -> Option<bool> { Some(false) }
+        fn armour_weights_worn(&self) -> Option<u8> { Some(2) }
+        fn class_abilities_slotted(&self) -> Option<u8> { Some(4) }
+        fn ability_slotted_any_bar(&self, id: u32) -> Option<bool> { Some(id == 9) }
         fn target_is(&self, k: TargetKind) -> Option<bool> { Some(k == TargetKind::Monster) }
         fn skill_line_active(&self, l: SkillLine) -> Option<u8> { Some(if l == SkillLine::BoneTyrant { 2 } else { 0 }) }
         fn ms_since(&self, e: TriggerEvent) -> Option<u32> {
@@ -636,6 +819,13 @@ mod tests {
         no(Condition::InPvpArea);
         yes(Condition::TargetIs(TargetKind::Monster));
         no(Condition::TargetIs(TargetKind::Player));
+        no(Condition::NearKeep);
+        yes(Condition::ArmourWeightsWorn { at_least: 2 });
+        no(Condition::ArmourWeightsWorn { at_least: 3 });
+        yes(Condition::ClassAbilitiesSlotted { at_least: 4 });
+        no(Condition::ClassAbilitiesSlotted { at_least: 5 });
+        yes(Condition::AbilitySlottedAnyBar { ability_id: 9 });
+        no(Condition::AbilitySlottedAnyBar { ability_id: 10 });
         yes(Condition::SkillLineAbilityActive { skill_line: SkillLine::BoneTyrant, at_least: 2 });
         no(Condition::SkillLineAbilityActive { skill_line: SkillLine::BoneTyrant, at_least: 3 });
         yes(Condition::RecentlyOccurred { event: TriggerEvent::Kill, within_ms: 2000 });
@@ -643,6 +833,91 @@ mod tests {
         // "has not happened" is a definite no, not an unknown
         no(Condition::RecentlyOccurred { event: TriggerEvent::Block, within_ms: 60_000 });
         no(Condition::out_of_combat());
+    }
+
+    #[test]
+    fn a_location_answers_both_location_questions() {
+        assert_eq!((Location::Pve.in_pvp_area(), Location::Pve.near_keep()), (false, false));
+        assert_eq!((Location::PvpArea.in_pvp_area(), Location::PvpArea.near_keep()), (true, false));
+        // near a Keep is also in a PvP area
+        assert_eq!((Location::NearKeep.in_pvp_area(), Location::NearKeep.near_keep()), (true, true));
+        let json = serde_json::to_string(&Location::NearKeep).unwrap();
+        assert_eq!(serde_json::from_str::<Location>(&json).unwrap(), Location::NearKeep);
+    }
+
+    #[test]
+    fn every_class_has_its_three_own_skill_lines() {
+        for class in [
+            PlayerClass::Dragonknight,
+            PlayerClass::Sorcerer,
+            PlayerClass::Nightblade,
+            PlayerClass::Warden,
+            PlayerClass::Necromancer,
+            PlayerClass::Templar,
+            PlayerClass::Arcanist,
+        ] {
+            let lines = class.skill_lines();
+            assert_eq!(lines.len(), 3, "{class:?}: a line name the parser does not know ({:?})", class.skill_line_names());
+            for (line, name) in lines.iter().zip(class.skill_line_names()) {
+                assert_eq!(line.as_str(), name);
+            }
+        }
+        // no line belongs to two classes
+        let mut all: Vec<SkillLine> = Vec::new();
+        for class in [PlayerClass::Dragonknight, PlayerClass::Sorcerer, PlayerClass::Nightblade, PlayerClass::Warden, PlayerClass::Necromancer, PlayerClass::Templar, PlayerClass::Arcanist] {
+            all.extend_from_slice(class.skill_lines());
+        }
+        let n = all.len();
+        all.sort_by_key(|l| l.as_str());
+        all.dedup();
+        assert_eq!(all.len(), n);
+    }
+
+    #[test]
+    fn the_new_conditions_round_trip_and_read_as_text() {
+        assert_eq!(Condition::NearKeep.to_string(), "near a Keep");
+        assert_eq!(Condition::ArmourWeightsWorn { at_least: 3 }.to_string(), "3 or more types of armour worn");
+        assert_eq!(Condition::ClassAbilitiesSlotted { at_least: 1 }.to_string(), "1 or more abilities of your class slotted");
+        assert_eq!(Condition::AbilitySlottedAnyBar { ability_id: 7 }.to_string(), "ability 7 slotted on either bar");
+        let json = serde_json::to_string(&Condition::ClassAbilitiesSlotted { at_least: 1 }).unwrap();
+        assert_eq!(json, r#"{"ClassAbilitiesSlotted":{"at_least":1}}"#);
+        assert_eq!(serde_json::to_string(&Condition::NearKeep).unwrap(), r#""NearKeep""#);
+    }
+
+    #[test]
+    fn weapon_type_distance_flank_and_debuff_conditions() {
+        struct Hands;
+        impl ConditionContext for Hands {
+            fn weapons_of_type(&self, weapon: WeaponType) -> Option<u8> {
+                Some(match weapon {
+                    WeaponType::Axe => 2,
+                    WeaponType::Dagger => 1,
+                    _ => 0,
+                })
+            }
+            fn target_distance(&self) -> Option<f32> { Some(15.0) }
+            fn target_flanked(&self) -> Option<bool> { Some(true) }
+            fn self_debuffed(&self) -> Option<bool> { Some(false) }
+        }
+        let has = |weapon, at_least| Condition::WeaponTypeEquipped { weapon, at_least };
+        assert_eq!(has(WeaponType::Axe, 2).evaluate(&Hands), Some(true));
+        assert_eq!(has(WeaponType::Axe, 3).evaluate(&Hands), Some(false));
+        assert_eq!(has(WeaponType::Sword, 1).evaluate(&Hands), Some(false));
+        assert!(has(WeaponType::Axe, 1).is_build_time());
+        // "15 meters or closer" holds at 15; "further than 15" is its `Not`
+        assert_eq!(Condition::TargetWithinMeters(15).evaluate(&Hands), Some(true));
+        assert_eq!(Condition::TargetWithinMeters(14).evaluate(&Hands), Some(false));
+        assert_eq!(Condition::not(Condition::TargetWithinMeters(14)).evaluate(&Hands), Some(true));
+        assert_eq!(Condition::TargetFlanked.evaluate(&Hands), Some(true));
+        assert_eq!(Condition::SelfDebuffed.evaluate(&Hands), Some(false));
+        // none of the three combat-time ones is decided by the build alone, and none is known without a context
+        for c in [Condition::TargetWithinMeters(15), Condition::TargetFlanked, Condition::SelfDebuffed] {
+            assert!(!c.is_build_time(), "{c:?}");
+            assert_eq!(c.evaluate(&NoContext), None, "{c:?}");
+        }
+        assert_eq!(has(WeaponType::Axe, 2).to_string(), "2 or more axe wielded");
+        assert_eq!(Condition::TargetWithinMeters(15).to_string(), "the target is 15 m away or closer");
+        assert_eq!(serde_json::to_string(&has(WeaponType::Dagger, 1)).unwrap(), r#"{"WeaponTypeEquipped":{"weapon":"Dagger","at_least":1}}"#);
     }
 
     #[test]

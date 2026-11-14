@@ -267,9 +267,10 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
     let auto = effects::auto_effects(&abilities, &config, &taken);
     let effects_jsonl = effects::to_jsonl(&overrides, &auto)?;
 
-    // every ability with an effect (hand-written, override or auto) is a rank a build can hold
-    let mut written = taken.clone();
-    written.extend(auto.iter().map(|d| d.id));
+    // a rank a build can hold is a passive id that a build lists: the `ability_id` of the source of an override or an
+    // auto effect, not the id of the effect (a passive with two numbers has one effect per number, and only the passive's
+    // id goes in `Build::passives`)
+    let written = passives::held_ids(overrides.iter().map(|o| &o.def).chain(auto.iter()));
     let (passive_ranks_csv, passive_report) = passives::ranks_csv(&passive_families, &written);
     if !passive_families.is_empty() && passive_report.rows == 0 {
         return Err(format!(

@@ -19,6 +19,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use esosim_types::{EffectDef, EffectSource};
 use eso_skill_data::SkillData34;
 
 /// One passive and its ranks.
@@ -106,8 +107,24 @@ impl RanksReport {
     }
 }
 
+/// The ability ids a build lists to hold a passive: the `ability_id` of every `Race`, `Class` and `Passive` source.
+/// This is what [`ranks_csv`] needs as `written`, and not the `id` of each effect: a passive with two numbers is one
+/// entry in the build, but one effect per number, and the second effect's id (the record that holds the number) is
+/// not an id a build can list. Rows made of effect ids never match what `Build::passives` holds.
+pub fn held_ids<'a>(defs: impl IntoIterator<Item = &'a EffectDef>) -> BTreeSet<u32> {
+    defs.into_iter()
+        .filter_map(|d| match d.source {
+            EffectSource::Race { ability_id, .. }
+            | EffectSource::Class { ability_id, .. }
+            | EffectSource::Passive { ability_id } => Some(ability_id),
+            _ => None,
+        })
+        .collect()
+}
+
 /// `passive_ranks.csv`: `ability id,ability id,...` one row per passive, lowest rank first, rows by first id.
-/// `written` are the ability ids that have an effect; a rank not in it is left out of its row.
+/// `written` are the ability ids a build can list that have an effect ([`held_ids`]); a rank not in it is left out of
+/// its row.
 pub fn ranks_csv(families: &[PassiveFamily], written: &BTreeSet<u32>) -> (String, RanksReport) {
     let mut report = RanksReport { families: families.len(), ..RanksReport::default() };
     let mut seen: BTreeSet<u32> = BTreeSet::new();
@@ -207,6 +224,43 @@ mod tests {
         let mut s = skill(11, 10);
         s.base_data.scribing_index = 3; // `base_ability_id()` is None for these
         assert!(families(&[skill(10, 0), s]).is_empty());
+    }
+
+    fn effect(id: u32, source: EffectSource) -> EffectDef {
+        EffectDef { id, name: String::new(), source, channels: vec![], condition: Default::default(), stacking: Default::default(), buff_code: None, duration_ms: None, cooldown_ms: None, note: None }
+    }
+
+    #[test]
+    fn held_ids_are_source_ability_ids_not_effect_ids() {
+        // Heavy Weapons: three effects (29375, 29384, 29385) for the one passive 29375, and a rank 2 the same way
+        let defs = [
+            effect(29375, EffectSource::Passive { ability_id: 29375 }),
+            effect(29384, EffectSource::Passive { ability_id: 29375 }),
+            effect(45434, EffectSource::Passive { ability_id: 45430 }),
+            effect(36303, EffectSource::Race { name: "Breton".into(), ability_id: 36303 }),
+            effect(5, EffectSource::Class { name: "Sorcerer".into(), ability_id: 7 }),
+            effect(9, EffectSource::Food),
+            effect(10, EffectSource::Buff { ability_id: 10 }),
+        ];
+        assert_eq!(held_ids(&defs), [29375, 45430, 36303, 7].into());
+    }
+
+    #[test]
+    fn a_family_of_effect_records_is_not_a_row() {
+        // 29384 / 45434 are the Axe numbers of Heavy Weapons: they have base links of their own, but no build lists them
+        let f = families(&[
+            skill(29375, 0), skill(45430, 29375),
+            skill(29384, 0), skill(45434, 29384),
+        ]);
+        let held = held_ids(&[
+            effect(29375, EffectSource::Passive { ability_id: 29375 }),
+            effect(29384, EffectSource::Passive { ability_id: 29375 }),
+            effect(45430, EffectSource::Passive { ability_id: 45430 }),
+            effect(45434, EffectSource::Passive { ability_id: 45430 }),
+        ]);
+        let (csv, r) = ranks_csv(&f, &held);
+        assert_eq!(csv, "29375,45430\n");
+        assert_eq!(r.rows, 1);
     }
 
     #[test]

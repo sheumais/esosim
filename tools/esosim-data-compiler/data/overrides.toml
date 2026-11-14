@@ -4,10 +4,11 @@
 # by a person. Draft an entry with `esosim-data-compiler suggest-effects <category>`, review it,
 # finish the TODOs and paste it below. Each `[[effect]]` is an `esosim_types::EffectDef` as TOML:
 #
-#   id            ability id, or a synthetic id >= 0x8000_0000 (2147483648) when no ability is behind it
+#   id            the ability id of a record in the bundle. There are no synthetic ids: an effect with no ability behind it
+#                 is a gap in the architecture (see the roadmap), not an id to invent
 #   name          our name for the effect
 #   game_name     the ability's name in the game; `verify` compares it with the lang name
-#                 (default: `name`; ignored for synthetic ids)
+#                 (default: `name`)
 #   source        e.g. "Food", { Buff = { ability_id = 1 } }, { Mundus = { ability_id = 1 } },
 #                 { ChampionPoint = { cp_id = 1 } }, { Set = { set_id = 1, pieces_required = 5 } }
 #   channels      non-empty: [{ channel = "CriticalChance", value = 1212.0, value_per_stack = 0.0 }]
@@ -39,7 +40,7 @@
 # value + value_per_stack * min(stacks, N); "Unique" (the default) counts once; "Additive" counts every source.
 # `buff_code` is the game's major_minor_id: effects with the same code count once.
 # [[effect]]
-# id = 2147483700
+# id = 1
 # name = "Example: Dvorak set bonus"
 # game_name = "Example"
 # source = { Set = { set_id = 19, pieces_required = 5 } }
@@ -78,6 +79,8 @@
 # channel    "CriticalChance" "CriticalDamage" "CriticalHealing" "CriticalResistance" "CriticalDamageTaken"
 #            "HealingDone" "HealingTaken" "HealingDoneSingleTarget" "HealingDoneOverTime" "MovementSpeed"
 #            "BlockMitigation" "DamageShieldStrength" "KillExperience" "UltimateGain" "AttackSpeed" "MundusBoost"
+#            "ResurrectionSpeed" (percentage points the time is cut by) "SwimmingSpeed" "GoldGain" "AlliancePointGain"
+#            "InspirationGain" "SneakEntryTime" (percentage points the time is cut by)
 #            { Armour = T } { Penetration = T }                        T: "Flame" "Shock" "Frost" "Earth" "Magic" "Physical"
 #                                                                        "Disease" "Poison" "Bleed" "Martial" "Spell" "All"
 #            { Power = [Ctx, Agg] } { DamageDone = [Ctx, Agg] }       Ctx: see below;  Agg: "Additive" | "Multiplicative"
@@ -86,14 +89,15 @@
 #                    DamageOverTime, StatusEffects, AreaOfEffect, SingleTarget, LightAttack, HeavyAttack, ClassAbilities,
 #                    Monsters, NonCritical, Bash.
 #            { DamageTaken = [Ctx, Agg] }                              Ctx: "All" "AreaOfEffect" "DamageOverTime" "Projectile"
-#                                                                        "Monsters" "Players" "Siege" "Fall" { Type = T }
+#                                                                        "Monsters" "Players" "Siege" "Fall" "Lava" { Type = T }
 #            { Resource = [R, Agg] } { Recovery = [R, Agg] } { SynergyRestore = [R, Agg] }    R: "Health" "Magicka" "Stamina"
 #            { CostReduction = [Mechanic, Agg] }                       Mechanic: "Health" "Magicka" "Stamina" "Ultimate"
 #            { CostReductionSkillLine = [Line, Agg] }  { HealingDoneSkillLine = Line }
+#            { DurationSkillLine = Line }                              milliseconds added to the duration of that line's abilities
 #            { CostReductionCCA = [Cca, Agg] }                         Cca: "Bash" "Block" "BreakFree" "DodgeRoll" "Sprint" "Sneak"
 #            { CapRaise = "CriticalChance" | "CriticalDamage" | "CriticalHealing" | "Resistance" }
 #            { HeavyAttackRestore = R }
-# condition  "Always" "InCombat" "InPvpArea" "FoodActive"
+# condition  "Always" "InCombat" "InPvpArea" "NearKeep" "FoodActive"
 #            { All = [..] } { Any = [..] } { Not = C }
 #            { SetPieces = { set_id, at_least } } { ArmourPieces = { weight = "Light"|"Medium"|"Heavy", at_least } }
 #            { SkillLineSlotted = { skill_line, at_least } } { SkillLineAbilityActive = { skill_line, at_least } }
@@ -109,6 +113,13 @@
 #                                                                        "Disoriented" "OffBalance" "Silenced" "Taunted"
 #            { InForm = "Werewolf"|"Transformed" } { TargetIs = "Monster"|"Boss"|"Player"|"Undead"|"Daedra" }
 #            { RecentlyOccurred = { event, within_ms } }
+#            { ArmourWeightsWorn = { at_least } }      distinct weights (Heavy, Medium, Light) worn, 0 to 3
+#            { ClassAbilitiesSlotted = { at_least } }  abilities on the active bar from the 3 lines of the build's class
+#            { AbilitySlottedAnyBar = { ability_id } } slotted on either bar (AbilitySlotted is the active bar only)
+#            { WeaponTypeEquipped = { weapon, at_least } }  weapons of one type in the hands of the active bar (a two-handed sword is one
+#                                                      sword); weapon: "Sword" "Axe" "Mace" "Dagger" "FireStaff" "FrostStaff" "LightningStaff".
+#                                                      With `stacking = "Additive"` a passive counts "each axe"
+#            { TargetWithinMeters = N }  { TargetFlanked }  { SelfDebuffed }     combat-time: listed as conditional until a context answers them
 
 [[effect]]
 id = 13940
@@ -803,20 +814,6 @@ condition = { Not = "InCombat" }
 check = { field = "value1" }
 note = "Tooltip number <<2>>, the linked record 136317: +45 % movement speed out of combat."
 
-# --- Major / Minor buffs and debuffs (roadmap 2.6): units reviewed, each tied to its record by `check` where
-# the record holds the number the channel needs.
-# A multiplicative channel holds a fraction (the record stores 5 for 5 %), an additive one flat points or
-# percentage points, as for the set effects above. Crit chance is a *rating* (level 66: 21,912 per 100 %), and
-# Resolve / Breach are resistance at level 66 (2974 minor, 5948 major); those records store another scale, so
-# those rows have no `check` and the note says where the number comes from.
-# The magnitudes are the game's tooltip values (the `MajorMinorBuff::tooltip_value` table, Healer's Haven).
-# The debuff rows (source `Debuff`) are for the enemy side (2.9): `Player::effective_effects` never switches one
-# on for the player, so a set that "grants" Minor Breach or Vulnerability does not hit the wearer.
-# `buff_code` is the game's major_minor_id except where noted: Sorcery shares Brutality's codes (1, 2) and Prophecy shares
-# Savagery's (3, 4), so each pair counts once (the lowest id, same value) and does not stack; Minor + Major still add.
-# Not modelled, and why: Minor Lifesteal / Magickasteal (the enemy heals or restores the *attacker*: a proc, not a
-# stat), the light-attack Empower abilities (only the heavy-attack one, 61737, is written), Major Vexation (no ability record in the bundle).
-
 [[effect]]
 id = 61693
 name = "Minor Resolve"
@@ -1066,8 +1063,6 @@ buff_code = 48
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 215.0 }]
 check = { field = "value1" }
 note = "Record value1 = 215: flat points."
-
-# Second pass: Brutality, Sorcery, Savagery, Prophecy (rating), Vitality, Heroism and every debuff.
 
 [[effect]]
 id = 61549
@@ -1336,11 +1331,6 @@ condition = { Not = "InPvpArea" }
 check = { field = "value1", scale = 0.01 }
 note = "Record value1 = 150: heavy attack damage +150 %. Does not apply while Battle Spirit is active, i.e. in a PvP area. The tooltip table (MajorMinorBuff::Empower) says 70, so confirm which is current."
 
-# ---- Trial dummy (roadmap 2.9) -------------------------------------------------------------------
-# Root 120006; 120016 (caused by it) gives the player's buffs, everything else it causes is a debuff on the
-# dummy. Each effect has the trial dummy's own ability id and the buff_code of its raid-buff twin, so a group's
-# Major Force (61747) and the dummy's (120013) count once. No `check`: add one when the records are in the bundle.
-
 [[effect]]
 id = 120007
 name = "Crusher"
@@ -1539,12 +1529,6 @@ name = "Illuminate"
 source = { Buff = { ability_id = 265985 } }
 channels = [{ channel = { Armour = "All" }, value = 2974.0 }]
 note = "Roadmap 2.9: +2974 resistance for the player."
-
-# --- Roadmap 2.4: racial passives, rank 3 (what a character at the top of the racial skill line has) ---
-# `source = { Race = { name, ability_id } }`: `Build::to_player` switches an effect on only when `Build.passives` lists its
-# `ability_id` and `name` is the build's race. Only the top rank is written: the lower ranks are the same passive earlier in
-# the skill line. A tooltip with two numbers is two records (its `ids`), so two effects, each tied to the record that holds
-# its number; both name the same `ability_id` (the passive's lowest record id), so one entry in the build turns both on.
 
 [[effect]]
 id = 45309
@@ -1906,14 +1890,14 @@ note = "Record 5. Simulator input."
 
 [[effect]]
 id = 45195
-name = "Expert Mage: Weapon and Spell Damage (Storm Calling)"
+name = "Expert Mage: Weapon and Spell Damage"
 game_name = "Expert Mage"
 source = { Class = { name = "Sorcerer", ability_id = 45195 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 108.0 }]
-condition = { SkillLineSlotted = { skill_line = "Storm Calling", at_least = 1 } }
+condition = { ClassAbilitiesSlotted = { at_least = 1 } }
 stacking = "Additive"
 check = { field = "value1" }
-note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Counts Sorcerer abilities: one effect per skill line."
+note = "Per Sorcerer ability slotted on the active bar (Additive stacking, stacks = abilities). One count over the three Sorcerer lines (Dark Magic, Daedric Summoning, Storm Calling): `ClassAbilitiesSlotted`."
 
 [[effect]]
 id = 45196
@@ -2299,14 +2283,14 @@ note = "Percentage points."
 
 [[effect]]
 id = 88656
-name = "Pressure Points: Critical Chance rating (Assassination)"
+name = "Pressure Points: Critical Chance rating"
 game_name = "Pressure Points"
 source = { Class = { name = "Nightblade", ability_id = 45053 } }
 channels = [{ channel = "CriticalChance", value = 438.0 }]
-condition = { SkillLineSlotted = { skill_line = "Assassination", at_least = 1 } }
+condition = { ClassAbilitiesSlotted = { at_least = 1 } }
 stacking = "Additive"
 check = { field = "value1" }
-note = "Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities). Record 88656 is the tooltip's number <<1>>: 438 rating (2 %) per Nightblade ability. One effect per skill line."
+note = "Per Nightblade ability slotted on the active bar (Additive stacking, stacks = abilities). Record 88656 is the tooltip's number <<1>>: 438 rating (2 %) per Nightblade ability. One count over the three Nightblade lines (Assassination, Shadow, Siphoning): `ClassAbilitiesSlotted`."
 
 [[effect]]
 id = 114962
@@ -2438,42 +2422,6 @@ check = { field = "value1", scale = 0.01 }
 note = "Same passive as the Max Magicka and Stamina effect (45199): 5 % Max Health while a permanent combat pet is active. Record 215059 (215060 has the same text and value and is not written)."
 
 [[effect]]
-id = 2147483802
-name = "Expert Mage: Weapon and Spell Damage (Dark Magic)"
-source = { Class = { name = "Sorcerer", ability_id = 2147483802 } }
-channels = [{ channel = { Power = ["All", "Additive"] }, value = 108.0 }]
-condition = { SkillLineSlotted = { skill_line = "Dark Magic", at_least = 1 } }
-stacking = "Additive"
-note = "Synthetic id: Expert Mage (45195) for the Dark Magic line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
-
-[[effect]]
-id = 2147483803
-name = "Expert Mage: Weapon and Spell Damage (Daedric Summoning)"
-source = { Class = { name = "Sorcerer", ability_id = 2147483803 } }
-channels = [{ channel = { Power = ["All", "Additive"] }, value = 108.0 }]
-condition = { SkillLineSlotted = { skill_line = "Daedric Summoning", at_least = 1 } }
-stacking = "Additive"
-note = "Synthetic id: Expert Mage (45195) for the Daedric Summoning line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
-
-[[effect]]
-id = 2147483804
-name = "Pressure Points: Critical Chance rating (Shadow)"
-source = { Class = { name = "Nightblade", ability_id = 2147483804 } }
-channels = [{ channel = "CriticalChance", value = 438.0 }]
-condition = { SkillLineSlotted = { skill_line = "Shadow", at_least = 1 } }
-stacking = "Additive"
-note = "Synthetic id: Pressure Points (88656) for the Shadow line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
-
-[[effect]]
-id = 2147483805
-name = "Pressure Points: Critical Chance rating (Siphoning)"
-source = { Class = { name = "Nightblade", ability_id = 2147483805 } }
-channels = [{ channel = "CriticalChance", value = 438.0 }]
-condition = { SkillLineSlotted = { skill_line = "Siphoning", at_least = 1 } }
-stacking = "Additive"
-note = "Synthetic id: Pressure Points (88656) for the Siphoning line. Per ability slotted from the skill line on the active bar (Additive stacking, stacks = abilities)."
-
-[[effect]]
 id = 45278
 name = "Martial Training: weapon ability cost (Redguard)"
 game_name = "Martial Training"
@@ -2481,11 +2429,6 @@ source = { Race = { name = "Redguard", ability_id = 45278 } }
 channels = [{ channel = { CostReductionSkillLine = ["One Hand and Shield", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Two Handed", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Dual Wield", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Bow", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Destruction Staff", "Multiplicative"] }, value = 0.08 }, { channel = { CostReductionSkillLine = ["Restoration Staff", "Multiplicative"] }, value = 0.08 }]
 check = { field = "value1", scale = -0.01 }
 note = "Reduces the cost of weapon abilities by 8 % (record -8): one entry per weapon skill line, no channel of its own. The snare reduction (records 121178..121180) is not written."
-
-# --- Roadmap 2.4 slice 3: world and guild skill-line passives, top rank ---
-# `source = { Passive = { ability_id } }`, like every passive: `Build::to_player` switches the effect on
-# only when `Build.passives` lists that ability id (`grant_rule::passive_effect_rules`). A passive with two numbers is two
-# effects that name the same `ability_id`, so one entry in the build turns both on. Roots: `[world_passives]` in roots.toml.
 
 [[effect]]
 id = 40436
@@ -2495,9 +2438,6 @@ source = { Passive = { ability_id = 40436 } }
 channels = [{ channel = { CostReductionSkillLine = ["Mages Guild", "Multiplicative"] }, value = 0.08 }]
 check = { field = "value1", scale = -0.01 }
 note = "Record -8: reduces the Magicka and Health cost of Mages Guild abilities by 8 %. The channel is per skill line, so it covers both resources."
-
-# ---- Lower ranks (roadmap 2.4): the same passives at the ranks below (Mage Adept: above) the one written above.
-# Each is the rank record the bundle holds, `ability_id` is that rank's own skill-line record, and `check` ties the value to it.
 
 [[effect]]
 id = 18929
@@ -2874,14 +2814,14 @@ note = "Rank 1 of 2 of this passive: record 31421, value1 = 3."
 
 [[effect]]
 id = 31425
-name = "Expert Mage: Weapon and Spell Damage (Storm Calling) (rank 1)"
+name = "Expert Mage: Weapon and Spell Damage (rank 1)"
 game_name = "Expert Mage"
 source = { Class = { name = "Sorcerer", ability_id = 31425 } }
 channels = [{ channel = { Power = ["All", "Additive"] }, value = 54.0 }]
-condition = { SkillLineSlotted = { skill_line = "Storm Calling", at_least = 1 } }
+condition = { ClassAbilitiesSlotted = { at_least = 1 } }
 stacking = "Additive"
 check = { field = "value1" }
-note = "Rank 1 of 2 of this passive: record 31425, value1 = 54. Per piece worn or ability slotted on the active bar (Additive stacking)."
+note = "Rank 1 of 2 of this passive: record 31425, value1 = 54. Per Sorcerer ability slotted on the active bar (Additive stacking, stacks = abilities). One count over the three Sorcerer lines (Dark Magic, Daedric Summoning, Storm Calling): `ClassAbilitiesSlotted`."
 
 [[effect]]
 id = 31698
@@ -3416,14 +3356,14 @@ note = "Rank 1 of 2 of this passive: record 86195, value1 = 4."
 
 [[effect]]
 id = 88655
-name = "Pressure Points: Critical Chance rating (Assassination) (rank 1)"
+name = "Pressure Points: Critical Chance rating (rank 1)"
 game_name = "Pressure Points"
 source = { Class = { name = "Nightblade", ability_id = 36636 } }
 channels = [{ channel = "CriticalChance", value = 219.0 }]
-condition = { SkillLineSlotted = { skill_line = "Assassination", at_least = 1 } }
+condition = { ClassAbilitiesSlotted = { at_least = 1 } }
 stacking = "Additive"
 check = { field = "value1" }
-note = "Rank 1 of 2 of this passive: record 88655, value1 = 219. Per piece worn or ability slotted on the active bar (Additive stacking)."
+note = "Rank 1 of 2 of this passive: record 88655, value1 = 219. Per Nightblade ability slotted on the active bar (Additive stacking, stacks = abilities). One count over the three Nightblade lines (Assassination, Shadow, Siphoning): `ClassAbilitiesSlotted`."
 
 [[effect]]
 id = 114959
@@ -3682,3 +3622,816 @@ source = { Class = { name = "Warden", ability_id = 86195 } }
 channels = [{ channel = { DamageDone = [{ Type = "Frost" }, "Multiplicative"] }, value = 0.07 }]
 check = { field = "value1", scale = 0.01 }
 note = "Rank 1 of 2 of this passive: record 228521, value1 = 7."
+
+[[effect]]
+id = 29062
+name = "Intimidating Presence: Fighters Guild cost"
+game_name = "Intimidating Presence"
+source = { Passive = { ability_id = 29062 } }
+channels = [{ channel = { CostReductionSkillLine = ["Fighters Guild", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = -0.01 }
+note = "Single rank in the bundle: record 29062, value1 = -15. Record -15: reduces the Stamina cost of Fighters Guild abilities by 15 %. The channel is per skill line. Only this record is in the bundle (the lower ranks of the passive are absent), so it has no passive_ranks row."
+
+[[effect]]
+id = 35803
+name = "Slayer: Weapon and Spell Damage (Fighters Guild) (rank 1)"
+game_name = "Slayer"
+source = { Passive = { ability_id = 35803 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.01 }]
+condition = { SkillLineSlotted = { skill_line = "Fighters Guild", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 3 of this passive: record 35803, value1 = 1. Per Fighters Guild ability slotted on the active bar (Additive stacking, stacks = abilities). Percent (tooltip type 96, like Dark Vigor): units to confirm against a sheet."
+
+[[effect]]
+id = 45595
+name = "Slayer: Weapon and Spell Damage (Fighters Guild) (rank 2)"
+game_name = "Slayer"
+source = { Passive = { ability_id = 45595 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.02 }]
+condition = { SkillLineSlotted = { skill_line = "Fighters Guild", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 3 of this passive: record 45595, value1 = 2. Per Fighters Guild ability slotted on the active bar (Additive stacking, stacks = abilities). Percent (tooltip type 96, like Dark Vigor): units to confirm against a sheet."
+
+[[effect]]
+id = 45596
+name = "Slayer: Weapon and Spell Damage (Fighters Guild)"
+game_name = "Slayer"
+source = { Passive = { ability_id = 45596 } }
+channels = [{ channel = { Power = ["All", "Multiplicative"] }, value = 0.03 }]
+condition = { SkillLineSlotted = { skill_line = "Fighters Guild", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 3 of 3 of this passive: record 45596, value1 = 3. Per Fighters Guild ability slotted on the active bar (Additive stacking, stacks = abilities). Percent (tooltip type 96, like Dark Vigor): units to confirm against a sheet."
+
+[[effect]]
+id = 40438
+name = "Magicka Controller: Max Magicka and Magicka Recovery (Mages Guild) (rank 1)"
+game_name = "Magicka Controller"
+source = { Passive = { ability_id = 40438 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.01 }, { channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.01 }]
+condition = { SkillLineSlotted = { skill_line = "Mages Guild", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 40438, value1 = 1. Per Mages Guild ability slotted on the active bar (Additive stacking, stacks = abilities). One tooltip number for both stats, so both channels hold it. Percent (tooltip type 96)."
+
+[[effect]]
+id = 45603
+name = "Magicka Controller: Max Magicka and Magicka Recovery (Mages Guild)"
+game_name = "Magicka Controller"
+source = { Passive = { ability_id = 45603 } }
+channels = [{ channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.02 }, { channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.02 }]
+condition = { SkillLineSlotted = { skill_line = "Mages Guild", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 2 of this passive: record 45603, value1 = 2. Per Mages Guild ability slotted on the active bar (Additive stacking, stacks = abilities). One tooltip number for both stats, so both channels hold it. Percent (tooltip type 96)."
+
+[[effect]]
+id = 39255
+name = "Magicka Aid: Magicka Recovery (Support) (rank 1)"
+game_name = "Magicka Aid"
+source = { Passive = { ability_id = 39255 } }
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.05 }]
+condition = { SkillLineSlotted = { skill_line = "Support", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.0001 }
+note = "Rank 1 of 2 of this passive: record 39255, value1 = 500. Per Support ability slotted on the active bar (Additive stacking, stacks = abilities). The record holds hundredths of a percent (1000 = 10 %), as the tooltip text says."
+
+[[effect]]
+id = 45622
+name = "Magicka Aid: Magicka Recovery (Support)"
+game_name = "Magicka Aid"
+source = { Passive = { ability_id = 45622 } }
+channels = [{ channel = { Recovery = ["Magicka", "Multiplicative"] }, value = 0.1 }]
+condition = { SkillLineSlotted = { skill_line = "Support", at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.0001 }
+note = "Rank 2 of 2 of this passive: record 45622, value1 = 1000. Per Support ability slotted on the active bar (Additive stacking, stacks = abilities). The record holds hundredths of a percent (1000 = 10 %), as the tooltip text says."
+
+[[effect]]
+id = 103809
+name = "Clairvoyance: Psijic Order cost (rank 1)"
+game_name = "Clairvoyance"
+source = { Passive = { ability_id = 103809 } }
+channels = [{ channel = { CostReductionSkillLine = ["Psijic Order", "Multiplicative"] }, value = 0.08 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 103809, value1 = -8. Reduces the cost of Psijic Order abilities. The channel is per skill line, so it covers every resource."
+
+[[effect]]
+id = 103811
+name = "Clairvoyance: Psijic Order cost"
+game_name = "Clairvoyance"
+source = { Passive = { ability_id = 103811 } }
+channels = [{ channel = { CostReductionSkillLine = ["Psijic Order", "Multiplicative"] }, value = 0.15 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 2 of 2 of this passive: record 103811, value1 = -15. Reduces the cost of Psijic Order abilities. The channel is per skill line, so it covers every resource."
+
+[[effect]]
+id = 55366
+name = "Undaunted Mettle: Max Health, Magicka and Stamina (Undaunted) (rank 1)"
+game_name = "Undaunted Mettle"
+source = { Passive = { ability_id = 55366 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.01 }, { channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.01 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.01 }]
+condition = { ArmourWeightsWorn = { at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.0001 }
+note = "Rank 1 of 2 of this passive: record 55366, value1 = 100. Per type of armour worn (Heavy, Medium, Light: 0 to 3, `ArmourWeightsWorn`, Additive stacking, stacks = weights). One tooltip number for all three resources, so all three channels hold it. The record holds hundredths of a percent (100 = 1 %). The secondary records (55384 / 55385, 55388 / 55389) only carry the tooltip text."
+
+[[effect]]
+id = 55386
+name = "Undaunted Mettle: Max Health, Magicka and Stamina (Undaunted)"
+game_name = "Undaunted Mettle"
+source = { Passive = { ability_id = 55386 } }
+channels = [{ channel = { Resource = ["Health", "Multiplicative"] }, value = 0.02 }, { channel = { Resource = ["Magicka", "Multiplicative"] }, value = 0.02 }, { channel = { Resource = ["Stamina", "Multiplicative"] }, value = 0.02 }]
+condition = { ArmourWeightsWorn = { at_least = 1 } }
+stacking = "Additive"
+check = { field = "value1", scale = 0.0001 }
+note = "Rank 2 of 2 of this passive: record 55386, value1 = 200. Per type of armour worn (Heavy, Medium, Light: 0 to 3, `ArmourWeightsWorn`, Additive stacking, stacks = weights). One tooltip number for all three resources, so all three channels hold it. The record holds hundredths of a percent (100 = 1 %). The secondary records (55384 / 55385, 55388 / 55389) only carry the tooltip text."
+
+[[effect]]
+id = 39259
+name = "Combat Medic: Healing Done (near a Keep) (rank 1)"
+game_name = "Combat Medic"
+source = { Passive = { ability_id = 39259 } }
+channels = [{ channel = { HealingDone = "All" }, value = 10.0 }]
+condition = "NearKeep"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 39259, value1 = 10. Healing done in percentage points (10 = +10 %). Only counts when the build says it is near a Keep (`Build::location`, `NearKeep`); until it does, the effect is listed as conditional and left out of the sheet."
+
+[[effect]]
+id = 45624
+name = "Combat Medic: Healing Done (near a Keep)"
+game_name = "Combat Medic"
+source = { Passive = { ability_id = 45624 } }
+channels = [{ channel = { HealingDone = "All" }, value = 20.0 }]
+condition = "NearKeep"
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45624, value1 = 20. Healing done in percentage points (10 = +10 %). Only counts when the build says it is near a Keep (`Build::location`, `NearKeep`); until it does, the effect is listed as conditional and left out of the sheet."
+
+[[effect]]
+id = 49168
+name = "Argonian Resistance: Max Health (Argonian) (rank 1)"
+game_name = "Argonian Resistance 1"
+source = { Race = { name = "Argonian", ability_id = 36583 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 333.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 49168, value1 = 333. First number of the tooltip of rank record 36583."
+
+[[effect]]
+id = 36583
+name = "Argonian Resistance: Disease and Poison Resistance (Argonian) (rank 1)"
+game_name = "Argonian Resistance"
+source = { Race = { name = "Argonian", ability_id = 36583 } }
+channels = [{ channel = { Armour = "Disease" }, value = 660.0 }, { channel = { Armour = "Poison" }, value = 660.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36583, value1 = 660. Second number of its own tooltip, for both resistances."
+
+[[effect]]
+id = 49169
+name = "Argonian Resistance: Max Health (Argonian) (rank 2)"
+game_name = "Argonian Resistance 1"
+source = { Race = { name = "Argonian", ability_id = 45253 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 666.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 49169, value1 = 666. First number of the tooltip of rank record 45253."
+
+[[effect]]
+id = 45253
+name = "Argonian Resistance: Disease and Poison Resistance (Argonian) (rank 2)"
+game_name = "Argonian Resistance"
+source = { Race = { name = "Argonian", ability_id = 45253 } }
+channels = [{ channel = { Armour = "Disease" }, value = 1320.0 }, { channel = { Armour = "Poison" }, value = 1320.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45253, value1 = 1320. Second number of its own tooltip, for both resistances."
+
+[[effect]]
+id = 49170
+name = "Argonian Resistance: Max Health (Argonian)"
+game_name = "Argonian Resistance 1"
+source = { Race = { name = "Argonian", ability_id = 45255 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+note = "Rank 3 of 3 of this passive: record 49170, value1 = 1000. First number of the tooltip of rank record 45255."
+
+[[effect]]
+id = 45255
+name = "Argonian Resistance: Disease and Poison Resistance (Argonian)"
+game_name = "Argonian Resistance"
+source = { Race = { name = "Argonian", ability_id = 45255 } }
+channels = [{ channel = { Armour = "Disease" }, value = 2310.0 }, { channel = { Armour = "Poison" }, value = 2310.0 }]
+check = { field = "value1" }
+note = "Rank 3 of 3 of this passive: record 45255, value1 = 2310. Second number of its own tooltip, for both resistances."
+
+[[effect]]
+id = 49181
+name = "Resist Frost: Max Health (Nord) (rank 1)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord", ability_id = 36627 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 333.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 49181, value1 = 333. First number of the tooltip of rank record 36627."
+
+[[effect]]
+id = 36627
+name = "Resist Frost: Frost Resistance (Nord) (rank 1)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord", ability_id = 36627 } }
+channels = [{ channel = { Armour = "Frost" }, value = 1540.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36627, value1 = 1540. Second number of its own tooltip."
+
+[[effect]]
+id = 49182
+name = "Resist Frost: Max Health (Nord) (rank 2)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord", ability_id = 45303 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 666.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 49182, value1 = 666. First number of the tooltip of rank record 45303."
+
+[[effect]]
+id = 45303
+name = "Resist Frost: Frost Resistance (Nord) (rank 2)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord", ability_id = 45303 } }
+channels = [{ channel = { Armour = "Frost" }, value = 3080.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 3 of this passive: record 45303, value1 = 3080. Second number of its own tooltip."
+
+[[effect]]
+id = 49183
+name = "Resist Frost: Max Health (Nord)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord", ability_id = 45304 } }
+channels = [{ channel = { Resource = ["Health", "Additive"] }, value = 1000.0 }]
+check = { field = "value1" }
+note = "Rank 3 of 3 of this passive: record 49183, value1 = 1000. First number of the tooltip of rank record 45304."
+
+[[effect]]
+id = 45304
+name = "Resist Frost: Frost Resistance (Nord)"
+game_name = "Resist Frost"
+source = { Race = { name = "Nord", ability_id = 45304 } }
+channels = [{ channel = { Armour = "Frost" }, value = 4620.0 }]
+check = { field = "value1" }
+note = "Rank 3 of 3 of this passive: record 45304, value1 = 4620. Second number of its own tooltip."
+
+[[effect]]
+id = 36628
+name = "Rugged: Physical and Spell Resistance (Nord) (rank 1)"
+game_name = "Rugged"
+source = { Race = { name = "Nord", ability_id = 36628 } }
+channels = [{ channel = { Armour = "All" }, value = 866.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 3 of this passive: record 36628, value1 = 866. Ranks 2 and 3 are 45305 and 45306."
+
+[[effect]]
+id = 36008
+name = "Acrobat: fall damage taken (Bosmer) (rank 1)"
+game_name = "Acrobat"
+source = { Race = { name = "Bosmer", ability_id = 36008 } }
+channels = [{ channel = { DamageTaken = ["Fall", "Multiplicative"] }, value = -0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 36008, value1 = -10: 10 % less fall damage taken. The bundle holds no record of a higher rank. The Bow experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 36582
+name = "Amphibian: swimming speed (Argonian)"
+game_name = "Amphibian"
+source = { Race = { name = "Argonian", ability_id = 36582 } }
+channels = [{ channel = "SwimmingSpeed", value = 50.0 }]
+check = { field = "value1" }
+note = "Record 36582, value1 = 50: swimming speed in percentage points (50 = +50 %). The bundle holds no record of another rank. The Restoration Staff experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 36588
+name = "Ashlander: damage taken from lava (Dunmer)"
+game_name = "Ashlander"
+source = { Race = { name = "Dunmer", ability_id = 36588 } }
+channels = [{ channel = { DamageTaken = ["Lava", "Multiplicative"] }, value = -0.5 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 36588, value1 = -50: 50 % less damage from environmental lava. The Dual Wield experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 35965
+name = "Highborn: experience gained (Altmer)"
+game_name = "Highborn"
+source = { Race = { name = "Altmer", ability_id = 35965 } }
+channels = [{ channel = "KillExperience", value = 1.0 }]
+check = { field = "value1" }
+note = "Record 35965, value1 = 1: percentage points of experience gained, in the `KillExperience` channel (the closest one there is). Unit read from the record, not confirmed against the game. The Destruction Staff experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 33293
+name = "Craftsman: crafting inspiration gained (Orc)"
+game_name = "Craftsman"
+source = { Race = { name = "Orc", ability_id = 33293 } }
+channels = [{ channel = "InspirationGain", value = 10.0 }]
+check = { field = "value1" }
+note = "Record 33293, value1 = 10: percentage points of crafting inspiration gained. The Heavy Armor experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 36312
+name = "Diplomat: gold gained (Imperial)"
+game_name = "Diplomat"
+source = { Race = { name = "Imperial", ability_id = 36312 } }
+channels = [{ channel = "GoldGain", value = 1.0 }]
+check = { field = "value1" }
+note = "Record 36312, value1 = 1: percentage points of gold gained. The One Hand and Shield experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 36247
+name = "Opportunist: Alliance Points gained (Breton)"
+game_name = "Opportunist"
+source = { Race = { name = "Breton", ability_id = 36247 } }
+channels = [{ channel = "AlliancePointGain", value = 1.0 }]
+check = { field = "value1" }
+note = "Record 36247, value1 = 1: percentage points of Alliance Points gained. The Light Armor experience gain in the same tooltip is not a stat."
+
+[[effect]]
+id = 132844
+name = "Unnatural Movement: Sprint cost (Vampire) (rank 1)"
+game_name = "Unnatural Movement"
+source = { Passive = { ability_id = 132844 } }
+channels = [{ channel = { CostReductionCCA = ["Sprint", "Multiplicative"] }, value = 0.25 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 1 of 2 of this passive: record 132844, value1 = -25. Reduces the cost of Sprint. The invisibility after sprinting is not a stat."
+
+[[effect]]
+id = 135218
+name = "Unnatural Movement: Sprint cost (Vampire)"
+game_name = "Unnatural Movement"
+source = { Passive = { ability_id = 135218 } }
+channels = [{ channel = { CostReductionCCA = ["Sprint", "Multiplicative"] }, value = 0.5 }]
+check = { field = "value1", scale = -0.01 }
+note = "Rank 2 of 2 of this passive: record 135218, value1 = -50. Reduces the cost of Sprint. The invisibility after sprinting is not a stat."
+
+[[effect]]
+id = 33095
+name = "Dark Stalker: time to enter Sneak (Vampire) (rank 1)"
+game_name = "Dark Stalker"
+source = { Passive = { ability_id = 33095 } }
+channels = [{ channel = "SneakEntryTime", value = 25.0 }]
+check = { field = "value1", scale = -1.0 }
+note = "Rank 1 of 2 of this passive: record 33095, value1 = -25. Percentage points by which the time to enter Sneak is cut. Ignoring the Movement Speed penalty of Sneak is not a stat."
+
+[[effect]]
+id = 46041
+name = "Dark Stalker: time to enter Sneak (Vampire)"
+game_name = "Dark Stalker"
+source = { Passive = { ability_id = 46041 } }
+channels = [{ channel = "SneakEntryTime", value = 50.0 }]
+check = { field = "value1", scale = -1.0 }
+note = "Rank 2 of 2 of this passive: record 46041, value1 = -50. Percentage points by which the time to enter Sneak is cut. Ignoring the Movement Speed penalty of Sneak is not a stat."
+
+[[effect]]
+id = 39261
+name = "Battle Resurrection: resurrection time (PvP area) (rank 1)"
+game_name = "Battle Resurrection"
+source = { Passive = { ability_id = 39261 } }
+channels = [{ channel = "ResurrectionSpeed", value = 15.0 }]
+condition = "InPvpArea"
+check = { field = "value1", scale = -1.0 }
+note = "Rank 1 of 2 of this passive: record 39261, value1 = -15. Percentage points by which the time to resurrect another player is cut (`ResurrectionSpeed`: bigger is faster). Only counts when the build says it is in a PvP area (`Build::location`)."
+
+[[effect]]
+id = 45625
+name = "Battle Resurrection: resurrection time (PvP area)"
+game_name = "Battle Resurrection"
+source = { Passive = { ability_id = 45625 } }
+channels = [{ channel = "ResurrectionSpeed", value = 30.0 }]
+condition = "InPvpArea"
+check = { field = "value1", scale = -1.0 }
+note = "Rank 2 of 2 of this passive: record 45625, value1 = -30. Percentage points by which the time to resurrect another player is cut (`ResurrectionSpeed`: bigger is faster). Only counts when the build says it is in a PvP area (`Build::location`)."
+
+[[effect]]
+id = 40437
+name = "Everlasting Magic: Mages Guild ability duration (rank 1)"
+game_name = "Everlasting Magic"
+source = { Passive = { ability_id = 40437 } }
+channels = [{ channel = { DurationSkillLine = "Mages Guild" }, value = 1000.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 40437, value1 = 1000. Milliseconds added to the duration of Mages Guild abilities."
+
+[[effect]]
+id = 45602
+name = "Everlasting Magic: Mages Guild ability duration"
+game_name = "Everlasting Magic"
+source = { Passive = { ability_id = 45602 } }
+channels = [{ channel = { DurationSkillLine = "Mages Guild" }, value = 2000.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45602, value1 = 2000. Milliseconds added to the duration of Mages Guild abilities."
+
+[[effect]]
+id = 40393
+name = "Skilled Tracker: Fighters Guild damage"
+game_name = "Skilled Tracker"
+source = { Passive = { ability_id = 40393 } }
+channels = [{ channel = { DamageDone = [{ SkillLine = "Fighters Guild" }, "Multiplicative"] }, value = 0.1 }]
+check = { field = "value1", scale = 0.01 }
+note = "Record 40393, value1 = 10, read as 10 %. **Unit to confirm in game.** The bonus doubles against player Vampires and Werewolves: not modelled (`TargetIs` has no Vampire or Werewolf). The bundle holds no record of another rank."
+
+[[effect]]
+id = 31747
+name = "Master Ritualist: resurrection time (Templar) (rank 1)"
+game_name = "Master Ritualist"
+source = { Class = { name = "Templar", ability_id = 31747 } }
+channels = [{ channel = "ResurrectionSpeed", value = 10.0 }]
+check = { field = "value1", scale = -1.0 }
+note = "Rank 1 of 2 of this passive: record 31747, value1 = -10. Percentage points by which the time to resurrect another player is cut. The extra Health of resurrected allies (secondary record) and the Soul Gem chance are not stats."
+
+[[effect]]
+id = 45202
+name = "Master Ritualist: resurrection time (Templar)"
+game_name = "Master Ritualist"
+source = { Class = { name = "Templar", ability_id = 45202 } }
+channels = [{ channel = "ResurrectionSpeed", value = 20.0 }]
+check = { field = "value1", scale = -1.0 }
+note = "Rank 2 of 2 of this passive: record 45202, value1 = -20. Percentage points by which the time to resurrect another player is cut. The extra Health of resurrected allies (secondary record) and the Soul Gem chance are not stats."
+
+[[effect]]
+id = 36616
+name = "Master Assassin: Critical Chance rating against flanked enemies (Nightblade) (rank 1)"
+game_name = "Master Assassin"
+source = { Class = { name = "Nightblade", ability_id = 36616 } }
+channels = [{ channel = "CriticalChance", value = 724.0 }]
+condition = "TargetFlanked"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 36616, value1 = 724. Critical Chance rating (724 is 3.3 %). Only counts against an enemy you are flanking (`TargetFlanked`: combat-time, listed as conditional until a context answers it)."
+
+[[effect]]
+id = 45038
+name = "Master Assassin: Critical Chance rating against flanked enemies (Nightblade)"
+game_name = "Master Assassin"
+source = { Class = { name = "Nightblade", ability_id = 45038 } }
+channels = [{ channel = "CriticalChance", value = 1448.0 }]
+condition = "TargetFlanked"
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45038, value1 = 1448. Critical Chance rating (724 is 3.3 %). Only counts against an enemy you are flanking (`TargetFlanked`: combat-time, listed as conditional until a context answers it)."
+
+[[effect]]
+id = 36552
+name = "Dark Veil: Shadow ability duration (Nightblade) (rank 1)"
+game_name = "Dark Veil"
+source = { Class = { name = "Nightblade", ability_id = 36552 } }
+channels = [{ channel = { DurationSkillLine = "Shadow" }, value = 1000.0 }]
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 36552, value1 = 1000. Milliseconds added to the duration of Shadow abilities. The game excludes Shadow Cloak and its morphs: the channel is per skill line and cannot say so."
+
+[[effect]]
+id = 45115
+name = "Dark Veil: Shadow ability duration (Nightblade)"
+game_name = "Dark Veil"
+source = { Class = { name = "Nightblade", ability_id = 45115 } }
+channels = [{ channel = { DurationSkillLine = "Shadow" }, value = 2000.0 }]
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45115, value1 = 2000. Milliseconds added to the duration of Shadow abilities. The game excludes Shadow Cloak and its morphs: the channel is per skill line and cannot say so."
+
+[[effect]]
+id = 116286
+name = "Curative Curse: Healing Done while afflicted (Necromancer) (rank 1)"
+game_name = "Curative Curse"
+source = { Class = { name = "Necromancer", ability_id = 116286 } }
+channels = [{ channel = { HealingDone = "All" }, value = 6.0 }]
+condition = "SelfDebuffed"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 116286, value1 = 6. Healing done in percentage points. Only while a negative effect is on you (`SelfDebuffed`: combat-time)."
+
+[[effect]]
+id = 116287
+name = "Curative Curse: Healing Done while afflicted (Necromancer)"
+game_name = "Curative Curse"
+source = { Class = { name = "Necromancer", ability_id = 116287 } }
+channels = [{ channel = { HealingDone = "All" }, value = 12.0 }]
+condition = "SelfDebuffed"
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 116287, value1 = 12. Healing done in percentage points. Only while a negative effect is on you (`SelfDebuffed`: combat-time)."
+
+[[effect]]
+id = 116282
+name = "Undead Confederate: Health, Magicka and Stamina Recovery (Necromancer) (rank 1)"
+game_name = "Undead Confederate"
+source = { Class = { name = "Necromancer", ability_id = 116282 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 77.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 77.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 77.0 }]
+condition = { Any = [{ SelfBuffActive = 114419 }, { SelfBuffActive = 114317 }, { SelfBuffActive = 115710 }] }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 116282, value1 = 77. One tooltip number for all three resources. Only while Sacrificial Bones (114419), Skeletal Mage (114317) or Spirit Mender (115710) is active: those are the ids the tooltip names, so a morph with its own id is not matched until it is added here (`SelfBuffActive`: combat-time)."
+
+[[effect]]
+id = 116283
+name = "Undead Confederate: Health, Magicka and Stamina Recovery (Necromancer)"
+game_name = "Undead Confederate"
+source = { Class = { name = "Necromancer", ability_id = 116283 } }
+channels = [{ channel = { Recovery = ["Health", "Additive"] }, value = 155.0 }, { channel = { Recovery = ["Magicka", "Additive"] }, value = 155.0 }, { channel = { Recovery = ["Stamina", "Additive"] }, value = 155.0 }]
+condition = { Any = [{ SelfBuffActive = 114419 }, { SelfBuffActive = 114317 }, { SelfBuffActive = 115710 }] }
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 116283, value1 = 155. One tooltip number for all three resources. Only while Sacrificial Bones (114419), Skeletal Mage (114317) or Spirit Mender (115710) is active: those are the ids the tooltip names, so a morph with its own id is not matched until it is added here (`SelfBuffActive`: combat-time)."
+
+[[effect]]
+id = 29385
+name = "Heavy Weapons: Sword Weapon and Spell Damage (Two Handed) (rank 1)"
+game_name = "Heavy Weapons"
+source = { Passive = { ability_id = 29375 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 129.0 }]
+condition = { All = [{ WeaponEquipped = "TwoHanded" }, { WeaponTypeEquipped = { weapon = "Sword", at_least = 1 } }] }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29385, value1 = 129. First number of the tooltip of rank record 29375. A two-handed sword."
+
+[[effect]]
+id = 29384
+name = "Heavy Weapons: Axe Critical Damage (Two Handed) (rank 1)"
+game_name = "Heavy Weapons"
+source = { Passive = { ability_id = 29375 } }
+channels = [{ channel = "CriticalDamage", value = 6.0 }]
+condition = { All = [{ WeaponEquipped = "TwoHanded" }, { WeaponTypeEquipped = { weapon = "Axe", at_least = 1 } }] }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29384, value1 = 6. Second number of the tooltip of rank record 29375: percentage points. A two-handed axe."
+
+[[effect]]
+id = 29375
+name = "Heavy Weapons: Mace Offensive Penetration (Two Handed) (rank 1)"
+game_name = "Heavy Weapons"
+source = { Passive = { ability_id = 29375 } }
+channels = [{ channel = { Penetration = "All" }, value = 1487.0 }]
+condition = { All = [{ WeaponEquipped = "TwoHanded" }, { WeaponTypeEquipped = { weapon = "Mace", at_least = 1 } }] }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 29375, value1 = 1487. Third number of its own tooltip. A two-handed mace."
+
+[[effect]]
+id = 45432
+name = "Heavy Weapons: Sword Weapon and Spell Damage (Two Handed)"
+game_name = "Heavy Weapons"
+source = { Passive = { ability_id = 45430 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 258.0 }]
+condition = { All = [{ WeaponEquipped = "TwoHanded" }, { WeaponTypeEquipped = { weapon = "Sword", at_least = 1 } }] }
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45432, value1 = 258. First number of the tooltip of rank record 45430. A two-handed sword."
+
+[[effect]]
+id = 45434
+name = "Heavy Weapons: Axe Critical Damage (Two Handed)"
+game_name = "Heavy Weapons"
+source = { Passive = { ability_id = 45430 } }
+channels = [{ channel = "CriticalDamage", value = 12.0 }]
+condition = { All = [{ WeaponEquipped = "TwoHanded" }, { WeaponTypeEquipped = { weapon = "Axe", at_least = 1 } }] }
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45434, value1 = 12. Second number of the tooltip of rank record 45430: percentage points. A two-handed axe."
+
+[[effect]]
+id = 45430
+name = "Heavy Weapons: Mace Offensive Penetration (Two Handed)"
+game_name = "Heavy Weapons"
+source = { Passive = { ability_id = 45430 } }
+channels = [{ channel = { Penetration = "All" }, value = 2974.0 }]
+condition = { All = [{ WeaponEquipped = "TwoHanded" }, { WeaponTypeEquipped = { weapon = "Mace", at_least = 1 } }] }
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45430, value1 = 2974. Third number of its own tooltip. A two-handed mace."
+
+[[effect]]
+id = 30895
+name = "Twin Blade and Blunt: each axe, Critical Damage (Dual Wield) (rank 1)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 30893 } }
+channels = [{ channel = "CriticalDamage", value = 3.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Axe", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30895, value1 = 3. First number of the tooltip of rank record 30893: percentage points, per axe in a hand (Additive, stacks = axes)."
+
+[[effect]]
+id = 30902
+name = "Twin Blade and Blunt: each mace, Offensive Penetration (Dual Wield) (rank 1)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 30893 } }
+channels = [{ channel = { Penetration = "All" }, value = 743.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Mace", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30902, value1 = 743. Second number of the tooltip of rank record 30893, per mace in a hand (Additive, stacks = maces)."
+
+[[effect]]
+id = 30912
+name = "Twin Blade and Blunt: each sword, Weapon and Spell Damage (Dual Wield) (rank 1)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 30893 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 64.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Sword", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 30912, value1 = 64. Third number of the tooltip of rank record 30893, per sword in a hand (Additive, stacks = swords)."
+
+[[effect]]
+id = 30893
+name = "Twin Blade and Blunt: each dagger, Critical Chance rating (Dual Wield) (rank 1)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 30893 } }
+channels = [{ channel = "CriticalChance", value = 328.5 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Dagger", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1", scale = 2.19 }
+note = "Rank 1 of 2 of this passive: record 30893, value1 = 150 (hundredths of a percent: x 0.01 x 219 rating per 1 %). The number is not in a tooltip record, only in the text of the tooltip (328), so the value is the record read that way (the text shows it rounded down). Per dagger in a hand (Additive, stacks = daggers)."
+
+[[effect]]
+id = 45487
+name = "Twin Blade and Blunt: each axe, Critical Damage (Dual Wield)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 45482 } }
+channels = [{ channel = "CriticalDamage", value = 6.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Axe", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45487, value1 = 6. First number of the tooltip of rank record 45482: percentage points, per axe in a hand (Additive, stacks = axes)."
+
+[[effect]]
+id = 45484
+name = "Twin Blade and Blunt: each mace, Offensive Penetration (Dual Wield)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 45482 } }
+channels = [{ channel = { Penetration = "All" }, value = 1487.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Mace", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45484, value1 = 1487. Second number of the tooltip of rank record 45482, per mace in a hand (Additive, stacks = maces)."
+
+[[effect]]
+id = 45485
+name = "Twin Blade and Blunt: each sword, Weapon and Spell Damage (Dual Wield)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 45482 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 129.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Sword", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 45485, value1 = 129. Third number of the tooltip of rank record 45482, per sword in a hand (Additive, stacks = swords)."
+
+[[effect]]
+id = 45482
+name = "Twin Blade and Blunt: each dagger, Critical Chance rating (Dual Wield)"
+game_name = "Twin Blade and Blunt"
+source = { Passive = { ability_id = 45482 } }
+channels = [{ channel = "CriticalChance", value = 657.0 }]
+condition = { All = [{ WeaponEquipped = "DualWield" }, { WeaponTypeEquipped = { weapon = "Dagger", at_least = 1 } }] }
+stacking = "Additive"
+check = { field = "value1", scale = 2.19 }
+note = "Rank 2 of 2 of this passive: record 45482, value1 = 300 (hundredths of a percent: x 0.01 x 219 rating per 1 %). The number is not in a tooltip record, only in the text of the tooltip (657), so the value is the record read that way. Per dagger in a hand (Additive, stacks = daggers)."
+
+[[effect]]
+id = 30937
+name = "Vinedusk Training: damage within 15 m (Bow) (rank 1)"
+game_name = "Vinedusk Training"
+source = { Passive = { ability_id = 30937 } }
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = 0.02 }]
+condition = { All = [{ WeaponEquipped = "Bow" }, { TargetWithinMeters = 15 }] }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 30937, value1 = 2. Damage done against enemies 15 metres or closer (`TargetWithinMeters`: combat-time, no distance in the calculator, so listed as conditional)."
+
+[[effect]]
+id = 30941
+name = "Vinedusk Training: Critical Chance rating beyond 15 m (Bow) (rank 1)"
+game_name = "Vinedusk Training"
+source = { Passive = { ability_id = 30937 } }
+channels = [{ channel = "CriticalChance", value = 657.0 }]
+condition = { All = [{ WeaponEquipped = "Bow" }, { Not = { TargetWithinMeters = 15 } }] }
+check = { field = "value1", scale = 219.0 }
+note = "Rank 1 of 2 of this passive: record 30941, value1 = 3. Second number of the tooltip of rank record 30937. **Unit to confirm in game:** read as a percentage like Accuracy (3 % x 219 rating = 657). Against enemies further than 15 metres."
+
+[[effect]]
+id = 45494
+name = "Vinedusk Training: damage within 15 m (Bow)"
+game_name = "Vinedusk Training"
+source = { Passive = { ability_id = 45494 } }
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, value = 0.05 }]
+condition = { All = [{ WeaponEquipped = "Bow" }, { TargetWithinMeters = 15 }] }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 2 of this passive: record 45494, value1 = 5. Damage done against enemies 15 metres or closer (`TargetWithinMeters`: combat-time, no distance in the calculator, so listed as conditional)."
+
+[[effect]]
+id = 45496
+name = "Vinedusk Training: Critical Chance rating beyond 15 m (Bow)"
+game_name = "Vinedusk Training"
+source = { Passive = { ability_id = 45494 } }
+channels = [{ channel = "CriticalChance", value = 1314.0 }]
+condition = { All = [{ WeaponEquipped = "Bow" }, { Not = { TargetWithinMeters = 15 } }] }
+check = { field = "value1", scale = 219.0 }
+note = "Rank 2 of 2 of this passive: record 45496, value1 = 6. Second number of the tooltip of rank record 45494. **Unit to confirm in game:** read as a percentage like Accuracy (6 % x 219 rating = 1314). Against enemies further than 15 metres."
+
+[[effect]]
+id = 30959
+name = "Ancient Knowledge: Inferno Staff damage over time and Status Effect damage (Destruction Staff) (rank 1)"
+game_name = "Ancient Knowledge"
+source = { Passive = { ability_id = 30959 } }
+channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.06 }, { channel = { DamageDone = ["StatusEffects", "Multiplicative"] }, value = 0.06 }]
+condition = { WeaponTypeEquipped = { weapon = "FireStaff", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 30959, value1 = 6. First number of its own tooltip, for both channels. With an Inferno Staff."
+
+[[effect]]
+id = 88743
+name = "Ancient Knowledge: Lightning Staff direct and channeled damage (Destruction Staff) (rank 1)"
+game_name = "Ancient Knowledge"
+source = { Passive = { ability_id = 30959 } }
+channels = [{ channel = { DamageDone = ["Direct", "Multiplicative"] }, value = 0.06 }, { channel = { DamageDone = ["Channeled", "Multiplicative"] }, value = 0.06 }]
+condition = { WeaponTypeEquipped = { weapon = "LightningStaff", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 2 of this passive: record 88743, value1 = 6. Second number of the tooltip of rank record 30959, for both channels. With a Lightning Staff."
+
+[[effect]]
+id = 88744
+name = "Ancient Knowledge: Ice Staff blocking (Destruction Staff) (rank 1)"
+game_name = "Ancient Knowledge"
+source = { Passive = { ability_id = 30959 } }
+channels = [{ channel = "BlockMitigation", value = 10.0 }, { channel = { CostReductionCCA = ["Block", "Multiplicative"] }, value = 0.18 }]
+condition = { WeaponTypeEquipped = { weapon = "FrostStaff", at_least = 1 } }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 88744, value1 = 10. Third number of the tooltip of rank record 30959: block mitigation in percentage points (the check). The 18 % cheaper block is a number in the text of the tooltip, not in a record. With an Ice Staff."
+
+[[effect]]
+id = 45513
+name = "Ancient Knowledge: Inferno Staff damage over time and Status Effect damage (Destruction Staff)"
+game_name = "Ancient Knowledge"
+source = { Passive = { ability_id = 45513 } }
+channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, value = 0.12 }, { channel = { DamageDone = ["StatusEffects", "Multiplicative"] }, value = 0.12 }]
+condition = { WeaponTypeEquipped = { weapon = "FireStaff", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 2 of this passive: record 45513, value1 = 12. First number of its own tooltip, for both channels. With an Inferno Staff."
+
+[[effect]]
+id = 88754
+name = "Ancient Knowledge: Lightning Staff direct and channeled damage (Destruction Staff)"
+game_name = "Ancient Knowledge"
+source = { Passive = { ability_id = 45513 } }
+channels = [{ channel = { DamageDone = ["Direct", "Multiplicative"] }, value = 0.12 }, { channel = { DamageDone = ["Channeled", "Multiplicative"] }, value = 0.12 }]
+condition = { WeaponTypeEquipped = { weapon = "LightningStaff", at_least = 1 } }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 2 of this passive: record 88754, value1 = 12. Second number of the tooltip of rank record 45513, for both channels. With a Lightning Staff."
+
+[[effect]]
+id = 88753
+name = "Ancient Knowledge: Ice Staff blocking (Destruction Staff)"
+game_name = "Ancient Knowledge"
+source = { Passive = { ability_id = 45513 } }
+channels = [{ channel = "BlockMitigation", value = 20.0 }, { channel = { CostReductionCCA = ["Block", "Multiplicative"] }, value = 0.36 }]
+condition = { WeaponTypeEquipped = { weapon = "FrostStaff", at_least = 1 } }
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 88753, value1 = 20. Third number of the tooltip of rank record 45513: block mitigation in percentage points (the check). The 36 % cheaper block is a number in the text of the tooltip, not in a record. With an Ice Staff."
+
+[[effect]]
+id = 35993
+name = "Spell Recharge: damage taken while casting or channeling (Altmer) (rank 1)"
+game_name = "Spell Recharge"
+source = { Race = { name = "Altmer", ability_id = 35993 } }
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.01 }]
+condition = { SelfState = "Channeling" }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 1 of 3 of this passive: record 35993, value1 = -1. Second number of the tooltip: \"when you are using an ability with a channel or cast time, you take X less damage\" (Channeling, combat state: conditional). The first half (restore Magicka or Stamina on activation, once per 6 s) is a proc and is not written."
+
+[[effect]]
+id = 45273
+name = "Spell Recharge: damage taken while casting or channeling (Altmer) (rank 2)"
+game_name = "Spell Recharge"
+source = { Race = { name = "Altmer", ability_id = 45273 } }
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.02 }]
+condition = { SelfState = "Channeling" }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 2 of 3 of this passive: record 45273, value1 = -2. Second number of the tooltip: \"when you are using an ability with a channel or cast time, you take X less damage\" (Channeling, combat state: conditional). The first half (restore Magicka or Stamina on activation, once per 6 s) is a proc and is not written."
+
+[[effect]]
+id = 45274
+name = "Spell Recharge: damage taken while casting or channeling (Altmer)"
+game_name = "Spell Recharge"
+source = { Race = { name = "Altmer", ability_id = 45274 } }
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, value = -0.05 }]
+condition = { SelfState = "Channeling" }
+check = { field = "value1", scale = 0.01 }
+note = "Rank 3 of 3 of this passive: record 45274, value1 = -5. Second number of the tooltip: \"when you are using an ability with a channel or cast time, you take X less damage\" (Channeling, combat state: conditional). The first half (restore Magicka or Stamina on activation, once per 6 s) is a proc and is not written."
+
+[[effect]]
+id = 194873
+name = "Fated Fortune: Critical Damage and Healing while you have Crux (Arcanist) (rank 1)"
+game_name = "Fated Fortune"
+source = { Class = { name = "Arcanist", ability_id = 184844 } }
+channels = [{ channel = "CriticalDamage", value = 6.0 }, { channel = "CriticalHealing", value = 6.0 }]
+condition = { SelfBuffStacks = { ability_id = 184220, at_least = 1 } }
+check = { field = "value1" }
+note = "Rank 1 of 2 of this passive: record 194873, value1 = 6, percentage points. A build lists 184844. Needs one or more Crux (184220): combat state, so conditional. This is the ordinary class passive, although record 194873 carries tag 335 and sits in the class_mastery category: it is caused by 184844 (a skill-line 218 passive). The mastery that upgrades rank 2, Unbound Potential (263410, line 352), is not written: the damage-done number it adds is not on any record."
+
+[[effect]]
+id = 194875
+name = "Fated Fortune: Critical Damage and Healing while you have Crux (Arcanist)"
+game_name = "Fated Fortune"
+source = { Class = { name = "Arcanist", ability_id = 184847 } }
+channels = [{ channel = "CriticalDamage", value = 12.0 }, { channel = "CriticalHealing", value = 12.0 }]
+condition = { SelfBuffStacks = { ability_id = 184220, at_least = 1 } }
+check = { field = "value1" }
+note = "Rank 2 of 2 of this passive: record 194875, value1 = 12, percentage points. A build lists 184847. Needs one or more Crux (184220): combat state, so conditional. This is the ordinary class passive, although record 194875 carries tag 335 and sits in the class_mastery category: it is caused by 184847 (a skill-line 218 passive). The mastery that upgrades rank 2, Unbound Potential (263410, line 352), is not written: the damage-done number it adds is not on any record."
+
+[[effect]]
+id = 263230
+name = "Resolute Defense: Block Mitigation at 5 stacks (Dragonknight mastery)"
+game_name = "Resolute Defense"
+source = { Class = { name = "Dragonknight", ability_id = 263220 } }
+channels = [{ channel = "BlockMitigation", value = 30.0 }]
+condition = { SelfState = "Blocking" }
+check = { field = "value1", scale = 5.0 }
+note = "Class mastery: skill line 351 is the Dragonknight mastery. Tag 335 is on some records of the line and not on this one, so the line, not the tag, is what makes it a mastery. A build lists 263220, the mastery passive, and only a Dragonknight gets it. Record 263230, value1 = 6, is the gain per second spent Bracing, up to 5 times (the 5 is in the text of the tooltip): written at full stacks, 6 x 5 = 30 percentage points, listed as conditional (Blocking). The Stamina-restore half (chance on block, record 263233) is a proc and is not written."

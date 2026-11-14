@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
-use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, MundusLoadout, PlayerClass, channel::{HealingDoneContext, StatusEffectContext}};
+use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, Location, MundusLoadout, PlayerClass, channel::{HealingDoneContext, StatusEffectContext}};
 
 use crate::{data::{enums::{cca::CoreCombatAbility::{Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::*, DamageDoneContext::Bash as BashDamage, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
 
@@ -44,6 +44,9 @@ pub struct Player {
     /// `None` = no food. The food's own effect is switched on in `active_effects`; this only records
     /// that there is one.
     pub food: Option<u32>,
+    /// Where the character is (`Build::location`), which `Condition::InPvpArea` and `Condition::NearKeep` ask about.
+    /// `None` = not said, which leaves both undecided.
+    pub location: Option<Location>,
     /// Where `channels` came from: one entry per source (a gear category, a set bonus row, an
     /// effect), written by `recompute`. `channels` is the merge of all of them; `explain` reads it.
     pub sources: Vec<(EffectSource, ChannelSet)>,
@@ -64,6 +67,7 @@ impl Player {
             mundus_pick: esosim_types::MundusLoadout::default(),
             class: None,
             food: None,
+            location: None,
             sources: Vec::new(),
         }
     }
@@ -452,6 +456,33 @@ impl Player {
             .count() as u8
     }
 
+    /// How many abilities on the active bar belong to one of the character's own class lines
+    /// (`GrantCondition::ActiveClassSkills`, `Condition::ClassAbilitiesSlotted`): one number over all three lines.
+    /// Only the active bar counts, and an ultimate on the bar counts like any other ability. `None` while the class
+    /// is not set.
+    pub fn get_number_of_active_class_skills(&self) -> Option<u8> {
+        let lines = self.class?.skill_lines();
+        let bar = match self.active_bar {
+            Front => &self.primary_abilities,
+            Backup => &self.backup_abilities,
+        };
+        Some(bar.iter().filter(|id| self.ability_skill_lines.get(*id).is_some_and(|l| lines.contains(l))).count() as u8)
+    }
+
+    /// How many of the three armour weights have at least one piece worn on the active bar's gear, 0 to 3
+    /// (`GrantCondition::DistinctArmourWeights`, `Condition::ArmourWeightsWorn`).
+    pub fn get_number_of_distinct_armour_weights(&self) -> u8 {
+        [ItemType::Heavy, ItemType::Medium, ItemType::Light]
+            .iter()
+            .filter(|weight| self.get_number_of_equipped_item_type(weight) > 0)
+            .count() as u8
+    }
+
+    /// Whether the ability is slotted on the front or the back bar, whichever is active.
+    pub fn is_ability_slotted_on_either_bar(&self, ability_id: u32) -> bool {
+        self.primary_abilities.contains(&ability_id) || self.backup_abilities.contains(&ability_id)
+    }
+
     /// No range check here: the 64-point limit is `Build::validate`'s job (roadmap 4.2). The old
     /// `debug_assert!(m + h + s <= 64)` itself overflowed `u8` on large input.
     pub fn set_attributes(&mut self, attributes: Attributes) {
@@ -603,6 +634,53 @@ mod tests {
         player.active_bar = Backup;
         assert_eq!(player.get_number_of_active_skills_from_skill_line(&a), 1);
         assert_eq!(player.get_number_of_active_skills_from_skill_line(&b), 0);
+    }
+
+    #[test]
+    fn class_skills_are_counted_over_all_three_lines_of_the_class_on_the_active_bar() {
+        let line = |name: &str| (0u32..4096).filter_map(|i| SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap();
+        let mut player = Player::new();
+        assert_eq!(player.get_number_of_active_class_skills(), None, "no class, no answer");
+        player.class = Some(PlayerClass::Sorcerer);
+        player.ability_skill_lines = HashMap::from([
+            (1, line("Storm Calling")),
+            (2, line("Dark Magic")),
+            (3, line("Daedric Summoning")),
+            (4, line("Assassination")), // another class's line
+            (5, line("Mages Guild")),   // a guild line
+            (6, line("Storm Calling")),
+        ]);
+        player.primary_abilities = vec![1, 2, 3, 4, 5, 99]; // 99 has no known line
+        player.backup_abilities = vec![6];
+        assert_eq!(player.get_number_of_active_class_skills(), Some(3));
+        player.active_bar = Backup;
+        assert_eq!(player.get_number_of_active_class_skills(), Some(1));
+        player.class = Some(PlayerClass::Arcanist);
+        assert_eq!(player.get_number_of_active_class_skills(), Some(0));
+    }
+
+    #[test]
+    fn armour_weights_are_counted_by_type_not_by_piece() {
+        let piece = |t| GearPiece::new(t, 66, None, Legendary, None, None);
+        let mut player = Player::new();
+        assert_eq!(player.get_number_of_distinct_armour_weights(), 0);
+        for slot in [GearSlot::Chest, GearSlot::Legs, GearSlot::Hands] {
+            player.set_gear_piece(slot, piece(ItemType::Heavy));
+        }
+        assert_eq!(player.get_number_of_distinct_armour_weights(), 1, "three heavy pieces are one weight");
+        player.set_gear_piece(GearSlot::Head, piece(ItemType::Medium));
+        assert_eq!(player.get_number_of_distinct_armour_weights(), 2);
+        player.set_gear_piece(GearSlot::Feet, piece(ItemType::Light));
+        assert_eq!(player.get_number_of_distinct_armour_weights(), 3);
+    }
+
+    #[test]
+    fn an_ability_can_be_found_on_either_bar() {
+        let mut player = Player::new();
+        player.primary_abilities = vec![1];
+        player.backup_abilities = vec![2];
+        assert!(player.is_ability_slotted_on_either_bar(1) && player.is_ability_slotted_on_either_bar(2));
+        assert!(!player.is_ability_slotted_on_either_bar(3));
     }
 
     #[test]

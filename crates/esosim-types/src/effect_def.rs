@@ -60,7 +60,7 @@ pub struct ChannelValue {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EffectDef {
-    /// Ability id when it has one, otherwise a synthetic id (>= 0x8000_0000).
+    /// The id of the ability record the effect comes from. There are no synthetic ids.
     pub id: u32,
     pub name: String,
     pub source: EffectSource,

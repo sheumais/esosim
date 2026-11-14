@@ -95,6 +95,7 @@ tags = [337]
 
 [world]
 tags = [340, 341, 342, 343, 344, 345, 361]
+skill_line = [51]
 
 [guild]
 tags = [346, 347, 348, 349, 350, 351, 430, 397, 8]
@@ -104,3 +105,11 @@ skill_line = [130]
 tags = [353, 208, 280, 355, 356]
 
 [special]
+tags = [
+    578, # crouch replacement
+]
+
+# `skill_line`, not `tags`: 351-357 are the seven class-mastery lines. Do not read these as tag ids: tag 357 is racial (above), tag 335
+# is on ordinary class passives too. The category is the closure of these roots, so most of its records are not masteries.
+[class_mastery]
+skill_line = [351, 352, 353, 354, 355, 356, 357]

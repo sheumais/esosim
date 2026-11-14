@@ -64,6 +64,7 @@ pub enum DamageTakenContext {
     Players,
     Siege,
     Fall,
+    Lava,
     Type(ResistableDamageType),
 }
 
@@ -105,15 +106,17 @@ pub enum Channel {
     CriticalHealing,
     MovementSpeed,
     CostReductionCCA(CoreCombatAbility, AggKind),
-    /// Cost reduction of one resource: additive is flat cost points (a glyph's 203), multiplicative a
-    /// *fraction* of the cost (0.10 = "reduces the cost of your Magicka abilities by 10%").
     CostReduction(#[serde(with = "crate::skill_serde::mechanic")] Mechanic, AggKind),
-    /// As [`Channel::CostReduction`], for the abilities of one skill line (Hawk's Eye: Bow).
     CostReductionSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine, AggKind),
     MundusBoost,
-    /// Raises the cap of a derived stat (armour cap, critical damage cap), in that stat's unit: see
-    /// [`CappedStat`].
     CapRaise(CappedStat),
+    /// In % points. Ability's base chance is dependent on damage category:
+    /// Weapon Enchants                 20%
+    /// Single Target Direct Damage     10%
+    /// AoE Direct Damage               5%
+    /// Single Target DoT (per tick)    3%
+    /// AoE DoT (per tick, ground DoTs tick every 1s)   1%
+    /// Light Attacks, Heavy Attacks, Status Effects    0%
     StatusEffectChance(StatusEffectContext),
     DecisiveUltimateChance,
     KillExperience,
@@ -132,10 +135,7 @@ pub enum Channel {
     UltimatePerTick,
     AttackSpeed,
     AbilityCooldown,
-    /// Milliseconds taken off the potion cooldown (Glyph of Potion Speed: 5 seconds is 5000).
     PotionCooldown,
-    /// Milliseconds added to the duration of potion effects (Glyph of Potion Boost: "Increase the
-    /// duration of Potion effects by 3.6 seconds" is 3600).
     PotionEffectiveness,
 
     DodgeChance,
@@ -145,4 +145,10 @@ pub enum Channel {
     MountSpeed,
     ResurrectionSpeed,
     StatusEffectDuration,
+    SwimmingSpeed,
+    GoldGain,
+    AlliancePointGain,
+    InspirationGain,
+    SneakEntryTime,
+    DurationSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
 }

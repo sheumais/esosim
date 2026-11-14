@@ -16,8 +16,9 @@
 //!    racial (`EffectSource::Race`), class (`Class`), armour-weight, weapon, world and guild (`Passive`) passives; a
 //!    race or class passive must also be the build's own. Only the top rank of each is written, which is what a
 //!    character at the top of the line has. "Per piece worn" and "per ability slotted" are stacks
-//!    (`Stacking::Additive` with an `ArmourPieces` / `SkillLineSlotted` condition); a weapon passive is gated by
-//!    `WeaponEquipped`, so a bar swap changes which of them count.
+//!    (`Stacking::Additive` with an `ArmourPieces` / `ArmourWeightsWorn` / `SkillLineSlotted` / `ClassAbilitiesSlotted`
+//!    condition); a weapon passive is gated by `WeaponEquipped`, so a bar swap changes which of them count. Where the
+//!    character is (`Build::location`) decides the PvP passives (`NearKeep`, `InPvpArea`); not said, they are conditional.
 //! Steps 3 to 8 are effects: each is switched on in `Player::active_effects` and aggregated by
 //! `recompute`, which decides their build-time conditions with the player as the context (1.2).
 //! Not gathered yet, because there is no data for them: the world and guild passives other than Mage Adept (they need a
@@ -112,6 +113,7 @@ impl Build {
         let mut player = Player::new();
         player.class = Some(self.class);
         player.food = self.food;
+        player.location = self.location;
         player.attributes = self.attributes;
         player.gear = self.gear.clone();
 
@@ -181,6 +183,7 @@ mod tests {
             potion: None,
             external_buffs: vec![],
             passives: vec![],
+            location: None,
             enemy: Default::default(),
         }
     }
@@ -785,6 +788,135 @@ mod tests {
         let p = b.to_player(bundle);
         assert_eq!(from_source(&p, cost, passive(40436)), 0.0);
         assert!(near(from_source(&p, cost, passive(45601)), 0.15));
+    }
+
+    fn line_named(name: &str) -> eso_skill_data::enums::skill_line::SkillLine {
+        (0u32..4096).filter_map(|i| eso_skill_data::enums::skill_line::SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap()
+    }
+
+    /// Roadmap 2.4, gap "distinct armour weights": Undaunted Mettle is +1 / 2 % Max Health, Magicka and Stamina per
+    /// *type* of armour worn, so three Heavy pieces are one weight and a Heavy, Medium and Light mix is three.
+    #[test]
+    fn undaunted_mettle_counts_weights_not_pieces() {
+        use crate::engine::effect::{AggKind::Multiplicative, ResourceKind::{Health, Magicka, Stamina}};
+        let bundle = Bundle::embedded();
+        let near = |a: f64, b: f64| (a - b).abs() < 1e-9;
+        let worn = |ids: &[u32], pieces: &[(GearSlot, ItemType)]| {
+            let mut b = build();
+            b.passives = ids.to_vec();
+            for (slot, weight) in pieces {
+                b.gear.set_gear_piece(*slot, GearPiece::new(*weight, 66, None, Legendary, None, None));
+            }
+            b.to_player(bundle)
+        };
+        let mettle = |id| EffectSource::Passive { ability_id: id };
+        let three_heavy = [(GearSlot::Chest, ItemType::Heavy), (GearSlot::Legs, ItemType::Heavy), (GearSlot::Hands, ItemType::Heavy)];
+        let mut mixed = three_heavy.to_vec();
+        mixed.push((GearSlot::Head, ItemType::Medium));
+        let mut all_three = mixed.clone();
+        all_three.push((GearSlot::Feet, ItemType::Light));
+
+        for resource in [Health, Magicka, Stamina] {
+            let channel = Channel::Resource(resource, Multiplicative);
+            // rank 1 (55366) is 1 % a weight, rank 2 (55386) 2 %
+            assert!(near(from_source(&worn(&[55366], &three_heavy), channel, mettle(55366)), 0.01), "{resource:?}: one weight");
+            assert!(near(from_source(&worn(&[55366], &mixed), channel, mettle(55366)), 0.02), "{resource:?}: two weights");
+            assert!(near(from_source(&worn(&[55386], &all_three), channel, mettle(55386)), 0.06), "{resource:?}: three weights, rank 2");
+            assert_eq!(from_source(&worn(&[55386], &[]), channel, mettle(55386)), 0.0, "{resource:?}: no armour, no weights");
+            // both ranks listed: only the higher one counts
+            let both = worn(&[55366, 55386], &mixed);
+            assert_eq!(from_source(&both, channel, mettle(55366)), 0.0);
+            assert!(near(from_source(&both, channel, mettle(55386)), 0.04));
+            // not unlocked: nothing
+            assert_eq!(from_source(&worn(&[], &mixed), channel, mettle(55386)), 0.0);
+        }
+    }
+
+    /// Roadmap 2.4, gap "a passive that counts a whole class": Expert Mage and Pressure Points are one effect each on
+    /// their real record and count the abilities of all three class lines on the active bar. Another class's line, a
+    /// guild line and the other bar do not count.
+    #[test]
+    fn expert_mage_and_pressure_points_count_the_whole_class() {
+        use crate::engine::effect::DamageDoneContext;
+        let bundle = Bundle::embedded();
+        let abilities = |name: &str, n: usize| -> Vec<u32> {
+            bundle.abilities_in_skill_line(&line_named(name)).iter().copied().take(n).collect()
+        };
+        let power = Channel::Power(DamageDoneContext::All, crate::engine::effect::AggKind::Additive);
+
+        // a Sorcerer: Storm Calling x2, Dark Magic x1, Daedric Summoning x1 and one Support ability on the front bar
+        let mut b = build();
+        b.class = PlayerClass::Sorcerer;
+        b.passives = vec![45195];
+        b.front_bar = [abilities("Storm Calling", 2), abilities("Dark Magic", 1), abilities("Daedric Summoning", 1), abilities("Support", 1)].concat();
+        b.back_bar = abilities("Daedric Summoning", 3);
+        assert_eq!(b.front_bar.len(), 5, "the lines have abilities in the bundle");
+        let expert = EffectSource::Class { name: "Sorcerer".into(), ability_id: 45195 };
+        let p = b.to_player(bundle);
+        assert_eq!(from_source(&p, power, expert.clone()), 4.0 * 108.0, "four class abilities: the Support one does not count");
+
+        // the same rank-1 record, one ability
+        b.passives = vec![31425];
+        b.front_bar = abilities("Dark Magic", 1);
+        let rank1 = EffectSource::Class { name: "Sorcerer".into(), ability_id: 31425 };
+        assert_eq!(from_source(&b.to_player(bundle), power, rank1), 54.0);
+
+        // a Nightblade does not get a Sorcerer passive, however it is slotted
+        b.class = PlayerClass::Nightblade;
+        b.passives = vec![45195];
+        assert_eq!(from_source(&b.to_player(bundle), power, expert), 0.0);
+
+        // Pressure Points: critical chance rating per Nightblade ability, 438 at rank 2 (88656 on ability 45053)
+        let mut b = build();
+        b.class = PlayerClass::Nightblade;
+        b.passives = vec![45053];
+        b.front_bar = [abilities("Shadow", 1), abilities("Assassination", 1), abilities("Siphoning", 1), abilities("Mages Guild", 1)].concat();
+        b.back_bar = abilities("Shadow", 1);
+        let points = EffectSource::Class { name: "Nightblade".into(), ability_id: 45053 };
+        let mut p = b.to_player(bundle);
+        assert_eq!(from_source(&p, Channel::CriticalChance, points.clone()), 3.0 * 438.0, "all three lines, not Assassination alone");
+        // the back bar has one: swapping bars changes the count
+        p.active_bar = crate::entity::player::ActiveBar::Backup;
+        let registry = EffectRegistry::from_bundle(bundle);
+        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &[45053])));
+        assert_eq!(from_source(&p, Channel::CriticalChance, points), 438.0);
+    }
+
+    /// Roadmap 2.4, gap "a location condition": Combat Medic is +10 / 20 % healing done only near a Keep. A build that
+    /// does not say where the character is gets it as a conditional effect and nothing on the sheet.
+    #[test]
+    fn combat_medic_needs_the_build_to_say_it_is_near_a_keep() {
+        use esosim_types::{Location, channel::HealingDoneContext};
+        let bundle = Bundle::embedded();
+        let healing = Channel::HealingDone(HealingDoneContext::All);
+        let medic = EffectSource::Passive { ability_id: 45624 };
+        let at = |location: Option<Location>, passives: &[u32]| {
+            let mut b = build();
+            b.passives = passives.to_vec();
+            b.location = location;
+            b
+        };
+
+        let unsaid = at(None, &[45624]);
+        assert_eq!(from_source(&unsaid.to_player(bundle), healing, medic.clone()), 0.0);
+        let listed = unsaid.conditional_effects(bundle, None);
+        let entry = listed.iter().find(|e| e.id == 45624).expect("listed as conditional");
+        assert_eq!(entry.when(), "near a Keep");
+
+        let near = at(Some(Location::NearKeep), &[45624]);
+        assert_eq!(from_source(&near.to_player(bundle), healing, medic.clone()), 20.0);
+        assert!(near.conditional_effects(bundle, None).iter().all(|e| e.id != 45624), "decided, so not conditional any more");
+        // rank 1 is 10 points, and the higher rank replaces it
+        let rank1 = at(Some(Location::NearKeep), &[39259]);
+        assert_eq!(from_source(&rank1.to_player(bundle), healing, EffectSource::Passive { ability_id: 39259 }), 10.0);
+        let both = at(Some(Location::NearKeep), &[39259, 45624]).to_player(bundle);
+        assert_eq!(from_source(&both, healing, medic.clone()), 20.0);
+        // in a PvP area but not near a Keep, and in PvE: off
+        for location in [Location::PvpArea, Location::Pve] {
+            assert_eq!(from_source(&at(Some(location), &[45624]).to_player(bundle), healing, medic.clone()), 0.0, "{location:?}");
+        }
+        // not unlocked: nothing, near a Keep or not
+        assert_eq!(from_source(&at(Some(Location::NearKeep), &[]).to_player(bundle), healing, medic), 0.0);
     }
 
     #[test]
