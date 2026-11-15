@@ -7,9 +7,10 @@
 //! * `sets`: every ability block / keystone of the set table;
 //! * `cp`: the ability of every star of the champion point table.
 //!
-//! The others (`mundus`, `consumables`, `racial`, `buffs`) are listed in `data/roots.toml`
-//! by id, by exact name or by name prefix. Each ability in the bundle then carries the categories
-//! whose closure it belongs to, so "why is this ability here?" has an answer.
+//! The others (`mundus`, `consumables`, `racial`, `buffs`, ...) are listed in `data/roots.toml`
+//! by id, by exact name, by name prefix, by ability tag or by skill line. Each ability in the
+//! bundle then carries the categories whose closure it belongs to, so "why is this ability
+//! here?" has an answer.
 
 use crate::compile::is_root;
 use crate::corpus::Corpus;
@@ -26,13 +27,14 @@ pub const ROOTS_TOML: &str = include_str!("../data/roots.toml");
 pub struct CategorySpec {
     #[serde(default)]
     pub ids: Vec<u32>,
-    /// Exact ability names (lang file).
+    /// Exact ability names (lang file). Case-sensitive.
     #[serde(default)]
     pub names: Vec<String>,
-    /// Every ability whose name starts with this.
+    /// Every ability whose name starts with one of these. Case-insensitive.
     #[serde(default)]
-    pub name_prefix: Option<String>,
-    /// How many roots `names` / `name_prefix` should find; another count is reported.
+    pub name_prefix: Vec<String>,
+    /// How many roots the category should have in total (listed ids, names, prefixes, tags and
+    /// skill lines together); another count is reported.
     #[serde(default)]
     pub expect: Option<usize>,
     /// `buffs` only: ids applied to the enemy. They are roots too.
@@ -133,6 +135,12 @@ impl RootsReport {
     }
 }
 
+/// Whether `name` starts with `prefix`, ignoring case (lang-file capitalisation is not something
+/// `roots.toml` should have to guess).
+fn name_has_prefix(name: &str, prefix: &str) -> bool {
+    name.to_lowercase().starts_with(&prefix.to_lowercase())
+}
+
 impl Roots {
     /// Roots of every category: the player skills, `set_roots` and `cp_roots` (ids with no record
     /// are dropped), and what `config` lists.
@@ -172,19 +180,17 @@ impl Roots {
                 }
             }
 
-            let mut by_name: BTreeSet<u32> = BTreeSet::new();
-            if !spec.names.is_empty() || spec.name_prefix.is_some() {
+            if !spec.names.is_empty() || !spec.name_prefix.is_empty() {
                 for (id, name) in &corpus.names {
                     if !corpus.skills.contains_key(id) {
                         continue;
                     }
                     let exact = spec.names.iter().any(|n| n == name);
-                    let prefixed = spec.name_prefix.as_deref().is_some_and(|p| name.starts_with(p));
+                    let prefixed = spec.name_prefix.iter().any(|p| name_has_prefix(name, p));
                     if exact || prefixed {
-                        by_name.insert(*id);
+                        found.insert(*id);
                     }
                 }
-                found.extend(by_name.iter().copied());
             }
             if !spec.tags.is_empty() {
                 for (id, s) in &corpus.skills {
@@ -195,16 +201,16 @@ impl Roots {
             }
             if !spec.skill_line.is_empty() {
                 for (id, s) in &corpus.skills {
-                    if s.skill_line().is_some() {
-                        if spec.skill_line.iter().any(|t| &s.base_data.skill_line_id == &(*t as u32)) {
-                            found.insert(*id);
-                        }
+                    if s.skill_line().is_some()
+                        && spec.skill_line.iter().any(|t| s.base_data.skill_line_id == *t as u32)
+                    {
+                        found.insert(*id);
                     }
                 }
             }
             if let Some(expected) = spec.expect {
-                if by_name.len() != expected {
-                    report.unexpected.push((*category, expected, by_name.len()));
+                if found.len() != expected {
+                    report.unexpected.push((*category, expected, found.len()));
                 }
             }
 
@@ -274,10 +280,13 @@ pub fn set_ability_ids(sets_jsonl: &str) -> Result<BTreeSet<u32>, String> {
     Ok(ids)
 }
 
+/// Whether `a` is picked by the name, prefix, tag or skill-line rules of `spec` (the same rules
+/// `Roots::build` applies to the game table; `a.skill_line` is 0 when the ability has none).
 pub fn matches_rules(spec: &CategorySpec, a: &ResolvedAbility) -> bool {
     spec.names.iter().any(|n| *n == a.name)
-        || spec.name_prefix.as_deref().is_some_and(|p| a.name.starts_with(p))
+        || spec.name_prefix.iter().any(|p| name_has_prefix(&a.name, p))
         || a.tags.iter().any(|t| spec.tags.contains(t))
+        || (a.skill_line != 0 && spec.skill_line.iter().any(|l| *l as u32 == a.skill_line))
 }
 
 #[cfg(test)]
@@ -327,7 +336,7 @@ mod tests {
             &[(11, "Boon: The Thief"), (12, "Boon: The Lady"), (13, "Other"), (14, "Fortified")],
         );
         let cfg = parse_config(
-            "[mundus]\nname_prefix = \"Boon: \"\nexpect = 3\n[consumables]\nids = [14, 999]\nnames = [\"Other\"]\n",
+            "[mundus]\nname_prefix = [\"Boon: \"]\nexpect = 3\n[consumables]\nids = [14, 999]\nnames = [\"Other\"]\n",
         )
         .unwrap();
         let (roots, report) = Roots::build(&c, &BTreeSet::new(), &BTreeSet::new(), &cfg);
@@ -338,6 +347,25 @@ mod tests {
         let text = report.summary();
         assert!(text.contains("`consumables` are not in the game data: 999"), "{text}");
         assert!(text.contains("`mundus` expected 3 roots, found 2"), "{text}");
+    }
+
+    #[test]
+    fn name_prefixes_ignore_case_and_any_prefix_in_the_list_matches() {
+        let c = corpus(
+            &[10, 11, 12, 13],
+            &[(10, "Vampire Stage 1"), (11, "VAMPIRE STAGE 4"), (12, "Boon: The Thief"), (13, "Other")],
+        );
+        let cfg =
+            parse_config("[class_mastery]\nname_prefix = [\"vampire stage \", \"boon: \"]\nexpect = 3\n").unwrap();
+        let (roots, report) = Roots::build(&c, &BTreeSet::new(), &BTreeSet::new(), &cfg);
+        assert_eq!(roots.by_category[&RootCategory::ClassMastery], BTreeSet::from([10, 11, 12]));
+        assert!(report.unexpected.is_empty(), "{:?}", report.unexpected);
+    }
+
+    #[test]
+    fn name_has_prefix_is_case_insensitive() {
+        assert!(name_has_prefix("Vampire Stage 2", "vampire stage "));
+        assert!(!name_has_prefix("Stage Vampire", "vampire stage "));
     }
 
     #[test]
@@ -352,6 +380,35 @@ mod tests {
         assert_eq!(roots.by_category[&RootCategory::Cp], BTreeSet::from([3]));
         assert_eq!(roots.all(), BTreeSet::from([1, 2, 3]));
         assert_eq!(report.counts[&RootCategory::Sets], 1);
+    }
+
+    #[test]
+    fn expect_counts_tag_and_skill_line_roots_too() {
+        let mut tagged = skill(11);
+        tagged.ability_tags = vec![5];
+        let c = Corpus::from_skills(vec![skill(10), tagged, skill(12)]);
+        let cfg = parse_config("[mundus]\ntags = [5]\nexpect = 1\n[racial]\ntags = [5]\nexpect = 2\n").unwrap();
+        let (roots, report) = Roots::build(&c, &BTreeSet::new(), &BTreeSet::new(), &cfg);
+        assert_eq!(roots.by_category[&RootCategory::Mundus], BTreeSet::from([11]));
+        assert_eq!(report.unexpected, vec![(RootCategory::Racial, 2, 1)]);
+    }
+
+    #[test]
+    fn rules_from_files_match_names_prefixes_tags_and_skill_lines() {
+        let ability = |json: &str| -> ResolvedAbility { serde_json::from_str(json).unwrap() };
+        let spec = CategorySpec {
+            names: vec!["Exact".into()],
+            name_prefix: vec!["vampire stage ".into()],
+            tags: vec![357],
+            skill_line: vec![351],
+            ..CategorySpec::default()
+        };
+        assert!(matches_rules(&spec, &ability(r#"{"id":1,"name":"Exact"}"#)));
+        assert!(matches_rules(&spec, &ability(r#"{"id":2,"name":"Vampire Stage 2"}"#)));
+        assert!(matches_rules(&spec, &ability(r#"{"id":3,"name":"x","tags":[357]}"#)));
+        assert!(matches_rules(&spec, &ability(r#"{"id":4,"name":"x","skill_line":351}"#)));
+        assert!(!matches_rules(&spec, &ability(r#"{"id":5,"name":"x","skill_line":352}"#)));
+        assert!(!matches_rules(&CategorySpec::default(), &ability(r#"{"id":6,"name":"x"}"#)), "an empty spec matches nothing");
     }
 
     #[test]

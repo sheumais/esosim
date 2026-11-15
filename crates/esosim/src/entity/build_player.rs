@@ -11,10 +11,12 @@
 //! 5. mundus stones
 //! 6. consumables (`Build::food`, `Build::potion`)
 //! 7. buffs the group provides (`Build::external_buffs`)
-//! 8. passives (roadmap 2.4), switched on by `passive_effect_rules`. Every passive works one way: it is on only when
+//! 8. passives (roadmap 2.4), switched on by `passive_effect_rules_with`. Every passive works one way: it is on only when
 //!    `Build::passives` lists its ability id, so nothing is on because of gear, race or class alone. That holds for
 //!    racial (`EffectSource::Race`), class (`Class`), armour-weight, weapon, world and guild (`Passive`) passives; a
-//!    race or class passive must also be the build's own. Only the top rank of each is written, which is what a
+//!    race passive must also be the build's own, and a class passive must be in a skill line the character has: its
+//!    class's three lines, less any it replaced by subclassing (`Build::subclass`), plus the lines it took, and Class
+//!    Mastery only while all three own lines are kept (`esosim_types::subclass`). Only the top rank of each is written, which is what a
 //!    character at the top of the line has. "Per piece worn" and "per ability slotted" are stacks
 //!    (`Stacking::Additive` with an `ArmourPieces` / `ArmourWeightsWorn` / `SkillLineSlotted` / `ClassAbilitiesSlotted`
 //!    condition); a weapon passive is gated by `WeaponEquipped`, so a bar swap changes which of them count. Where the
@@ -32,10 +34,10 @@
 //! [`Build::conditional_effects`] lists those, with their condition as text; [`Build::sheet_against`]
 //! is the second sheet, the same build against an [`Enemy`], where the target-aware effects count.
 
-use esosim_types::TargetKind;
+use esosim_types::{SubclassIssue, Subclassing, TargetKind};
 
 use crate::data::bundle::Bundle;
-use crate::engine::grant_rule::{GrantRule, all_grant_rules, passive_effect_rules, set_effect_rules};
+use crate::engine::grant_rule::{GrantRule, all_grant_rules, passive_effect_rules_with, set_effect_rules};
 use crate::engine::registry::EffectRegistry;
 use crate::entity::build::Build;
 use crate::entity::condition_context::TargetContext;
@@ -108,16 +110,12 @@ impl Build {
         self.prepare_for(bundle, None)
     }
 
-    /// `prepare`, with the buffs `target` gives the player switched on as well.
-    fn prepare_for(&self, bundle: &Bundle, target: Option<&Enemy>) -> Prepared {
+    /// A player that has the build's class, its subclass swaps and its bars, with the skill line of each slotted
+    /// ability (what skill-line conditions count). Nothing else yet.
+    fn player_with_skills(&self, bundle: &Bundle) -> Player {
         let mut player = Player::new();
         player.class = Some(self.class);
-        player.food = self.food;
-        player.location = self.location;
-        player.attributes = self.attributes;
-        player.gear = self.gear.clone();
-
-        // bars: which skill line each slotted ability is in (what skill-line conditions count)
+        player.subclass = self.subclass.clone();
         player.primary_abilities = self.front_bar.clone();
         player.backup_abilities = self.back_bar.clone();
         for id in self.front_bar.iter().chain(&self.back_bar) {
@@ -125,6 +123,24 @@ impl Build {
                 player.ability_skill_lines.insert(*id, line);
             }
         }
+        player
+    }
+
+    /// What is wrong with the build's subclass choice: more than two lines replaced, a line replaced that is not
+    /// the class's own, a replacement that is not a class line or is the class's own, two lines from one class, and
+    /// any class ability on a bar whose line the character does not have (`Player::subclass_issues`). Empty for a
+    /// legal build. The sheet leaves illegal swaps out; this says why.
+    pub fn subclass_issues(&self, bundle: &Bundle) -> Vec<SubclassIssue> {
+        self.player_with_skills(bundle).subclass_issues()
+    }
+
+    /// `prepare`, with the buffs `target` gives the player switched on as well.
+    fn prepare_for(&self, bundle: &Bundle, target: Option<&Enemy>) -> Prepared {
+        let mut player = self.player_with_skills(bundle);
+        player.food = self.food;
+        player.location = self.location;
+        player.attributes = self.attributes;
+        player.gear = self.gear.clone();
 
         player.active_effects.apply_champion_points(bundle, &self.champion);
         player.set_mundus(bundle, &self.mundus);
@@ -142,12 +158,19 @@ impl Build {
         // set bonuses written as effects (class 3, roadmap 2.2) are switched on by the set they name
         let registry = EffectRegistry::from_bundle(bundle);
         let mut set_effects = set_effect_rules(bundle.effects.values());
-        // passives (roadmap 2.4): the effects of the passives the build unlocked (`Build::passives`), a race or class
-        // one only if it is this race's or class's; a per-piece or per-slotted-ability one gets its count as stacks
-        let (race, class) = (format!("{:?}", self.race), format!("{:?}", self.class));
+        // passives (roadmap 2.4): the effects of the passives the build unlocked (`Build::passives`), a race one only
+        // if it is this race's, a class one only if its skill line is one the character has (subclassing);
+        // a per-piece or per-slotted-ability one gets its count as stacks
+        let race = format!("{:?}", self.race);
+        // a class passive follows its skill line, not the class's name: a subclassed character has the passives of the
+        // lines it took and none of the lines it gave up, and Class Mastery only while all three own lines are kept
+        let subclassing = Subclassing::resolve(self.class, &self.subclass);
+        let has_class_passive = |class_name: &str, ability_id: u32| {
+            subclassing.has_class_passive(class_name, bundle.skill_line_of(ability_id))
+        };
         // a passive has ranks, each with its own effects: only the highest rank listed counts
         let held = bundle.highest_ranks(&self.passives);
-        set_effects.extend(passive_effect_rules(bundle.effects.values(), &race, &class, &held));
+        set_effects.extend(passive_effect_rules_with(bundle.effects.values(), &race, has_class_passive, &held));
         player.recompute_with(&registry, all_grant_rules().into_iter().chain(&set_effects));
         Prepared { player, registry, set_effects }
     }
@@ -184,6 +207,7 @@ mod tests {
             external_buffs: vec![],
             passives: vec![],
             location: None,
+            subclass: Vec::new(),
             enemy: Default::default(),
         }
     }
@@ -213,8 +237,8 @@ mod tests {
     fn why_is_my_crit_chance_what_it_is() {
         let p = with_gear(build()).to_player(Bundle::embedded());
         let why = p.explain(Channel::CriticalChance);
-        // 810 from a legendary Precise sword, 320 from the star, 1212 from the Thief, and 657 from
-        // the stat rows of the three Ansuul's Torment pieces (`SET_CRITICAL_CHANCE_DEFAULT` in sets.rs)
+        // 810 from a legendary Precise sword, 320 from the star, 1212 from the Thief, and 657.36 (3 %, shown as 657)
+        // from the stat rows of the three Ansuul's Torment pieces (`SET_CRITICAL_CHANCE_DEFAULT` in sets.rs)
         assert!(why.contains(&(EffectSource::GearTrait, 810.0)), "{why:?}");
         assert!(why.contains(&(EffectSource::ChampionPoint { cp_id: 11 }, 320.0)), "{why:?}");
         assert!(why.contains(&(EffectSource::Mundus { ability_id: THIEF }, 1212.0)), "{why:?}");
@@ -223,7 +247,7 @@ mod tests {
             .filter(|(s, _)| matches!(s, EffectSource::Set { set_id, .. } if *set_id == ANSUULS_TORMENT_SET_ID))
             .map(|(_, v)| v)
             .sum();
-        assert_eq!(from_set, 657.0, "{why:?}");
+        assert!((from_set - 657.36).abs() < 1e-9, "3 % of 21912, not the 657 the tooltip shows: {why:?}");
         assert_eq!(p.channels.get(Channel::CriticalChance), 810 + 320 + 1212 + 657);
     }
 
@@ -548,7 +572,7 @@ mod tests {
         assert_eq!(at(60, true), (1647, 10));
         assert_eq!(at(40, true), (3294, 19));
         assert_eq!(at(40, false), (824, 5), "the doubling is for combat only");
-        let pen = |health| in_fight(&[134271, 134273, 134274], health, true).get(Channel::Penetration(crate::engine::effect::ResistableDamageType::All));
+        let pen = |health| in_fight(&[134271, 134273, 134274], health, true).get(Channel::Penetration(crate::engine::effect::DamageDoneContext::All));
         assert_eq!((pen(90), pen(70), pen(30)), (1442, 2884, 5768));
     }
 
@@ -562,18 +586,18 @@ mod tests {
         let high = in_fight(&[32801, 137154], 80, true);
         assert_eq!((high.get(Channel::Recovery(Health, Additive)), high.get(armour)), (0, 0));
         // Ancient Dragonguard: above 50 % damage (record 129532), 50 % or less resistance (record 129508)
-        let power = Channel::Power(crate::engine::effect::DamageDoneContext::All, Additive);
+        let power = Channel::Power(crate::engine::effect::PowerContext::All, Additive);
         let d = |health| { let c = in_fight(&[129532, 129508], health, false); (c.get(power), c.get(armour)) };
         assert_eq!((d(50), d(49)), ((349, 0), (0, 4024)));
     }
 
     #[test]
     fn per_ability_damage_has_its_own_context_and_stays_off_the_sheet_channel() {
-        use crate::engine::effect::{AggKind::Additive, DamageDoneContext, ResistableDamageType::Flame};
+        use crate::engine::effect::{AggKind::Additive, DamageDoneContext, PowerContext, ResistableDamageType::Flame};
         use crate::data::tables::set_ids::SILKS_OF_THE_SUN_SET_ID as SET;
         let p = wearing(SET, 5, None);
-        assert_eq!(p.channels.get(Channel::Power(DamageDoneContext::Type(Flame), Additive)), 466);
-        assert_eq!(from_set(&p, Channel::Power(DamageDoneContext::All, Additive), SET, 5), 0.0);
+        assert_eq!(p.channels.get(Channel::Power(PowerContext::Damage(DamageDoneContext::Type(Flame)), Additive)), 466);
+        assert_eq!(from_set(&p, Channel::Power(PowerContext::All, Additive), SET, 5), 0.0);
     }
 
     /// What one source gives on a channel, summed over its effects.
@@ -666,11 +690,11 @@ mod tests {
         assert!(near(from_source(&p, max_health, nightblade(45084)), 0.10), "two on the front bar");
         p.active_bar = crate::entity::player::ActiveBar::Backup;
         let registry = EffectRegistry::from_bundle(bundle);
-        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &bundle.highest_ranks(&unlocked))));
+        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&crate::engine::grant_rule::passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &bundle.highest_ranks(&unlocked))));
         assert!(near(from_source(&p, max_health, nightblade(45084)), 0.05), "one on the backup bar");
 
         // weapon: Sword and Board (45452) is +5 % Weapon and Spell Damage with a sword and shield, not with a sword alone
-        let power = Channel::Power(crate::engine::effect::DamageDoneContext::All, Multiplicative);
+        let power = Channel::Power(crate::engine::effect::PowerContext::All, Multiplicative);
         let mut b = worn_build(SET, 0, Some(ItemType::Sword));
         assert_eq!(from_source(&b.to_player(bundle), power, passive(45452)), 0.0);
         b.gear.set_gear_piece(GearSlot::OffHand, GearPiece::new(ItemType::Shield, 66, None, Legendary, None, None));
@@ -837,12 +861,12 @@ mod tests {
     /// guild line and the other bar do not count.
     #[test]
     fn expert_mage_and_pressure_points_count_the_whole_class() {
-        use crate::engine::effect::DamageDoneContext;
+        use crate::engine::effect::PowerContext;
         let bundle = Bundle::embedded();
         let abilities = |name: &str, n: usize| -> Vec<u32> {
             bundle.abilities_in_skill_line(&line_named(name)).iter().copied().take(n).collect()
         };
-        let power = Channel::Power(DamageDoneContext::All, crate::engine::effect::AggKind::Additive);
+        let power = Channel::Power(PowerContext::All, crate::engine::effect::AggKind::Additive);
 
         // a Sorcerer: Storm Calling x2, Dark Magic x1, Daedric Summoning x1 and one Support ability on the front bar
         let mut b = build();
@@ -874,12 +898,32 @@ mod tests {
         b.back_bar = abilities("Shadow", 1);
         let points = EffectSource::Class { name: "Nightblade".into(), ability_id: 45053 };
         let mut p = b.to_player(bundle);
-        assert_eq!(from_source(&p, Channel::CriticalChance, points.clone()), 3.0 * 438.0, "all three lines, not Assassination alone");
+        assert!(
+            (from_source(&p, Channel::CriticalChance, points.clone()) - 3.0 * 438.24).abs() < 1e-9,
+            "all three lines, not Assassination alone (2 % of 21912 each)"
+        );
         // the back bar has one: swapping bars changes the count
         p.active_bar = crate::entity::player::ActiveBar::Backup;
         let registry = EffectRegistry::from_bundle(bundle);
-        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &[45053])));
-        assert_eq!(from_source(&p, Channel::CriticalChance, points), 438.0);
+        p.recompute_with(&registry, all_grant_rules().into_iter().chain(&crate::engine::grant_rule::passive_effect_rules(bundle.effects.values(), "Dunmer", "Nightblade", &[45053])));
+        assert!((from_source(&p, Channel::CriticalChance, points) - 438.24).abs() < 1e-9);
+    }
+
+    /// A scribed grimoire is in no skill line in the game data; `skill_lines.csv` (from the compiler's `grimoires.csv`) says Ulfsild's
+    /// Contingency is a Mages Guild ability, so it is a stack of Magicka Controller (+2 % max Magicka per Mages Guild ability).
+    #[test]
+    fn a_scribed_mages_guild_ability_counts_for_magicka_controller() {
+        use crate::engine::effect::{AggKind, ResourceKind};
+        let bundle = Bundle::embedded();
+        let controller = EffectSource::Passive { ability_id: 45603 };
+        let magicka = Channel::Resource(ResourceKind::Magicka, AggKind::Multiplicative);
+        let mut b = build();
+        b.class = PlayerClass::Arcanist;
+        b.passives = vec![45603];
+        b.front_bar = vec![240150];
+        assert_eq!(from_source(&b.to_player(bundle), magicka, controller.clone()), 0.02);
+        b.front_bar = vec![];
+        assert_eq!(from_source(&b.to_player(bundle), magicka, controller), 0.0, "nothing slotted, no stacks");
     }
 
     /// Roadmap 2.4, gap "a location condition": Combat Medic is +10 / 20 % healing done only near a Keep. A build that
@@ -917,6 +961,165 @@ mod tests {
         }
         // not unlocked: nothing, near a Keep or not
         assert_eq!(from_source(&at(Some(Location::NearKeep), &[]).to_player(bundle), healing, medic), 0.0);
+    }
+
+    /// Whether the effect from `source` is on in the player's sources.
+    fn has_source(p: &Player, source: EffectSource) -> bool {
+        p.sources.iter().any(|(s, _)| *s == source)
+    }
+
+    /// Subclassing: a class passive follows its skill line, not the name of the class. A Dragonknight that gave up one
+    /// of its lines loses that line's passives and gets the passives of the Nightblade line it took.
+    #[test]
+    fn a_subclassed_character_has_the_passives_of_its_lines() {
+        use esosim_types::SubclassSwap;
+        const HEMORRHAGE: u32 = 45060; // Nightblade, Assassination: +10 Critical Damage
+        const HEART_OF_STONE: u32 = 44996; // Dragonknight
+        let bundle = Bundle::embedded();
+        let hemorrhage = EffectSource::Class { name: "Nightblade".into(), ability_id: HEMORRHAGE };
+        let heart = EffectSource::Class { name: "Dragonknight".into(), ability_id: HEART_OF_STONE };
+        let (assassination, heart_line) = (bundle.skill_line_of(HEMORRHAGE).unwrap(), bundle.skill_line_of(HEART_OF_STONE).unwrap());
+
+        let mut b = build();
+        b.class = PlayerClass::Dragonknight;
+        b.front_bar.clear();
+        b.passives = vec![HEMORRHAGE, HEART_OF_STONE];
+        let pure = b.to_player(bundle);
+        assert!(has_source(&pure, heart.clone()), "a Dragonknight has Heart of Stone");
+        assert!(!has_source(&pure, hemorrhage.clone()), "and not a Nightblade passive it never took the line for");
+
+        b.subclass = vec![SubclassSwap::new(heart_line, assassination)];
+        assert_eq!(b.subclass_issues(bundle), [], "a Dragonknight line for an Assassination line is a legal swap");
+        let swapped = b.to_player(bundle);
+        assert!(!has_source(&swapped, heart), "the line is given up, its passive goes with it");
+        assert!(has_source(&swapped, hemorrhage.clone()));
+        assert_eq!(from_source(&swapped, Channel::CriticalDamage, hemorrhage), 10.0);
+
+        // listing a passive does not help when the line is not there
+        b.subclass.clear();
+        b.class = PlayerClass::Nightblade;
+        let nightblade = b.to_player(bundle);
+        assert!(!has_source(&nightblade, EffectSource::Class { name: "Dragonknight".into(), ability_id: HEART_OF_STONE }));
+    }
+
+    /// Subclassing: Class Mastery needs all three own lines. Resolute Defense (263230, the Dragonknight mastery, a
+    /// conditional effect while Blocking) is there for the pure class and gone after any swap.
+    #[test]
+    fn replacing_a_class_line_removes_class_mastery() {
+        use esosim_types::SubclassSwap;
+        const MASTERY: u32 = 263220;
+        const RESOLUTE_DEFENSE: u32 = 263230;
+        let bundle = Bundle::embedded();
+        let has = |b: &Build| b.conditional_effects(bundle, None).iter().any(|e| e.id == RESOLUTE_DEFENSE);
+        // Heart of Stone's line is one of the Dragonknight's own; Hemorrhage's is Nightblade (Assassination)
+        let (assassination, own_line) = (bundle.skill_line_of(45060).unwrap(), bundle.skill_line_of(44996).unwrap());
+
+        let mut b = build();
+        b.class = PlayerClass::Dragonknight;
+        b.front_bar.clear();
+        b.passives = vec![MASTERY];
+        assert!(has(&b), "the pure Dragonknight has its mastery");
+        b.subclass = vec![SubclassSwap::new(own_line, assassination)];
+        assert!(!has(&b), "one replaced line is enough to lose it");
+        // a swap the game refuses does not happen, so the mastery stays
+        b.subclass = vec![SubclassSwap::new(own_line, own_line)];
+        assert!(!b.subclass_issues(bundle).is_empty());
+        assert!(has(&b));
+        // and it is the Dragonknight's: another class never has it
+        b.subclass.clear();
+        b.class = PlayerClass::Nightblade;
+        assert!(!has(&b));
+    }
+
+    /// Subclassing: "per class ability slotted" counts the lines the character has. A Nightblade with Storm Calling
+    /// instead of Assassination counts Storm Calling and Shadow abilities and no longer Assassination ones, and Expert
+    /// Mage (a Storm Calling passive) is its to have.
+    #[test]
+    fn expert_mage_counts_the_lines_of_a_subclassed_character() {
+        use crate::engine::effect::PowerContext;
+        use esosim_types::{SubclassIssue, SubclassSwap};
+        let bundle = Bundle::embedded();
+        let abilities = |name: &str, n: usize| -> Vec<u32> {
+            bundle.abilities_in_skill_line(&line_named(name)).iter().copied().take(n).collect()
+        };
+        let power = Channel::Power(PowerContext::All, crate::engine::effect::AggKind::Additive);
+        let expert = EffectSource::Class { name: "Sorcerer".into(), ability_id: 45195 };
+
+        let mut b = build();
+        b.class = PlayerClass::Nightblade;
+        b.passives = vec![45195];
+        b.front_bar = [abilities("Storm Calling", 2), abilities("Shadow", 1), abilities("Assassination", 1)].concat();
+        assert_eq!(b.front_bar.len(), 4, "the lines have abilities in the bundle");
+        assert_eq!(from_source(&b.to_player(bundle), power, expert.clone()), 0.0, "a pure Nightblade has no Storm Calling");
+
+        b.subclass = vec![SubclassSwap::new(line_named("Assassination"), line_named("Storm Calling"))];
+        // 2 Storm Calling + 1 Shadow; the Assassination ability is of a line the character gave up
+        assert_eq!(from_source(&b.to_player(bundle), power, expert), 3.0 * 108.0);
+        let issues = b.subclass_issues(bundle);
+        assert_eq!(issues.len(), 1, "{issues:?}");
+        assert!(matches!(issues[0], SubclassIssue::SlottedOutsideYourLines { line, .. } if line == line_named("Assassination")));
+    }
+
+    /// Subclassing: Pressure Points is an Assassination passive, so replacing Assassination takes it away, whatever
+    /// else is slotted.
+    #[test]
+    fn a_passive_of_a_replaced_line_is_gone_even_if_it_counts_the_whole_class() {
+        use esosim_types::SubclassSwap;
+        let bundle = Bundle::embedded();
+        let abilities = |name: &str| -> Vec<u32> { bundle.abilities_in_skill_line(&line_named(name)).iter().copied().take(1).collect() };
+        let points = EffectSource::Class { name: "Nightblade".into(), ability_id: 45053 };
+        let mut b = build();
+        b.class = PlayerClass::Nightblade;
+        b.passives = vec![45053];
+        b.front_bar = [abilities("Shadow"), abilities("Siphoning")].concat();
+        assert!((from_source(&b.to_player(bundle), Channel::CriticalChance, points.clone()) - 2.0 * 438.24).abs() < 1e-9);
+        b.subclass = vec![SubclassSwap::new(line_named("Assassination"), line_named("Storm Calling"))];
+        assert!(!has_source(&b.to_player(bundle), points.clone()));
+        // swapping a different line keeps it; a Storm Calling ability is a Sorcerer one, so it is not counted
+        b.subclass = vec![SubclassSwap::new(line_named("Siphoning"), line_named("Storm Calling"))];
+        b.front_bar = [abilities("Shadow"), abilities("Storm Calling")].concat();
+        assert!((from_source(&b.to_player(bundle), Channel::CriticalChance, points) - 438.24).abs() < 1e-9);
+    }
+
+    /// The count is of the abilities' native class, not the character's: an Arcanist that took Assassination has
+    /// Pressure Points and gets 438 per Nightblade ability slotted, and its own Arcanist abilities do not count.
+    #[test]
+    fn a_subclassed_arcanist_gets_pressure_points_from_nightblade_abilities() {
+        use esosim_types::SubclassSwap;
+        let bundle = Bundle::embedded();
+        let abilities = |name: &str, n: usize| -> Vec<u32> {
+            bundle.abilities_in_skill_line(&line_named(name)).iter().copied().take(n).collect()
+        };
+        let points = EffectSource::Class { name: "Nightblade".into(), ability_id: 45053 };
+        let mut b = build();
+        b.class = PlayerClass::Arcanist;
+        b.passives = vec![45053];
+        b.subclass = vec![SubclassSwap::new(line_named("Herald of the Tome"), line_named("Assassination"))];
+        b.front_bar = [abilities("Assassination", 2), abilities("Soldier of Apocrypha", 1), abilities("Mages Guild", 1)].concat();
+        assert_eq!(b.front_bar.len(), 4, "the lines have abilities in the bundle");
+        assert!((from_source(&b.to_player(bundle), Channel::CriticalChance, points.clone()) - 2.0 * 438.24).abs() < 1e-9);
+        // no Nightblade ability on the bar, no stacks
+        b.front_bar = abilities("Soldier of Apocrypha", 2);
+        assert_eq!(from_source(&b.to_player(bundle), Channel::CriticalChance, points), 0.0);
+    }
+
+    /// Subclassing rests on two tables the data has to agree with: which class a skill line belongs to, and which
+    /// lines are class mastery. Every class passive written in the effect data must sit in a line of the class it names
+    /// (or in that class's mastery line).
+    #[test]
+    fn every_class_passive_sits_in_a_line_of_the_class_it_names() {
+        use esosim_types::class_mastery_line;
+        let bundle = Bundle::embedded();
+        let mut checked = 0;
+        for def in bundle.effects.values() {
+            let EffectSource::Class { name, ability_id } = &def.source else { continue };
+            let line = bundle.skill_line_of(*ability_id).unwrap_or_else(|| panic!("{}: ability {ability_id} is in no skill line", def.name));
+            let owner = PlayerClass::of_skill_line(line).or_else(|| PlayerClass::ALL.into_iter().find(|c| class_mastery_line(*c) == Some(line)));
+            assert_eq!(owner.map(|c| format!("{c:?}")), Some(name.clone()), "{} (ability {ability_id}, line {})", def.name, line.as_str());
+            checked += 1;
+        }
+        assert!(checked > 50, "only {checked} class passives found");
+        assert_eq!(bundle.skill_line_of(263220), class_mastery_line(PlayerClass::Dragonknight), "the Dragonknight mastery passive");
     }
 
     #[test]

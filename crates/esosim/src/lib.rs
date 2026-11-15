@@ -41,6 +41,7 @@ pub mod entity {
     pub mod gear;
     pub mod player;
     pub mod set_issues;
+    pub mod subclassing;
 }
 
 pub mod stats {

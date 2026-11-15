@@ -97,11 +97,11 @@ use super::*;
             4462 + 477 * 2 + 193 * 3 + 560 + 1206 * 2 + 1000,
         );
         c.add_multiplicative_bps(Channel::Resource(ResourceKind::Health, AggKind::Multiplicative), 1200);
-        // 48.43 % crit chance = 10 % base + 8421 / 21912
+        // 48.38 % crit chance = (2181 base rating + 8421) / 21912
         c.add_additive(Channel::CriticalChance, 2629 + 1922 + 219 * 6 + 320 + 657 + 1579);
         // 5179 weapon damage (dual wield example)
-        c.add_additive(Channel::Power(esosim_types::DamageDoneContext::All, Additive), 1851 + 174 * 3 + 129 * 2 + 205);
-        c.add_multiplicative_bps(Channel::Power(esosim_types::DamageDoneContext::All, Multiplicative), 3500);
+        c.add_additive(Channel::Power(esosim_types::PowerContext::All, Additive), 1851 + 174 * 3 + 129 * 2 + 205);
+        c.add_multiplicative_bps(Channel::Power(esosim_types::PowerContext::All, Multiplicative), 3500);
 
         let ctx = StatContext { level: 50, attributes: Attributes { health: 32, magicka: 0, stamina: 0 }, target: None };
         let s = derive_sheet(&c, &ctx);
@@ -109,7 +109,7 @@ use super::*;
         assert_eq!(s.max_magicka, 12000);
         assert_eq!(s.power, 5179);
         assert_eq!(s.crit_rating, 8421);
-        assert!((s.crit_chance - 0.4843).abs() < 1e-4);
+        assert!((s.crit_chance as f64 - (2181.0 + 8421.0) / 21912.0).abs() < 1e-5);
         assert_eq!(s.crit_damage_pct, 50.0);
     }
 
@@ -125,15 +125,15 @@ use super::*;
         assert!(with(Channel::Resource(ResourceKind::Health, Additive)).max_health > base.max_health);
         assert!(with(Channel::Resource(ResourceKind::Magicka, Additive)).max_magicka > base.max_magicka);
         assert!(with(Channel::Resource(ResourceKind::Stamina, Additive)).max_stamina > base.max_stamina);
-        assert!(with(Channel::Power(esosim_types::DamageDoneContext::All, Additive)).power > base.power);
+        assert!(with(Channel::Power(esosim_types::PowerContext::All, Additive)).power > base.power);
         assert!(with(Channel::CriticalChance).crit_rating > base.crit_rating);
         assert!(with(Channel::CriticalChance).crit_chance > base.crit_chance);
         assert!(with(Channel::CriticalDamage).crit_damage_pct > base.crit_damage_pct);
         assert!(with(Channel::CriticalHealing).crit_healing_pct > base.crit_healing_pct);
         assert!(with(Channel::Armour(Dmg::Martial)).physical_resistance > base.physical_resistance);
         assert!(with(Channel::Armour(Dmg::Spell)).spell_resistance > base.spell_resistance);
-        assert!(with(Channel::Penetration(Dmg::Martial)).physical_penetration > base.physical_penetration);
-        assert!(with(Channel::Penetration(Dmg::Spell)).spell_penetration > base.spell_penetration);
+        assert!(with(Channel::Penetration(esosim_types::DamageDoneContext::Type(Dmg::Martial))).physical_penetration > base.physical_penetration);
+        assert!(with(Channel::Penetration(esosim_types::DamageDoneContext::Type(Dmg::Spell))).spell_penetration > base.spell_penetration);
         assert!(with(Channel::Recovery(ResourceKind::Health, Additive)).health_recovery > base.health_recovery);
         assert!(with(Channel::Recovery(ResourceKind::Magicka, Additive)).magicka_recovery > base.magicka_recovery);
         assert!(with(Channel::Recovery(ResourceKind::Stamina, Additive)).stamina_recovery > base.stamina_recovery);

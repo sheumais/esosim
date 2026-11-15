@@ -122,7 +122,7 @@ impl ActiveEffects {
 
 /// Add every channel of `fx` at `stacks` stacks, each value times `scale`. A mundus stone's value is
 /// truncated to a whole number, as the character sheet does (2023 x 1.727 = 3493.8 shows 3493); every
-/// other effect is rounded.
+/// other effect is rounded, except that a channel which keeps fractions (the critical rating) keeps them.
 fn add_effect(out: &mut ChannelSet, fx: &EffectDef, stacks: u32, scale: f64, truncate: bool) {
     for cv in &fx.channels {
         let mut value = fx.channel_value_at(cv, stacks) * scale;
@@ -130,7 +130,7 @@ fn add_effect(out: &mut ChannelSet, fx: &EffectDef, stacks: u32, scale: f64, tru
             value = (value + 1e-6).floor(); // the epsilon keeps 1212 * 1.5 style products from landing just under
         }
         match cv.channel.bucket() {
-            Bucket::Additive => out.add_additive(cv.channel, value.round() as i64),
+            Bucket::Additive => out.add_additive_f64(cv.channel, value),
             Bucket::Multiplicative => out.add_multiplicative_bps(cv.channel, (value * 10_000.0).round() as i64),
         }
     }
@@ -233,21 +233,21 @@ mod tests {
 
     #[test]
     fn brutality_and_sorcery_are_multiplicative_percentages() {
-        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext};
-        let power = Channel::Power(DamageDoneContext::All, Multiplicative);
+        use crate::engine::effect::{AggKind::Multiplicative, PowerContext};
+        let power = Channel::Power(PowerContext::All, Multiplicative);
         assert_eq!(embedded_sheet(&[61662]).get_multiplicative_bps(power), 1000); // Minor Brutality
         assert_eq!(embedded_sheet(&[61665]).get_multiplicative_bps(power), 2000); // Major Brutality
         assert_eq!(embedded_sheet(&[61662, 61665]).get_multiplicative_bps(power), 3000);
         assert_eq!(embedded_sheet(&[61685]).get_multiplicative_bps(power), 1000); // Minor Sorcery
         assert_eq!(embedded_sheet(&[61687]).get_multiplicative_bps(power), 2000); // Major Sorcery
         // nothing went into the additive bucket any more
-        assert_eq!(embedded_sheet(&[61665]).get(Channel::Power(DamageDoneContext::All, crate::engine::effect::AggKind::Additive)), 0);
+        assert_eq!(embedded_sheet(&[61665]).get(Channel::Power(PowerContext::All, crate::engine::effect::AggKind::Additive)), 0);
     }
 
     #[test]
     fn brutality_and_sorcery_do_not_stack_and_savagery_and_prophecy_do_not_stack() {
-        use crate::engine::effect::{AggKind::Multiplicative, DamageDoneContext};
-        let power = Channel::Power(DamageDoneContext::All, Multiplicative);
+        use crate::engine::effect::{AggKind::Multiplicative, PowerContext};
+        let power = Channel::Power(PowerContext::All, Multiplicative);
         // same tier: counted once
         assert_eq!(embedded_sheet(&[61665, 61687]).get_multiplicative_bps(power), 2000); // Major Brutality + Major Sorcery
         assert_eq!(embedded_sheet(&[61662, 61685]).get_multiplicative_bps(power), 1000);
@@ -318,7 +318,7 @@ mod tests {
         assert_eq!(embedded_sheet(&[61733]).get_multiplicative_bps(health), -1000); // Minor Mangle
         assert_eq!(embedded_sheet(&[145977]).get(Channel::CriticalDamageTaken), 20); // Major Brittle
         assert_eq!(embedded_sheet(&[79907]).get(Channel::CriticalDamage), -10); // Minor Enervation
-        let power = Channel::Power(DamageDoneContext::All, crate::engine::effect::AggKind::Additive);
+        let power = Channel::Power(crate::engine::effect::PowerContext::All, crate::engine::effect::AggKind::Additive);
         assert_eq!(embedded_sheet(&[147643]).get(power), -430); // Major Cowardice
         assert_eq!(embedded_sheet(&[79867]).get(power), -215); // Minor Cowardice
         assert_eq!(embedded_sheet(&[263403]).get(Channel::HealingDone(esosim_types::channel::HealingDoneContext::All)), -8); // Minor Vexation

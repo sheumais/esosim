@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eso_skill_data::enums::{mechanic::Mechanic::{Stamina, Magicka}, skill_line::SkillLine};
-use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, Location, MundusLoadout, PlayerClass, channel::{HealingDoneContext, StatusEffectContext}};
+use esosim_types::{AggKind::{self, Multiplicative}, Bucket, Channel, ConditionContext, DamageDoneContext, Location, MundusLoadout, PlayerClass, PowerContext, SubclassSwap, channel::{HealingDoneContext, StatusEffectContext}};
 
 use crate::{data::{enums::{cca::CoreCombatAbility::{Block, DodgeRoll, Sprint}, damage::ResistableDamageType::{All as ResistableDamageTypeAll, *}, gear::{EnchantType, GearSlot, GearTrait, ItemType}}, tables::{enchant::get_armour_enchant_multiplier, power::OFFHAND_MULTIPLIER, sets::SETS}}, engine::{active_effects::ActiveEffects, aggregator::ChannelSet, effect::{AggKind::Additive, Channel::*, DamageDoneContext::Bash as BashDamage, ResourceKind::{Health, Magicka as Mag, Stamina as Stam}}, grant_rule::GrantRule, registry::EffectRegistry}, entity::{gear::{GearPiece, Loadout, PrismaticValueWrapper}, player::ActiveBar::*}, stats::sheet::Attributes};
 
@@ -40,6 +40,9 @@ pub struct Player {
     /// The character's class. `None` = not set, which leaves `Condition::ClassIs` undecided
     /// (`ConditionContext for Player`, roadmap 1.2); `Build::to_player` sets it (1.3).
     pub class: Option<PlayerClass>,
+    /// Own class lines replaced by lines of other classes (`Build::subclass`). Empty = the pure class. Read through
+    /// `Player::subclassing`, which applies the game's rules; an illegal swap listed here does nothing.
+    pub subclass: Vec<SubclassSwap>,
     /// The food or drink the build names (`Build::food`), which `Condition::FoodActive` asks about.
     /// `None` = no food. The food's own effect is switched on in `active_effects`; this only records
     /// that there is one.
@@ -66,6 +69,7 @@ impl Player {
             attributes: Attributes::default(),
             mundus_pick: esosim_types::MundusLoadout::default(),
             class: None,
+            subclass: Vec::new(),
             food: None,
             location: None,
             sources: Vec::new(),
@@ -215,7 +219,7 @@ impl Player {
             .iter()
             .filter_map(|(source, part)| {
                 let value = match channel.bucket() {
-                    Bucket::Additive => part.get(channel) as f64,
+                    Bucket::Additive => part.get_exact(channel),
                     Bucket::Multiplicative => part.get_multiplicative_bps(channel) as f64 / 10_000.0,
                 };
                 (value != 0.0).then(|| (source.clone(), value))
@@ -234,7 +238,7 @@ impl Player {
         for gear in self.get_active_gear() {
             let power = gear.bloodthirsty_power(health);
             if power > 0.0 {
-                part.add_additive(Power(DamageDoneContext::All, Additive), power);
+                part.add_additive(Power(PowerContext::All, Additive), power);
                 any = true;
             }
         }
@@ -266,7 +270,7 @@ impl Player {
                     _ => self.channels.get(Channel::OffhandWeaponPowerBonus) as f32 / 100.0 + OFFHAND_MULTIPLIER,
                 };
                 let p = (power * m).round();
-                base.add_additive(Power(DamageDoneContext::All, Additive), p);
+                base.add_additive(Power(PowerContext::All, Additive), p);
             } 
             base.add_additive(Armour(ResistableDamageTypeAll), gear.get_armour_value(&slot));
             if let Some(gear_trait) = gear.get_item_trait() {
@@ -321,7 +325,7 @@ impl Player {
                             GearTrait::WeaponDefending => {}, // handle in armour code
                             GearTrait::WeaponPowered => {traits.add_multiplicative_bps(HealingDone(HealingDoneContext::All), (v * 10_000.0).round());},
                             GearTrait::WeaponPrecise => {traits.add_additive(CriticalChance, v)},
-                            GearTrait::WeaponSharpened => {traits.add_additive(Penetration(ResistableDamageTypeAll), v)},
+                            GearTrait::WeaponSharpened => {traits.add_additive(Penetration(DamageDoneContext::All), v)},
                             GearTrait::WeaponTraining => {traits.add_multiplicative_bps(KillExperience, (v * 10_000.0).round());},
                             _ => {},
                         }
@@ -352,17 +356,17 @@ impl Player {
                             EnchantType::Health => {enchants.add_additive(Resource(Health, Additive), v)},
                             EnchantType::HealthRegen => {enchants.add_additive(Recovery(Health, Additive), v)},
                             EnchantType::IncreaseBashDamage => {enchants.add_additive(DamageDone(BashDamage, Additive), v);},
-                            EnchantType::IncreasePhysicalDamage => {enchants.add_additive(Power(DamageDoneContext::All, AggKind::Additive), v); enchants.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreasePhysicalDamage => {enchants.add_additive(Power(PowerContext::All, AggKind::Additive), v); enchants.add_additive(Recovery(Stam, Additive), 10. * infused_multiplier * slot_multiplier)},
                             // the glyph tables are in seconds; the channels are in milliseconds
                             EnchantType::IncreasePotionEffectiveness => {enchants.add_additive(PotionEffectiveness, v * 1000.0);},
-                            EnchantType::IncreaseSpellDamage => {enchants.add_additive(Power(DamageDoneContext::All, AggKind::Additive), v); enchants.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
+                            EnchantType::IncreaseSpellDamage => {enchants.add_additive(Power(PowerContext::All, AggKind::Additive), v); enchants.add_additive(Recovery(Mag, Additive), 10. * infused_multiplier * slot_multiplier)},
                             EnchantType::Magicka => {enchants.add_additive(Resource(Mag, Additive), v)},
                             EnchantType::MagickaRegen => {enchants.add_additive(Recovery(Mag, Additive), v)},
                             EnchantType::PhysicalResistance => {enchants.add_additive(Armour(Martial), v)},
                             EnchantType::PoisonResistance => {enchants.add_additive(Armour(Poison), v)},
                             EnchantType::PrismaticDefense => {}, // handle below
                             EnchantType::PrismaticRecovery => {}, // handle below
-                            EnchantType::ReduceBlockCost => {enchants.add_additive(CostReductionCCA(Block, Additive), v);},
+                            EnchantType::ReduceBlockAndBash => {enchants.add_additive(CostReductionCCA(Block, Additive), v);},
                             EnchantType::ReduceFeatCost => {enchants.add_additive(CostReduction(Stamina, Additive), v);},
                             EnchantType::ReducePotionCooldown => {enchants.add_additive(PotionCooldown, v * 1000.0);},
                             EnchantType::ReduceSpellCost => {enchants.add_additive(CostReduction(Magicka, Additive), v);},
@@ -414,7 +418,7 @@ impl Player {
                 for bonus in row.iter() {
                     // `None`: a stat the compiler has no channel for yet (see sets.jsonl)
                     if let Some(channel) = bonus.channel {
-                        part.add_additive(channel, bonus.value);
+                        part.add_additive_f64(channel, bonus.value);
                         any = true;
                     }
                 }
@@ -456,17 +460,22 @@ impl Player {
             .count() as u8
     }
 
-    /// How many abilities on the active bar belong to one of the character's own class lines
+    /// How many abilities on the active bar come from one of `class`'s three own skill lines
     /// (`GrantCondition::ActiveClassSkills`, `Condition::ClassAbilitiesSlotted`): one number over all three lines.
-    /// Only the active bar counts, and an ultimate on the bar counts like any other ability. `None` while the class
-    /// is not set.
-    pub fn get_number_of_active_class_skills(&self) -> Option<u8> {
-        let lines = self.class?.skill_lines();
+    /// This is about the ability's native class, not the character's: a subclassed Arcanist with Assassination
+    /// has Nightblade abilities. A character can only slot the lines it has, so no subclassing lookup is needed
+    /// (`Player::subclass_issues` reports a slotted ability of a line it does not have). Only the active bar
+    /// counts, and an ultimate on the bar counts like any other ability.
+    pub fn get_number_of_active_class_skills(&self, class: PlayerClass) -> u8 {
         let bar = match self.active_bar {
             Front => &self.primary_abilities,
             Backup => &self.backup_abilities,
         };
-        Some(bar.iter().filter(|id| self.ability_skill_lines.get(*id).is_some_and(|l| lines.contains(l))).count() as u8)
+        bar.iter()
+            .filter(|id| {
+                self.ability_skill_lines.get(*id).is_some_and(|l| PlayerClass::of_skill_line(*l) == Some(class))
+            })
+            .count() as u8
     }
 
     /// How many of the three armour weights have at least one piece worn on the active bar's gear, 0 to 3
@@ -569,7 +578,7 @@ mod tests {
     /// (+20 % at Legendary: 1335 -> 1602), where it used to leave 20 % of it.
     #[test]
     fn a_nirnhoned_weapon_has_more_power_not_less() {
-        let power = Channel::Power(DamageDoneContext::All, Additive);
+        let power = Channel::Power(PowerContext::All, Additive);
         let plain = GearPiece::new(ItemType::Sword, 66, None, Legendary, None, None);
         assert_eq!(gear_channels(GearSlot::MainHand, plain).get(power), 1335);
         let nirnhoned = GearPiece::new(ItemType::Sword, 66, Some(GearTrait::WeaponNirnhoned), Legendary, None, None);
@@ -595,7 +604,7 @@ mod tests {
     /// straight in between, and absent from any context that has no target (the build's own sheet).
     #[test]
     fn bloodthirsty_is_power_against_an_enemy_by_its_health() {
-        let power = Channel::Power(DamageDoneContext::All, Additive);
+        let power = Channel::Power(PowerContext::All, Additive);
         let ring = || GearPiece::new(ItemType::Ring, 66, Some(GearTrait::JewelryBloodthirsty), Legendary, None, None);
         let mut player = Player::new();
         player.set_gear_piece(GearSlot::Ring1, ring());
@@ -640,8 +649,8 @@ mod tests {
     fn class_skills_are_counted_over_all_three_lines_of_the_class_on_the_active_bar() {
         let line = |name: &str| (0u32..4096).filter_map(|i| SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap();
         let mut player = Player::new();
-        assert_eq!(player.get_number_of_active_class_skills(), None, "no class, no answer");
-        player.class = Some(PlayerClass::Sorcerer);
+        let sorcerer = |p: &Player| p.get_number_of_active_class_skills(PlayerClass::Sorcerer);
+        assert_eq!(sorcerer(&player), 0);
         player.ability_skill_lines = HashMap::from([
             (1, line("Storm Calling")),
             (2, line("Dark Magic")),
@@ -652,11 +661,14 @@ mod tests {
         ]);
         player.primary_abilities = vec![1, 2, 3, 4, 5, 99]; // 99 has no known line
         player.backup_abilities = vec![6];
-        assert_eq!(player.get_number_of_active_class_skills(), Some(3));
+        assert_eq!(sorcerer(&player), 3);
+        assert_eq!(player.get_number_of_active_class_skills(PlayerClass::Nightblade), 1);
         player.active_bar = Backup;
-        assert_eq!(player.get_number_of_active_class_skills(), Some(1));
+        assert_eq!(sorcerer(&player), 1);
+        // the character's own class does not matter: an Arcanist slotting Sorcerer lines counts them all the same
         player.class = Some(PlayerClass::Arcanist);
-        assert_eq!(player.get_number_of_active_class_skills(), Some(0));
+        assert_eq!(sorcerer(&player), 1);
+        assert_eq!(player.get_number_of_active_class_skills(PlayerClass::Arcanist), 0);
     }
 
     #[test]

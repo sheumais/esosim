@@ -1,0 +1,1976 @@
+{
+  "build": {
+    "attributes": {
+      "health": 32,
+      "magicka": 32,
+      "stamina": 0
+    },
+    "back_bar": [
+      103623,
+      46331,
+      217462,
+      24574,
+      24595,
+      28348
+    ],
+    "champion": {
+      "points": {
+        "2": 50,
+        "6": 20,
+        "8": 50,
+        "10": 20,
+        "11": 20,
+        "12": 50,
+        "14": 20,
+        "15": 20,
+        "16": 20,
+        "17": 40,
+        "18": 40,
+        "20": 20,
+        "21": 30,
+        "22": 30,
+        "23": 50,
+        "25": 50,
+        "32": 50,
+        "35": 50,
+        "37": 30,
+        "38": 20,
+        "39": 20,
+        "40": 30,
+        "42": 16,
+        "43": 30,
+        "44": 6,
+        "45": 30,
+        "46": 50,
+        "47": 50,
+        "51": 50,
+        "52": 50,
+        "58": 50,
+        "66": 50,
+        "68": 30,
+        "69": 50,
+        "70": 50,
+        "74": 50,
+        "75": 30,
+        "78": 15,
+        "79": 50,
+        "81": 10,
+        "82": 75,
+        "83": 50,
+        "85": 30,
+        "86": 50,
+        "91": 25,
+        "92": 50,
+        "99": 20,
+        "108": 20,
+        "113": 20,
+        "128": 20,
+        "264": 50,
+        "270": 50,
+        "271": 50,
+        "276": 50,
+        "279": 50
+      },
+      "slotted": [
+        66,
+        92,
+        82,
+        12,
+        25,
+        264,
+        8,
+        270,
+        2,
+        271,
+        46
+      ]
+    },
+    "external_buffs": [],
+    "front_bar": [
+      46348,
+      240150,
+      185842,
+      40195,
+      25267,
+      40161
+    ],
+    "gear": {
+      "chest": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 2084,
+          "armor_type": {
+            "id": 2,
+            "name": "ARMORTYPE_MEDIUM"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 19,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 25,
+            "description": "Adds 868 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 2,
+          "equip_type": {
+            "id": 3,
+            "name": "EQUIP_TYPE_CHEST"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:208534:364:50:26582:370:50:18:45:0:0:0:0:0:0:2049:0:0:1:0:9800:0|h|h",
+          "link_fields": {
+            "enchant_id": 26582,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 208534,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 775,
+            "max_equipped": 5,
+            "name": "Spattering Disjunction",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "chest",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 208534,
+        "item_type": "Medium",
+        "name": "Spattering Disjunction Jack",
+        "quality": "Legendary",
+        "set_id": 775
+      },
+      "feet": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 1221,
+          "armor_type": {
+            "id": 1,
+            "name": "ARMORTYPE_LIGHT"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 0,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 19,
+            "description": "Adds 351 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 9,
+          "equip_type": {
+            "id": 10,
+            "name": "EQUIP_TYPE_FEET"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:68528:364:50:0:0:0:18:48:0:0:0:0:0:0:2049:37:0:1:0:9900:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 50,
+            "item_id": 68528,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 217,
+            "max_equipped": 5,
+            "name": "Winterborn",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "feet",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 68528,
+        "item_type": "Light",
+        "name": "Winterborn Shoes",
+        "quality": "Legendary",
+        "set_id": 217
+      },
+      "hands": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 698,
+          "armor_type": {
+            "id": 1,
+            "name": "ARMORTYPE_LIGHT"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 0,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 19,
+            "description": "Adds 351 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 16,
+          "equip_type": {
+            "id": 13,
+            "name": "EQUIP_TYPE_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:68529:364:50:0:0:0:18:48:0:0:0:0:0:0:2049:37:0:1:0:10000:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 50,
+            "item_id": 68529,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 217,
+            "max_equipped": 5,
+            "name": "Winterborn",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "hands",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 68529,
+        "item_type": "Light",
+        "name": "Winterborn Gloves",
+        "quality": "Legendary",
+        "set_id": 217
+      },
+      "head": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 1823,
+          "armor_type": {
+            "id": 2,
+            "name": "ARMORTYPE_MEDIUM"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 19,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 25,
+            "description": "Adds 868 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 0,
+          "equip_type": {
+            "id": 1,
+            "name": "EQUIP_TYPE_HEAD"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:95044:364:50:26582:370:50:18:0:0:0:0:0:0:0:2049:67:0:1:0:9950:0|h|h",
+          "link_fields": {
+            "enchant_id": 26582,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 95044,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 270,
+            "max_equipped": 2,
+            "name": "Slimecraw",
+            "num_bonuses": 3,
+            "num_effect_contributions": 0,
+            "num_equipped": 1,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "head",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 95044,
+        "item_type": "Medium",
+        "name": "Slimecraw Mask",
+        "quality": "Legendary",
+        "set_id": 270
+      },
+      "legs": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 1823,
+          "armor_type": {
+            "id": 2,
+            "name": "ARMORTYPE_MEDIUM"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 19,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 25,
+            "description": "Adds 868 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 8,
+          "equip_type": {
+            "id": 9,
+            "name": "EQUIP_TYPE_LEGS"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:208538:364:50:26582:370:50:18:45:0:0:0:0:0:0:2049:0:0:1:0:9800:0|h|h",
+          "link_fields": {
+            "enchant_id": 26582,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 208538,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 775,
+            "max_equipped": 5,
+            "name": "Spattering Disjunction",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "legs",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 208538,
+        "item_type": "Medium",
+        "name": "Spattering Disjunction Guards",
+        "quality": "Legendary",
+        "set_id": 775
+      },
+      "main_hand": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "BefouledWeapon"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 3,
+            "category": {
+              "id": 1,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_BEFOULED_WEAPON"
+            },
+            "default_id": 83,
+            "description": "Deals 3142 Disease Damage.",
+            "final_id": 3,
+            "has_charges": true,
+            "header": "Befouled Weapon Enchantment"
+          },
+          "equip_slot": 4,
+          "equip_type": {
+            "id": 6,
+            "name": "EQUIP_TYPE_TWO_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:208373:364:50:26841:370:50:2:45:0:0:0:0:0:0:2049:0:0:1:0:316:0|h|h",
+          "link_fields": {
+            "enchant_id": 26841,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 208373,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 775,
+            "max_equipped": 5,
+            "name": "Spattering Disjunction",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "main_hand",
+          "trait": {
+            "id": 2,
+            "name": "ITEM_TRAIT_TYPE_WEAPON_CHARGED"
+          },
+          "weapon_power": 1335,
+          "weapon_type": {
+            "id": 15,
+            "name": "WEAPONTYPE_LIGHTNING_STAFF"
+          }
+        },
+        "gear_trait": "WeaponCharged",
+        "item_id": 208373,
+        "item_type": "LightningStaff",
+        "name": "Spattering Disjunction Lightning Staff",
+        "quality": "Legendary",
+        "set_id": 775
+      },
+      "main_hand_backup": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "FieryWeapon"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 10,
+            "category": {
+              "id": 6,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_FIERY_WEAPON"
+            },
+            "default_id": 82,
+            "description": "Deals 4085 Flame Damage.",
+            "final_id": 10,
+            "has_charges": true,
+            "header": "Fiery Weapon Enchantment"
+          },
+          "equip_slot": 20,
+          "equip_type": {
+            "id": 6,
+            "name": "EQUIP_TYPE_TWO_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:208370:364:50:26848:370:50:4:45:0:0:0:0:0:0:2049:0:0:1:0:401:0|h|h",
+          "link_fields": {
+            "enchant_id": 26848,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 208370,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 775,
+            "max_equipped": 5,
+            "name": "Spattering Disjunction",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "main_hand_backup",
+          "trait": {
+            "id": 4,
+            "name": "ITEM_TRAIT_TYPE_WEAPON_INFUSED"
+          },
+          "weapon_power": 1335,
+          "weapon_type": {
+            "id": 8,
+            "name": "WEAPONTYPE_BOW"
+          }
+        },
+        "gear_trait": "WeaponInfused",
+        "item_id": 208370,
+        "item_type": "Bow",
+        "name": "Spattering Disjunction Bow",
+        "quality": "Legendary",
+        "set_id": 775
+      },
+      "necklace": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "IncreaseSpellDamage"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 93,
+            "category": {
+              "id": 32,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_INCREASE_SPELL_DAMAGE"
+            },
+            "default_id": 20,
+            "description": "Adds 174 Weapon and Spell Damage.\nAdds 10 Magicka Recovery.",
+            "final_id": 93,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 1,
+          "equip_type": {
+            "id": 2,
+            "name": "EQUIP_TYPE_NECK"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:71269:364:50:45884:370:50:31:48:0:0:0:0:0:0:2049:37:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 45884,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 71269,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 217,
+            "max_equipped": 5,
+            "name": "Winterborn",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "necklace",
+          "trait": {
+            "id": 31,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_BLOODTHIRSTY"
+          },
+          "weapon_power": 174,
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryBloodthirsty",
+        "item_id": 71269,
+        "item_type": "Necklace",
+        "name": "Winterborn Pendant",
+        "quality": "Legendary",
+        "set_id": 217
+      },
+      "ring1": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "IncreasePhysicalDamage"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 6,
+            "name": "ITEM_DISPLAY_QUALITY_MYTHIC_OVERRIDE"
+          },
+          "enchant": {
+            "applied_id": 92,
+            "category": {
+              "id": 31,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_INCREASE_PHYSICAL_DAMAGE"
+            },
+            "default_id": 178,
+            "description": "Adds 278 Weapon and Spell Damage.\nAdds 16 Stamina Recovery.",
+            "final_id": 92,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 11,
+          "equip_type": {
+            "id": 12,
+            "name": "EQUIP_TYPE_RING"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:216237:364:50:45883:370:50:33:25:0:0:0:0:0:0:2049:0:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 45883,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 216237,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 813,
+            "max_equipped": 1,
+            "name": "Monomyth Reforged",
+            "num_bonuses": 1,
+            "num_effect_contributions": 0,
+            "num_equipped": 1,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "ring1",
+          "trait": {
+            "id": 33,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_INFUSED"
+          },
+          "weapon_power": 278,
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryInfused",
+        "item_id": 216237,
+        "item_type": "Ring",
+        "name": "Monomyth Reforged",
+        "quality": "Legendary",
+        "set_id": 813
+      },
+      "ring2": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "IncreaseSpellDamage"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 93,
+            "category": {
+              "id": 32,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_INCREASE_SPELL_DAMAGE"
+            },
+            "default_id": 20,
+            "description": "Adds 278 Weapon and Spell Damage.\nAdds 16 Magicka Recovery.",
+            "final_id": 93,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 12,
+          "equip_type": {
+            "id": 12,
+            "name": "EQUIP_TYPE_RING"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:71260:364:50:45884:370:50:33:48:0:0:0:0:0:0:2049:37:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 45884,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 71260,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 217,
+            "max_equipped": 5,
+            "name": "Winterborn",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "ring2",
+          "trait": {
+            "id": 33,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_INFUSED"
+          },
+          "weapon_power": 278,
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryInfused",
+        "item_id": 71260,
+        "item_type": "Ring",
+        "name": "Winterborn Ring",
+        "quality": "Legendary",
+        "set_id": 217
+      },
+      "shoulders": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 1823,
+          "armor_type": {
+            "id": 2,
+            "name": "ARMORTYPE_MEDIUM"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 19,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 25,
+            "description": "Adds 351 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 3,
+          "equip_type": {
+            "id": 4,
+            "name": "EQUIP_TYPE_SHOULDERS"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:208546:364:50:26582:370:50:0:0:0:0:0:0:0:0:1025:0:0:1:0:9700:0|h|h",
+          "link_fields": {
+            "enchant_id": 26582,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 208546,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 775,
+            "max_equipped": 5,
+            "name": "Spattering Disjunction",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "shoulders",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 208546,
+        "item_type": "Medium",
+        "name": "Spattering Disjunction Arm Cops",
+        "quality": "Legendary",
+        "set_id": 775
+      },
+      "waist": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "esoui": {
+          "armor_rating": 523,
+          "armor_type": {
+            "id": 1,
+            "name": "ARMORTYPE_LIGHT"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 0,
+            "category": {
+              "id": 13,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_MAGICKA"
+            },
+            "default_id": 19,
+            "description": "Adds 351 Maximum Magicka.",
+            "final_id": 19,
+            "has_charges": true,
+            "header": "Maximum Magicka Enchantment"
+          },
+          "equip_slot": 6,
+          "equip_type": {
+            "id": 8,
+            "name": "EQUIP_TYPE_WAIST"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:68534:364:50:0:0:0:18:48:0:0:0:0:0:0:2049:37:0:1:0:10000:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 50,
+            "item_id": 68534,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 217,
+            "max_equipped": 5,
+            "name": "Winterborn",
+            "num_bonuses": 4,
+            "num_effect_contributions": 0,
+            "num_equipped": 5,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "waist",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 68534,
+        "item_type": "Light",
+        "name": "Winterborn Sash",
+        "quality": "Legendary",
+        "set_id": 217
+      }
+    },
+    "level": 50,
+    "location": "Pve",
+    "mundus": {
+      "stones": [
+        13981
+      ]
+    },
+    "passives": [
+      184847,
+      184858,
+      184873,
+      184887,
+      45038,
+      45048,
+      45053,
+      45060,
+      45176,
+      45172,
+      45165,
+      45181,
+      45444,
+      45430,
+      45443,
+      45446,
+      45448,
+      45476,
+      45477,
+      45478,
+      45481,
+      45482,
+      45494,
+      45492,
+      45493,
+      45497,
+      45498,
+      45500,
+      45509,
+      45512,
+      45513,
+      45514,
+      150185,
+      152778,
+      45549,
+      45557,
+      45559,
+      45561,
+      45562,
+      150181,
+      45564,
+      45565,
+      45567,
+      45572,
+      45574,
+      150184,
+      152780,
+      45533,
+      45526,
+      45546,
+      29773,
+      29791,
+      63799,
+      63811,
+      42054,
+      46041,
+      46040,
+      33090,
+      135218,
+      29062,
+      45596,
+      45599,
+      40393,
+      45601,
+      45602,
+      45603,
+      43561,
+      103793,
+      103809,
+      74580,
+      55676,
+      55386,
+      45614,
+      45621,
+      45619,
+      45622,
+      45624,
+      45625,
+      36063,
+      70390,
+      117848,
+      45301,
+      70043,
+      45573,
+      45579,
+      45555,
+      47276,
+      48171,
+      48165,
+      47288,
+      48201,
+      48195,
+      46727,
+      46758,
+      46772,
+      103632,
+      103645,
+      44590,
+      44625,
+      44610,
+      44615,
+      44641,
+      47282,
+      48186,
+      48180
+    ],
+    "race": "Khajiit"
+  },
+  "expected": {
+    "advanced": {
+      "BASH_COST": {
+        "category": "Core Abilities",
+        "flat": 614,
+        "format": "FLAT",
+        "name": "Bash Cost"
+      },
+      "BASH_DAMAGE": {
+        "category": "Core Abilities",
+        "flat": 309,
+        "format": "FLAT",
+        "name": "Bash Damage"
+      },
+      "BLEED_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Bleed Damage",
+        "percent": 6
+      },
+      "BLEED_RESIST": {
+        "category": "Resistances",
+        "flat": 9995,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Bleed Resistance",
+        "percent": 15.14393902
+      },
+      "BLOCK_COST": {
+        "category": "Core Abilities",
+        "flat": 1659,
+        "format": "FLAT",
+        "name": "Block Cost"
+      },
+      "BLOCK_MITIGATION": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Block Mitigation",
+        "percent": 52
+      },
+      "BLOCK_SPEED": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Block Move Speed",
+        "percent": 42
+      },
+      "CC_BREAK_COST": {
+        "category": "Core Abilities",
+        "flat": 4403,
+        "format": "FLAT",
+        "name": "Break Free Cost"
+      },
+      "COLD_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Frost Damage",
+        "percent": 6
+      },
+      "CRITICAL_DAMAGE": {
+        "category": "Damage Bonuses",
+        "format": "PERCENT",
+        "name": "Critical Damage",
+        "percent": 38
+      },
+      "CRITICAL_HEALING": {
+        "category": "Healing Bonuses",
+        "format": "PERCENT",
+        "name": "Critical Healing",
+        "percent": 28
+      },
+      "DISEASE_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Disease Damage",
+        "percent": 6
+      },
+      "DISEASE_RESIST": {
+        "category": "Resistances",
+        "flat": 9995,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Disease Resistance",
+        "percent": 15.14393902
+      },
+      "DODGE_COST": {
+        "category": "Core Abilities",
+        "flat": 2869,
+        "format": "FLAT",
+        "name": "Dodge Roll Cost"
+      },
+      "FIRE_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Flame Damage",
+        "percent": 6
+      },
+      "FIRE_RESIST": {
+        "category": "Resistances",
+        "flat": 12173,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Flame Resistance",
+        "percent": 18.44393921
+      },
+      "FROST_RESIST": {
+        "category": "Resistances",
+        "flat": 12173,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Frost Resistance",
+        "percent": 18.44393921
+      },
+      "HEALING_DONE_BONUSES": {
+        "category": "Healing Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Healing Done",
+        "percent": 2
+      },
+      "HEALING_TAKEN_BONUSES": {
+        "category": "Healing Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Healing Taken",
+        "percent": 2
+      },
+      "MAGIC_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Magic Damage",
+        "percent": 6
+      },
+      "MAGIC_RESIST": {
+        "category": "Resistances",
+        "flat": 12173,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Magic Resistance",
+        "percent": 18.44393921
+      },
+      "OBLIVION_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Oblivion Damage",
+        "percent": 6
+      },
+      "PHYSICAL_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Physical Damage",
+        "percent": 6
+      },
+      "POISON_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Poison Damage",
+        "percent": 6
+      },
+      "POISON_RESIST": {
+        "category": "Resistances",
+        "flat": 9995,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Poison Resistance",
+        "percent": 15.14393902
+      },
+      "SHOCK_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Shock Damage",
+        "percent": 6
+      },
+      "SHOCK_RESIST": {
+        "category": "Resistances",
+        "flat": 12173,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Shock Resistance",
+        "percent": 18.44393921
+      },
+      "SNEAK_COST": {
+        "category": "Core Abilities",
+        "flat": 68,
+        "format": "FLAT",
+        "name": "Sneak Cost"
+      },
+      "SNEAK_SPEED_REDUCTION": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Sneak Speed",
+        "percent": 100
+      },
+      "SPRINT_COST": {
+        "category": "Core Abilities",
+        "flat": 193,
+        "format": "FLAT",
+        "name": "Sprint Cost"
+      },
+      "SPRINT_SPEED": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Sprint Speed",
+        "percent": 156
+      },
+      "SUBSCRIBER_ALL_XP": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Experience",
+        "percent": 0
+      },
+      "SUBSCRIBER_ALLIANCE_POINTS_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Alliance Points",
+        "percent": 0
+      },
+      "SUBSCRIBER_COIN_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Gold",
+        "percent": 0
+      },
+      "SUBSCRIBER_INSPIRATION_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Crafting Inspiration",
+        "percent": 0
+      },
+      "SUBSCRIBER_TELVAR_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Tel Var",
+        "percent": 0
+      },
+      "SUBSCRIBER_TOME_POINT_GAIN": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Tome Points",
+        "percent": 0
+      }
+    },
+    "derived": {
+      "ARMOR_RATING": {
+        "label": "Armor",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "ATTACK_POWER": {
+        "label": "Attack Power",
+        "value": 3459,
+        "without_bonus": 0
+      },
+      "BLOCK": {
+        "label": "Block",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "CRITICAL_CHANCE": {
+        "label": "Critical Chance",
+        "value": 6017,
+        "without_bonus": 0
+      },
+      "CRITICAL_RESISTANCE": {
+        "label": "Critical Resistance",
+        "value": 1320,
+        "without_bonus": 0
+      },
+      "CRITICAL_STRIKE": {
+        "crit_chance_pct": 37.41328812,
+        "label": "Weapon Critical",
+        "value": 8198,
+        "without_bonus": 2181
+      },
+      "DAMAGE_RESIST_BLEED": {
+        "label": "Bleed Resistance",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_COLD": {
+        "label": "Frost Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_DISEASE": {
+        "label": "Disease Resistance",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_DROWN": {
+        "label": "Drowning Resistance",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_EARTH": {
+        "label": "Earth Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_FIRE": {
+        "label": "Flame Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_GENERIC": {
+        "label": "Generic Resistance",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_MAGIC": {
+        "label": "Magic Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_OBLIVION": {
+        "label": "Oblivion Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_PHYSICAL": {
+        "label": "Physical Resistance",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_POISON": {
+        "label": "Poison Resistance",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_SHOCK": {
+        "label": "Shock Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "DODGE": {
+        "label": "Dodge",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALING_DONE": {
+        "label": "Healing Done",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALING_TAKEN": {
+        "label": "Healing Taken",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALTH_MAX": {
+        "label": "Maximum Health",
+        "value": 23690,
+        "without_bonus": 23690
+      },
+      "HEALTH_REGEN": {
+        "label": "Health Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALTH_REGEN_COMBAT": {
+        "label": "Health Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALTH_REGEN_IDLE": {
+        "label": "Health Recovery Idle",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MAGICKA_MAX": {
+        "label": "Maximum Magicka",
+        "value": 22255,
+        "without_bonus": 22255
+      },
+      "MAGICKA_REGEN": {
+        "label": "Magicka Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MAGICKA_REGEN_COMBAT": {
+        "label": "Magicka Recovery",
+        "value": 718,
+        "without_bonus": 718
+      },
+      "MAGICKA_REGEN_IDLE": {
+        "label": "Magicka Recovery Idle",
+        "value": 1835,
+        "without_bonus": 1835
+      },
+      "MISS": {
+        "label": "Miss",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MITIGATION": {
+        "label": "Resistance",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MOUNT_STAMINA_MAX": {
+        "label": "Mount Stamina",
+        "value": 7000,
+        "without_bonus": 7000
+      },
+      "MOUNT_STAMINA_REGEN_COMBAT": {
+        "label": "Mount Stamina Regen Combat",
+        "value": 100,
+        "without_bonus": 100
+      },
+      "MOUNT_STAMINA_REGEN_MOVING": {
+        "label": "Mount Stamina Regen Moving",
+        "value": 200,
+        "without_bonus": 200
+      },
+      "OFFENSIVE_PENETRATION": {
+        "label": "Offensive Penetration",
+        "value": 9246,
+        "without_bonus": 0
+      },
+      "PHYSICAL_PENETRATION": {
+        "label": "Physical Penetration",
+        "value": 9246,
+        "without_bonus": 0
+      },
+      "PHYSICAL_RESIST": {
+        "label": "Physical Resistance",
+        "value": 9995,
+        "without_bonus": 0
+      },
+      "POWER": {
+        "label": "Weapon Damage",
+        "value": 4799,
+        "without_bonus": 1000
+      },
+      "REGEN": {
+        "label": "Regen",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "SPELL_CRITICAL": {
+        "crit_chance_pct": 37.41328812,
+        "label": "Spell Critical",
+        "value": 8198,
+        "without_bonus": 2181
+      },
+      "SPELL_MITIGATION": {
+        "label": "Spell Resistance",
+        "value": 51,
+        "without_bonus": 51
+      },
+      "SPELL_PENETRATION": {
+        "label": "Spell Penetration",
+        "value": 9246,
+        "without_bonus": 0
+      },
+      "SPELL_POWER": {
+        "label": "Spell Damage",
+        "value": 4799,
+        "without_bonus": 1000
+      },
+      "SPELL_RESIST": {
+        "label": "Spell Resistance",
+        "value": 12173,
+        "without_bonus": 0
+      },
+      "STAMINA_MAX": {
+        "label": "Maximum Stamina",
+        "value": 13972,
+        "without_bonus": 13972
+      },
+      "STAMINA_REGEN": {
+        "label": "Stamina Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "STAMINA_REGEN_COMBAT": {
+        "label": "Stamina Recovery",
+        "value": 719,
+        "without_bonus": 719
+      },
+      "STAMINA_REGEN_IDLE": {
+        "label": "Stamina Recovery Idle",
+        "value": 1296,
+        "without_bonus": 1296
+      },
+      "WEAPON_AND_SPELL_DAMAGE": {
+        "label": "Weapon and Spell Damage",
+        "value": 3459,
+        "without_bonus": 0
+      }
+    },
+    "sheet": {
+      "crit_chance": 0.3741328812,
+      "critical_resistance": 1320,
+      "max_health": 23690,
+      "max_magicka": 22255,
+      "max_stamina": 13972,
+      "physical_penetration": 9246,
+      "physical_resistance": 9995,
+      "power": 4799,
+      "spell_crit_chance": 0.3741328812,
+      "spell_penetration": 9246,
+      "spell_power": 4799,
+      "spell_resistance": 12173
+    }
+  },
+  "extra": {
+    "artificial_effects": [],
+    "bars": {
+      "back": [
+        {
+          "ability_id": 103623,
+          "name": "Crushing Weapon",
+          "slot": 1,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 46331,
+          "name": "Crystal Weapon",
+          "slot": 2,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 217462,
+          "crafted_ability_id": 8,
+          "name": "Healing Burst",
+          "script_ids": [
+            18,
+            32,
+            55
+          ],
+          "slot": 3,
+          "slot_type": {
+            "id": 3,
+            "name": "ACTION_TYPE_CRAFTED_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 24574,
+          "name": "Defensive Rune",
+          "slot": 4,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 24595,
+          "name": "Dark Deal",
+          "slot": 5,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 28348,
+          "name": "Absorption Field",
+          "slot": 6,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": true
+        }
+      ],
+      "front": [
+        {
+          "ability_id": 46348,
+          "name": "Crushing Shock",
+          "slot": 1,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 240150,
+          "crafted_ability_id": 9,
+          "name": "Warding Contingency",
+          "script_ids": [
+            20,
+            41,
+            58
+          ],
+          "slot": 2,
+          "slot_type": {
+            "id": 3,
+            "name": "ACTION_TYPE_CRAFTED_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 185842,
+          "name": "Inspired Scholarship",
+          "slot": 3,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 40195,
+          "name": "Camouflaged Hunter",
+          "slot": 4,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 25267,
+          "name": "Concealed Weapon",
+          "slot": 5,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 40161,
+          "name": "Flawless Dawnbreaker",
+          "slot": 6,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": true
+        }
+      ]
+    },
+    "buffs": [
+      {
+        "ability_id": 84720,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": true,
+        "cast_by_player": true,
+        "duration_s": 58.7,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Eye Scream",
+        "remaining_s": 13.9,
+        "stacks": 0
+      },
+      {
+        "ability_id": 63569,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Gallop",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 13981,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "mundus": true,
+        "name": "Boon: The Lover",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61665,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Major Brutality",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61735,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Expedition",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 135402,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 12262.3,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Vampire Stage 4",
+        "remaining_s": 12223.8,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61667,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Major Savagery",
+        "remaining_s": 0,
+        "stacks": 0
+      }
+    ],
+    "champion": {
+      "slotted": [
+        {
+          "ability_id": 142125,
+          "id": 66,
+          "name": "Steed's Blessing",
+          "slot": 1
+        },
+        {
+          "ability_id": 149286,
+          "id": 92,
+          "name": "Gifted Rider",
+          "slot": 2
+        },
+        {
+          "ability_id": 142223,
+          "id": 82,
+          "name": "War Mount",
+          "slot": 3
+        },
+        {
+          "ability_id": 141899,
+          "id": 12,
+          "name": "Fighting Finesse",
+          "slot": 5
+        },
+        {
+          "ability_id": 141999,
+          "id": 25,
+          "name": "Deadly Aim",
+          "slot": 6
+        },
+        {
+          "ability_id": 92134,
+          "id": 264,
+          "name": "Master-at-Arms",
+          "slot": 7
+        },
+        {
+          "ability_id": 141941,
+          "id": 8,
+          "name": "Wrathful Strikes",
+          "slot": 8
+        },
+        {
+          "ability_id": 160044,
+          "id": 270,
+          "name": "Celerity",
+          "slot": 9
+        },
+        {
+          "ability_id": 142034,
+          "id": 2,
+          "name": "Boundless Vitality",
+          "slot": 10
+        },
+        {
+          "ability_id": 160048,
+          "id": 271,
+          "name": "Refreshing Stride",
+          "slot": 11
+        },
+        {
+          "ability_id": 142090,
+          "id": 46,
+          "name": "Bastion",
+          "slot": 12
+        }
+      ]
+    },
+    "character": {
+      "champion_points": 2120,
+      "champion_points_earned": 2120,
+      "character_id": "8796093074734339",
+      "class_id": 117,
+      "class_localised": "Arcanist",
+      "display_name": "@TheMrPancake",
+      "effective_level": 66,
+      "level": 50,
+      "name": "Tentacles-with-Love",
+      "race": "Khajiit",
+      "race_id": 9,
+      "race_localised": "Khajiit"
+    },
+    "meta": {
+      "active_bar": "front",
+      "active_hotbar": {
+        "id": 0,
+        "name": "HOTBAR_CATEGORY_PRIMARY"
+      },
+      "addon_version": "1.0.4",
+      "api_version": 101052,
+      "in_combat": false,
+      "in_pvp_area": false,
+      "language": "en",
+      "schema": 1,
+      "timestamp": 1794664716,
+      "world": "PTS"
+    },
+    "mundus": [
+      {
+        "ability_id": 13981,
+        "advanced_stat_effects": [],
+        "name": "Boon: The Lover"
+      }
+    ],
+    "sets": {
+      "217": {
+        "max_equipped": 5,
+        "name": "Winterborn",
+        "num_effect_contributions": 0,
+        "num_equipped": 5,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 0
+      },
+      "270": {
+        "max_equipped": 2,
+        "name": "Slimecraw",
+        "num_effect_contributions": 0,
+        "num_equipped": 1,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 0
+      },
+      "775": {
+        "max_equipped": 5,
+        "name": "Spattering Disjunction",
+        "num_effect_contributions": 0,
+        "num_equipped": 5,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 0
+      },
+      "813": {
+        "max_equipped": 1,
+        "name": "Monomyth Reforged",
+        "num_effect_contributions": 0,
+        "num_equipped": 1,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 0
+      }
+    },
+    "warnings": []
+  },
+  "hidden": [],
+  "name": "Tentacles-with-Love Khajiit Arcanist, CP2120, front bar",
+  "patch": "U52",
+  "tolerance": {}
+}

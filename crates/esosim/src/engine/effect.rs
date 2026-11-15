@@ -5,6 +5,6 @@
 
 pub use esosim_types::{
     AggKind, ArmourWeight, Bar, Bucket, Channel, ChannelValue, Condition, ConditionContext,
-    DamageDoneContext, DamageTakenContext, EffectDef, EffectSource, NoContext, ResourceKind,
+    DamageDoneContext, DamageTakenContext, EffectDef, EffectSource, NoContext, PowerContext, ResourceKind,
     Stacking, cca::CoreCombatAbility, damage::ResistableDamageType,
 };

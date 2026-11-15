@@ -32,7 +32,7 @@ pub enum BehaviourClass {
 /// are not a kind of their own: they are linked to their regular set (`perfected_of` in
 /// `sets.jsonl`) and share its kind, so a perfected arena weapon is an [`ArenaWeapon`].
 ///
-/// **Inferred from the shape of the set table, not read from it** (the table has no such field),
+/// **Inferred from the shape of the set table, not read from it** (the table has no such field), [it's a logical separation based on sourcing]
 /// the same way [`BlockBehaviour::pieces`] is. The shipped counts are pinned by tests, so a change
 /// in the data that moves a set from one kind to another fails loudly.
 ///

@@ -15,11 +15,12 @@ pub mod mundus;
 pub mod race;
 pub mod set_behaviour;
 pub mod skill_serde;
+pub mod subclass;
 pub mod trigger;
 
 pub use bucket::{Bucket, Cap, CappedStat};
 pub use cca::CoreCombatAbility;
-pub use channel::{AggKind, Channel, DamageDoneContext, DamageTakenContext, ResourceKind};
+pub use channel::{AggKind, Channel, DamageDoneContext, DamageTakenContext, PowerContext, ResourceKind};
 pub use condition::{
     Affliction, ArmourWeight, Bar, Condition, ConditionContext, Form, Location, NoContext, PlayerClass, SelfState,
     TargetKind, WeaponKind, WeaponType,
@@ -30,6 +31,9 @@ pub use effect_def::{ChannelValue, EffectDef, EffectSource, Stacking};
 pub use mundus::{BASE_MUNDUS_STONES, MUNDUS_STONES_WITH_EXTRA_SLOT, MundusIssue, MundusLoadout};
 pub use race::Race;
 pub use set_behaviour::{BehaviourClass, BlockBehaviour, SetBehaviour, SetKind};
+pub use subclass::{
+    MAX_SUBCLASS_SWAPS, SubclassIssue, SubclassSwap, Subclassing, class_mastery_line, is_class_mastery_line,
+};
 pub use trigger::{CastKind, Trigger, TriggerEvent};
 
 #[cfg(test)]
@@ -66,7 +70,7 @@ use super::*;
                 for kind in [AggKind::Additive, AggKind::Multiplicative] {
                     round_trip(Channel::CostReductionSkillLine(l, kind));
                 }
-                round_trip(Channel::Power(DamageDoneContext::SkillLine(l), AggKind::Additive));
+                round_trip(Channel::Power(PowerContext::Damage(DamageDoneContext::SkillLine(l)), AggKind::Additive));
                 round_trip(Channel::DamageDone(DamageDoneContext::SkillLine(l), AggKind::Multiplicative));
                 round_trip(Channel::HealingDone(HealingDoneContext::SkillLine(l)));
             }
@@ -86,7 +90,7 @@ use super::*;
     fn bucket_follows_the_payload_of_every_channel_that_has_one() {
         use crate::{CoreCombatAbility, DamageDoneContext, DamageTakenContext};
         for (kind, bucket) in [(AggKind::Additive, Bucket::Additive), (AggKind::Multiplicative, Bucket::Multiplicative)] {
-            assert_eq!(Channel::Power(DamageDoneContext::All, kind).bucket(), bucket);
+            assert_eq!(Channel::Power(PowerContext::All, kind).bucket(), bucket);
             assert_eq!(Channel::DamageDone(DamageDoneContext::Bash, kind).bucket(), bucket);
             assert_eq!(Channel::DamageTaken(DamageTakenContext::Monsters, kind).bucket(), bucket);
             assert_eq!(Channel::CostReductionCCA(CoreCombatAbility::Sneak, kind).bucket(), bucket);

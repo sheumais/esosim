@@ -27,7 +27,7 @@
 
 use esosim_types::channel::HealingDoneContext;
 use esosim_types::damage::ResistableDamageType as Dmg;
-use esosim_types::{AggKind as Agg, Channel, DamageDoneContext, ResourceKind as Res};
+use esosim_types::{AggKind as Agg, Channel, DamageDoneContext, PowerContext, ResourceKind as Res};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt::Write as _;
@@ -204,7 +204,7 @@ pub fn parse(data: &[u8]) -> Result<Vec<SetRecord>, String> {
 fn channel_of(code: u32) -> Option<Channel> {
     use Channel as C;
     Some(match code {
-        2 => C::Power(DamageDoneContext::All, Agg::Additive),
+        2 => C::Power(PowerContext::All, Agg::Additive),
         3 => C::Armour(Dmg::All),
         4 => C::Resource(Res::Magicka, Agg::Additive),
         7 => C::Resource(Res::Health, Agg::Additive),
@@ -214,7 +214,7 @@ fn channel_of(code: u32) -> Option<Channel> {
         18 => C::Recovery(Res::Stamina, Agg::Additive),
         19 => C::Recovery(Res::Health, Agg::Additive),
         24 => C::CriticalResistance,
-        27 => C::Penetration(Dmg::All),
+        27 => C::Penetration(DamageDoneContext::All),
         28 => C::CriticalChance,
         29 => C::Resource(Res::Stamina, Agg::Additive),
         _ => return None,
@@ -231,11 +231,30 @@ pub fn bonus_value(b: &RawBonus) -> u32 {
     }
 }
 
+/// The stat type of Weapon and Spell Critical rating (see `channel_of`).
+const CRIT_RATING_STAT: u32 = 28;
+
+/// 3 % of 21,912 (the level constant at effective level 66). The set rows the game shows as 657 are this much, not
+/// 657: the Arcanist golden fixture only adds up to the game's 6017 with the fraction kept.
+const CRIT_RATING_THREE_PERCENT: f64 = 657.36;
+
 /// The same value as an exact `f64`, as stored in `sets.jsonl`: `floor(86 * coef)` computed
 /// from the `f32` widened to `f64` (so it equals what the old generated Rust expression
 /// `(86.0 * <coef>_f32 as f64).floor()` folded to), or the integer field for flat stats.
+///
+/// One exception, a critical rating row that shows 657 (every one of the 218 such rows is the 3 % tier): it is
+/// [`CRIT_RATING_THREE_PERCENT`], because the engine adds critical rating up with its fractions and floors the
+/// total once. The other critical rating rows (526, 892, 943, 986, 1528, ...) keep their floored value until a
+/// golden fixture shows what their fraction is; `bonus_value`, the number the game displays, is unchanged.
 pub fn bonus_value_f64(b: &RawBonus) -> f64 {
-    if b.coef == 0.0 { f64::from(b.raw) } else { (SCALE * f64::from(b.coef)).floor() }
+    if b.coef == 0.0 {
+        return f64::from(b.raw);
+    }
+    let scaled = SCALE * f64::from(b.coef);
+    if b.stat == CRIT_RATING_STAT && scaled.round() == 657.0 {
+        return CRIT_RATING_THREE_PERCENT;
+    }
+    scaled.floor()
 }
 
 // ---------------------------------------------------------------------------
@@ -681,6 +700,18 @@ mod tests {
     }
 
     #[test]
+    fn the_three_percent_critical_rating_row_keeps_its_fraction() {
+        let crit = |coef: f32| bonus_value_f64(&RawBonus { slot: 1, stat: 28, raw: 0, coef });
+        // all three spellings of the coefficient in sets.jsonl are the same row
+        assert_eq!((crit(7.64), crit(7.6396), crit(7.63954)), (657.36, 657.36, 657.36));
+        // other critical rating rows, and other stats worth 657, are untouched
+        assert_eq!((crit(6.12), crit(17.77), crit(11.47)), (526.0, 1528.0, 986.0));
+        assert_eq!(bonus_value_f64(&RawBonus { slot: 1, stat: 2, raw: 0, coef: 7.64 }), 657.0);
+        // what the game displays is still the whole number
+        assert_eq!(bonus_value(&RawBonus { slot: 1, stat: 28, raw: 0, coef: 7.64 }), 657);
+    }
+
+    #[test]
     fn f64_value_equals_the_integer_value_for_every_coefficient() {
         for coef in [1.5_f32, 14.025, 12.75, 7.64, 17.3, 34.59, 171.0 / 86.0, 0.0833, 3.0] {
             let b = RawBonus { slot: 2, stat: 2, raw: 0, coef };
@@ -867,7 +898,7 @@ mod tests {
 
     #[test]
     fn channel_codes_cover_what_the_old_generator_knew() {
-        assert_eq!(channel_of(2), Some(Channel::Power(DamageDoneContext::All, Agg::Additive)));
+        assert_eq!(channel_of(2), Some(Channel::Power(PowerContext::All, Agg::Additive)));
         assert_eq!(channel_of(29), Some(Channel::Resource(Res::Stamina, Agg::Additive)));
         assert_eq!(channel_of(13), None);
     }

@@ -153,7 +153,8 @@ pub enum EnchantType {
     PrismaticOnslaught,
     PrismaticRecovery,
     ReduceArmor,
-    ReduceBlockCost,
+    /// Doesn't reduce bash at all. Legacy name
+    ReduceBlockAndBash,
     ReduceFeatCost,
     ReducePotionCooldown,
     ReducePower,

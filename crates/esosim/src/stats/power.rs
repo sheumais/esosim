@@ -5,7 +5,7 @@
 //! multiplicative bucket (basis points).
 
 use esosim_types::AggKind::{Additive, Multiplicative};
-use esosim_types::DamageDoneContext;
+use esosim_types::PowerContext;
 
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::Channel;
@@ -20,8 +20,8 @@ pub(crate) fn apply_multiplicative_bps(base: i64, bps: i64) -> u32 {
 
 /// Weapon and spell damage, which are the same number.
 pub fn power(c: &ChannelSet, level: u8) -> u32 {
-    let base = level as i64 * 20 + c.get(Channel::Power(DamageDoneContext::All, Additive));
-    let bps = c.get_multiplicative_bps(Channel::Power(DamageDoneContext::All, Multiplicative));
+    let base = level as i64 * 20 + c.get(Channel::Power(PowerContext::All, Additive));
+    let bps = c.get_multiplicative_bps(Channel::Power(PowerContext::All, Multiplicative));
     apply_multiplicative_bps(base, bps)
 }
 
@@ -33,8 +33,8 @@ mod tests {
 
     fn set(additive: i64, bps: i64) -> ChannelSet {
         let mut c = ChannelSet::new();
-        c.add_additive(Channel::Power(DamageDoneContext::All, Additive), additive);
-        c.add_multiplicative_bps(Channel::Power(DamageDoneContext::All, Multiplicative), bps);
+        c.add_additive(Channel::Power(PowerContext::All, Additive), additive);
+        c.add_multiplicative_bps(Channel::Power(PowerContext::All, Multiplicative), bps);
         c
     }
 
@@ -65,7 +65,6 @@ mod tests {
         assert_eq!(power(&set(additive, bps), DEFAULT_LEVEL), 4176);
         bps += 2000; // major brutality
         assert_eq!(power(&set(additive, bps), DEFAULT_LEVEL), 4902);
-        additive += 205; // wrathful strikes CP <!> Doesn't show up on character sheet
-        assert_eq!(power(&set(additive, bps), DEFAULT_LEVEL), 5179);
+        // Wrathful Strikes (205) is ability-only, so it is not part of the sheet's power
     }
 }

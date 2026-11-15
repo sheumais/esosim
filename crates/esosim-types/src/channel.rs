@@ -33,10 +33,24 @@ pub enum DamageDoneContext {
     NonCritical,
     Bash,
     Channeled, // Denoted by flag 4 = 1 on an ability
+    /// Damaging abilities cast at enemies (Wrathful Strikes), as opposed to general weapon/spell damage.
+    /// Not part of `All`, so it never shows on the character sheet's power.
+    Abilities,
     /// Abilities of one skill line ("your Two Handed abilities", "your Bow abilities"). Written as the
     /// line's name, like the skill-line channels below.
     SkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
     Type(ResistableDamageType),
+}
+
+/// Where a Weapon/Spell Damage bonus applies. Power is one stat in the game: `All` is the stat itself
+/// (the character sheet's number, counted for every damage and healing event). `Damage` and `Healing` are
+/// extra power that only counts while dealing that kind of damage or healing (Wrathful Strikes: damaging
+/// abilities only), so they never show on the sheet.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum PowerContext {
+    All,
+    Damage(DamageDoneContext),
+    Healing(HealingDoneContext),
 }
 
 /// Which kinds of outgoing healing a bonus applies to.
@@ -97,8 +111,8 @@ pub enum Channel {
     CriticalDamage,
     /// Measured in 1% = 66
     CriticalResistance,
-    Power(DamageDoneContext, AggKind),
-    Penetration(ResistableDamageType),
+    Power(PowerContext, AggKind),
+    Penetration(DamageDoneContext),
     Resource(ResourceKind, AggKind),
     Recovery(ResourceKind, AggKind),
     SynergyRestore(ResourceKind, AggKind),
@@ -140,11 +154,19 @@ pub enum Channel {
 
     DodgeChance,
     MissChance,
+    /// How far you see through stealth, in metres (centimetres are fractions: Piercing Gaze is 1 m a stage). A sneaking
+    /// target is seen when `StealthDetection` minus the target's `DetectionRadius` is at least the distance between
+    /// you: 10 m of detection against 15 m of radius sees nothing, 50 m against 10 m sees the target from 40 m.
     StealthDetection,
+    /// How much of an enemy's detection you cancel while sneaking, in metres: the more, the better hidden (Out of
+    /// Sight is 1 m a stage). See `StealthDetection` for how the two meet.
     DetectionRadius,
     MountSpeed,
+    /// In percentage points by which the time to resurrect another player is cut (Spirit Mastery: 33).
     ResurrectionSpeed,
-    StatusEffectDuration,
+    /// The duration of the status effects the enemy player applies to you, as a fraction of it: a cut is negative
+    /// (Mystic Tenacity: -0.05 a stage). Multiplicative like every percentage of a duration.
+    StatusEffectDuration(AggKind),
     SwimmingSpeed,
     GoldGain,
     AlliancePointGain,

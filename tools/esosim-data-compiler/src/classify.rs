@@ -32,7 +32,7 @@ use esosim_types::channel::{HealingDoneContext, StatusEffectContext};
 use esosim_types::damage::ResistableDamageType as Dmg;
 use esosim_types::{
     AggKind as Agg, Channel, DamageDoneContext as DoneCtx, DamageTakenContext as TakenCtx,
-    ResourceKind as Res,
+    PowerContext, ResourceKind as Res,
 };
 use eso_skill_data::enums::{mechanic::Mechanic as Mech, skill_line::SkillLine as Line};
 use crate::corpus::Corpus;
@@ -389,10 +389,10 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("armour_two_elements", r"(?P<a>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|magic) and (?P<b>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|magic) resist(?:ance)?", |c| vec![C::Armour(el_of(cap(c, "a").unwrap_or(""))), C::Armour(el_of(cap(c, "b").unwrap_or("")))]),
         noun("armour_element", r"(?P<el>fire|flame|frost|cold|shock|lightning|poison|disease|bleed|magic) resist(?:ance)?", |c| vec![C::Armour(el_of(cap(c, "el").unwrap_or("")))]),
         noun("armour_all", r"armou?r(?: rating)?", |_| vec![C::Armour(Dmg::All)]),
-        noun("pen_all", r"offensive penetration|physical and spell penetration|spell and physical penetration", |_| vec![C::Penetration(Dmg::All)]),
-        noun("pen_physical", r"physical penetration", |_| vec![C::Penetration(Dmg::Martial)]),
-        noun("pen_spell", r"spell penetration", |_| vec![C::Penetration(Dmg::Spell)]),
-        noun("pen_bare", r"penetration", |_| vec![C::Penetration(Dmg::All)]),
+        noun("pen_all", r"offensive penetration|physical and spell penetration|spell and physical penetration", |_| vec![C::Penetration(DoneCtx::All)]),
+        noun("pen_physical", r"physical penetration", |_| vec![C::Penetration(DoneCtx::Type(Dmg::Martial))]),
+        noun("pen_spell", r"spell penetration", |_| vec![C::Penetration(DoneCtx::Type(Dmg::Spell))]),
+        noun("pen_bare", r"penetration", |_| vec![C::Penetration(DoneCtx::All)]),
         // ---- costs -----------------------------------------------------------
         noun("cost_roll", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?(?:roll dodge|dodge roll|rolling)|roll dodge(?: stamina)? cost|dodge roll cost", |_| vec![C::CostReductionCCA(Cca::DodgeRoll, Agg::Additive)]),
         noun("cost_sprint", r"(?:(?:magicka|stamina|health) )?cost of (?:your )?sprint(?:ing)?|sprint(?:ing)? cost", |_| vec![C::CostReductionCCA(Cca::Sprint, Agg::Additive)]),
@@ -417,9 +417,9 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         noun("kill_experience", r"(?:kill |all )?experience(?: points)?(?: gains?| gained)?(?: from kills)?", |_| vec![C::KillExperience]),
         noun("status_effect_chance", r"chance to apply status effects?|status effect chance", |_| vec![C::StatusEffectChance(StatusEffectContext::All)]),
         noun("stealth_detection", r"stealth detection", |_| vec![C::StealthDetection]),
-        noun("power_both", r"weapon and spell (?:damage|power)|spell and weapon (?:damage|power)|weapon damage and spell damage|spell damage and weapon damage|weapon power and spell power|spell power and weapon power", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
-        noun("power_weapon", r"weapon (?:damage|power)", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
-        noun("power_spell", r"spell (?:damage|power)", |_| vec![C::Power(DoneCtx::All, Agg::Additive)]),
+        noun("power_both", r"weapon and spell (?:damage|power)|spell and weapon (?:damage|power)|weapon damage and spell damage|spell damage and weapon damage|weapon power and spell power|spell power and weapon power", |_| vec![C::Power(PowerContext::All, Agg::Additive)]),
+        noun("power_weapon", r"weapon (?:damage|power)", |_| vec![C::Power(PowerContext::All, Agg::Additive)]),
+        noun("power_spell", r"spell (?:damage|power)", |_| vec![C::Power(PowerContext::All, Agg::Additive)]),
     ]
 });
 

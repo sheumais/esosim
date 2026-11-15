@@ -1,0 +1,29 @@
+# The twelve scribing grimoires: the one thing the game data does not say about them.
+#
+# Every ability a grimoire produces (the grimoire itself, each focus-script variant, the effects it causes) carries the
+# grimoire's number in `base_data.scribing_index`, but its `skill_line_id` is 0, so the ability is in no skill line and
+# would count for no skill-line condition or passive ("Magicka Controller: per Mages Guild ability slotted").
+# `scribing.rs` reads this table, finds every ability with each `scribing_index` in the game's ability table and writes
+# them into `skill_lines.csv` under the grimoire's line, so the engine sees them as ordinary members of that line.
+# Nothing here is an ability id: when a patch adds script variants, the next `cargo xtask sync-data` picks them up.
+#
+# Columns: scribing_index, grimoire name (for people; not read), skill line, unlock requirement (for people; not read).
+#   * scribing_index  `base_data.scribing_index` of the ability records, 1..=12 (the game's crafted-ability number);
+#   * skill line      written as `SkillLine::as_str` writes it, or as the skill line id if the parser has no name for it;
+#   * the compiler fails, naming the index, when the game has a scribing_index that is not listed here (a new grimoire),
+#     when a listed grimoire has no abilities (the index changed), or when a line is unknown.
+# A blank line or a line starting with # is skipped.
+#
+# index, grimoire,               skill line,          requirement
+1,  Vault,                 Bow,                 Bow Master
+2,  Wield Soul,            Soul Magic,          The Second Era of Scribing (quest)
+3,  Shield Throw,          One Hand and Shield, One Hand and Shield Master
+4,  Smash,                 Two Handed,          Two-Handed Master
+5,  Elemental Explosion,   Destruction Staff,   Destruction Staff Master
+6,  Mender's Bond,         Restoration Staff,   Restoration Staff Master
+7,  Traveling Knife,       Dual Wield,          Dual Wield Master
+8,  Soul Burst,            Soul Magic,          The Wing of the Crow (quest)
+9,  Ulfsild's Contingency, Mages Guild,         Mages Guild Skill Master
+10, Torchbearer,           Fighters Guild,      Fighters Guild Skill Master
+11, Trample,               Assault,             Assault: Alliance War Skill Master
+12, Banner Bearer,         Support,             Support: Alliance War Skill Apprentice

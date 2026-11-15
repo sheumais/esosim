@@ -14,7 +14,7 @@
 # Units follow the bucket the channel aggregates into (`Channel::agg_kind`):
 #
 #   * Additive channels hold flat amounts, or percentage points for the channels without an `AggKind`
-#     (`CriticalDamage`, `Healing*`, `MovementSpeed`, `MountSpeed`, `StatusEffectChance`, ...): the
+#     (`CriticalDamage`, `CriticalHealing`, `HealingDone`, `MovementSpeed`, `MountSpeed`, `StatusEffectChance`, `GoldGain`, ...): the
 #     game's `3` stays `3` (scale 1.0).
 #   * Multiplicative channels (`Power`, `DamageDone`, `DamageTaken`, `CostReductionCCA`, ... with
 #     `"Multiplicative"`) hold a FRACTION that the aggregator turns into basis points: 3 % is `0.03`,
@@ -22,7 +22,10 @@
 #   * A reduction of damage taken is negative (`scale = -0.01`); a cost reduction is positive.
 #   * Flat bash damage is the one `DamageDone` that is Additive.
 #
-# Stars that are NOT here have no channel that says what they do (see the end of this file).
+# Stars that are NOT here have no channel or no condition that says what they do (see the end of this file).
+#
+# A star with a `condition` the calculator cannot decide yet (flanking, Off Balance, sprinting, a negative effect on
+# you ...) is left out of the sheet until the build says so, like Steed's Blessing's `Not(InCombat)`.
 
 [[star]]
 id = 2
@@ -52,8 +55,14 @@ channels = [{ channel = { Resource = ["Stamina", "Additive"] } }]
 [[star]]
 id = 8
 name = "Wrathful Strikes"
-channels = [{ channel = { Power = ["All", "Additive"] } }]
-note = "Tooltip: 'to your damaging abilities'. The in-game character sheet does not show it (it treats the player as the target, see the 205 in power.rs); the damage calculation does, so it is modelled."
+channels = [{ channel = { Power = [{ Damage = "Abilities" }, "Additive"] } }]
+note = "Tooltip: 'to your damaging abilities'. Applies only to abilities that damage enemies, not to general weapon/spell damage, so it is not on the `Power(All)` channel and never appears on the character sheet."
+
+[[star]]
+id = 9
+name = "Rejuvenator"
+channels = [{ channel = { Power = [{ Healing = "All" }, "Additive"] } }]
+note = "Tooltip: 'to your healing abilities'. Like Wrathful Strikes it is extra power for one kind of event (healing), not general power, so it is not on the `Power(All)` channel and never appears on the character sheet."
 
 [[star]]
 id = 10
@@ -68,8 +77,8 @@ channels = [{ channel = "CriticalChance" }]
 [[star]]
 id = 12
 name = "Fighting Finesse"
-channels = [{ channel = "CriticalDamage" }]
-note = "Also raises Critical Healing; there is no channel for that."
+channels = [{ channel = "CriticalDamage" }, { channel = "CriticalHealing" }]
+note = "Raises Critical Damage and Critical Healing by the same amount (percentage points)."
 
 [[star]]
 id = 13
@@ -125,10 +134,10 @@ channels = [{ channel = "HealingTaken" }]
 id = 21
 name = "War Mage"
 channels = [
-    { channel = { Power = [{ Type = "Magic" }, "Additive"] } },
-    { channel = { Power = [{ Type = "Flame" }, "Additive"] } },
-    { channel = { Power = [{ Type = "Frost" }, "Additive"] } },
-    { channel = { Power = [{ Type = "Shock" }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Magic" } }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Flame" } }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Frost" } }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Shock" } }, "Additive"] } },
 ]
 note = "Weapon and Spell Damage to Magical attacks: Magic, Flame, Frost and Shock."
 
@@ -136,10 +145,10 @@ note = "Weapon and Spell Damage to Magical attacks: Magic, Flame, Frost and Shoc
 id = 22
 name = "Mighty"
 channels = [
-    { channel = { Power = [{ Type = "Physical" }, "Additive"] } },
-    { channel = { Power = [{ Type = "Poison" }, "Additive"] } },
-    { channel = { Power = [{ Type = "Disease" }, "Additive"] } },
-    { channel = { Power = [{ Type = "Bleed" }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Physical" } }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Poison" } }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Disease" } }, "Additive"] } },
+    { channel = { Power = [{ Damage = { Type = "Bleed" } }, "Additive"] } },
 ]
 note = "Weapon and Spell Damage to Martial attacks: Physical, Poison, Disease and Bleed."
 
@@ -147,6 +156,11 @@ note = "Weapon and Spell Damage to Martial attacks: Physical, Poison, Disease an
 id = 23
 name = "Biting Aura"
 channels = [{ channel = { DamageDone = ["AreaOfEffect", "Multiplicative"] }, scale = 0.01 }]
+
+[[star]]
+id = 24
+name = "Soothing Tide"
+channels = [{ channel = { HealingDone = "AreaOfEffect" } }]
 
 [[star]]
 id = 25
@@ -167,6 +181,13 @@ channels = [{ channel = { DamageDone = ["DamageOverTime", "Multiplicative"] }, s
 id = 28
 name = "Swift Renewal"
 channels = [{ channel = { HealingDone = "OverTime" } }]
+
+[[star]]
+id = 31
+name = "Backstabber"
+channels = [{ channel = "CriticalDamage" }]
+condition = "TargetFlanked"
+note = "Critical Damage only (the tooltip does not mention Critical Healing). Combat-time: left out of the sheet until a target is flanked."
 
 [[star]]
 id = 34
@@ -199,9 +220,29 @@ name = "Savage Defense"
 channels = [{ channel = { CostReductionCCA = ["Bash", "Additive"] } }]
 
 [[star]]
+id = 42
+name = "Hasty"
+channels = [{ channel = "MovementSpeed" }]
+condition = { SelfState = "Sprinting" }
+note = "Percentage points, like Celerity; only while sprinting."
+
+[[star]]
 id = 43
 name = "Fortification"
 channels = [{ channel = "BlockMitigation" }]
+
+[[star]]
+id = 44
+name = "Nimble Protector"
+channels = [{ channel = "MovementSpeed" }]
+condition = { SelfState = "Blocking" }
+note = "'While Bracing': `SelfState::Blocking` covers both blocking and bracing. Percentage points."
+
+[[star]]
+id = 45
+name = "Piercing Gaze"
+channels = [{ channel = "StealthDetection", scale = 0.01 }]
+note = "The table holds centimetres (100 a stage); the channel is metres, hence scale 0.01."
 
 [[star]]
 id = 46
@@ -216,6 +257,25 @@ channels = [{ channel = { DamageDone = ["Bash", "Additive"] } }]
 note = "Flat Bash damage, like the Bash enchant: the one additive DamageDone."
 
 [[star]]
+id = 53
+name = "Mystic Tenacity"
+channels = [{ channel = { StatusEffectDuration = "Multiplicative" }, scale = -0.01 }]
+note = "Cuts the duration of the elemental (Burning, Chilled, Concussion, Overcharged) status effects the enemy player applies to you; the channel is not split by kind yet (`StatusEffectContext`), so it counts for all of them. A reduction is stored negative."
+
+[[star]]
+id = 56
+name = "Spirit Mastery"
+channels = [{ channel = "ResurrectionSpeed" }]
+note = "Percentage points by which the time to resurrect is cut; the table's ability record holds -33, the star 33."
+
+[[star]]
+id = 61
+name = "Arcane Alacrity"
+channels = [{ channel = { CostReductionCCA = ["DodgeRoll", "Additive"] } }]
+condition = { SelfState = "DamageShielded" }
+note = "Flat Stamina off Roll Dodge while a damage shield is up (like Tumbling, which is always on)."
+
+[[star]]
 id = 65
 name = "Sustaining Shadows"
 channels = [{ channel = { CostReductionCCA = ["Sneak", "Multiplicative"] }, scale = 0.01 }]
@@ -227,6 +287,31 @@ name = "Steed's Blessing"
 channels = [{ channel = "MovementSpeed" }]
 condition = { Not = "InCombat" }
 note = "Out of combat only; MovementSpeed is percentage points, added."
+
+[[star]]
+id = 68
+name = "Out of Sight"
+channels = [{ channel = "DetectionRadius", scale = -0.01 }]
+condition = { SelfState = "Stealthed" }
+note = "The table holds -100 (centimetres off the radius you can be detected in); `DetectionRadius` is the metres of enemy detection you cancel, so the sign flips: scale -0.01 gives +1 m a stage. Sneaking only."
+
+[[star]]
+id = 69
+name = "Breakfall"
+channels = [{ channel = { DamageTaken = ["Fall", "Multiplicative"] }, scale = -0.01 }]
+note = "A reduction is stored negative."
+
+[[star]]
+id = 72
+name = "Inspiration Boost"
+channels = [{ channel = "InspirationGain" }]
+note = "Percentage points."
+
+[[star]]
+id = 74
+name = "Gilded Fingers"
+channels = [{ channel = "GoldGain" }]
+note = "Percentage points."
 
 [[star]]
 id = 92
@@ -267,6 +352,13 @@ channels = [{ channel = { DamageTaken = ["DamageOverTime", "Multiplicative"] }, 
 note = "A reduction is stored negative."
 
 [[star]]
+id = 159
+name = "Bulwark"
+channels = [{ channel = { Armour = "Martial" } }, { channel = { Armour = "Spell" } }]
+condition = { Any = [{ WeaponEquipped = "OneHandAndShield" }, { WeaponTypeEquipped = { weapon = "FrostStaff", at_least = 1 } }] }
+note = "Tooltip: 'Spell and Physical Resistance' while a Shield or Frost Staff is equipped. Physical resistance is `Armour(Martial)`, spell resistance `Armour(Spell)`. A frost staff in either hand counts."
+
+[[star]]
 id = 259
 name = "Weapons Expert"
 channels = [
@@ -280,26 +372,51 @@ name = "Master-at-Arms"
 channels = [{ channel = { DamageDone = ["Direct", "Multiplicative"] }, scale = 0.01 }]
 
 [[star]]
+id = 266
+name = "Ward Master"
+channels = [{ channel = { DamageTaken = ["All", "Multiplicative"] }, scale = -0.01 }]
+condition = { All = [{ SelfState = "Blocking" }, { SelfState = "DamageShielded" }] }
+note = "Bracing and under a damage shield. A reduction is stored negative."
+
+[[star]]
 id = 270
 name = "Celerity"
 channels = [{ channel = "MovementSpeed" }]
 
+[[star]]
+id = 271
+name = "Refreshing Stride"
+channels = [{ channel = { Recovery = ["Health", "Additive"] } }, { channel = { Recovery = ["Magicka", "Additive"] } }]
+condition = { SelfState = "Sprinting" }
+note = "While sprinting only. Not a proc."
+
+[[star]]
+id = 273
+name = "Sustained by Suffering"
+channels = [{ channel = { Recovery = ["Health", "Additive"] } }, { channel = { Recovery = ["Magicka", "Additive"] } }, { channel = { Recovery = ["Stamina", "Additive"] } }]
+condition = "SelfDebuffed"
+note = "While a negative effect is on you. Combat-time: left out of the sheet until the build says so."
+
+[[star]]
+id = 277
+name = "Exploiter"
+channels = [{ channel = { DamageDone = ["All", "Multiplicative"] }, scale = 0.01 }]
+condition = { TargetAfflicted = "OffBalance" }
+note = "Damage done against Off Balance enemies. Combat-time."
+
 # Not modelled, with the reason. Do not add one without knowing how the game applies it.
 #
-# * Need a condition the engine cannot ask yet: Bulwark (shield / frost staff equipped), Backstabber (flanking),
-#   Exploiter (Off Balance), Nimble Protector (bracing), Hasty (sprinting), Fleet Phantom (sneaking),
-#   Bracing Anchor, Ward Master (bracing + shield), Peace of Mind, Juggernaut, On Guard, Arcane Alacrity and Rousing
-#   Speed (shield / crowd control immunity), Sustained by Suffering, Pain's Refuge, Survival Instincts (afflicted by
-#   a status effect), Force of Nature (per status effect).
+# * Need a condition the engine cannot ask yet: Fleet Phantom (reduces a penalty, not a stat), Bracing Anchor (+4 % a
+#   stage block, but also a flat -16 % movement speed at every stage, which `value_per_stage` cannot carry), Peace of
+#   Mind, Juggernaut, On Guard and Rousing Speed (Crowd Control Immunity: there is no `SelfState` for it), Survival
+#   Instincts (afflicted by ANY status effect: `Affliction` knows only Burning, Chilled and Concussed), Pain's Refuge
+#   (a count of negative effects), Force of Nature (a count of status effects on the target), Strategic Reserve (per 10
+#   Ultimate).
 # * Procs and triggers, which belong to the simulator: Foresight, Riposte, Last Stand, Reinforced, Cleansing Revival,
 #   Reaving Blows, Occult Overload, Cutting Defense, Soothing Shield, Salve of Renewal, Hope Infusion, From the Brink,
 #   Enlivening Overflow, Siphoning Spells, Bloody Renewal, Expert Evasion, Slippery, Relentlessness, Thrill of the
-#   Hunt, Refreshing Stride, Unchained.
-# * No channel for what they do: Rejuvenator (healing abilities only), Soothing Tide (area of effect healing),
-#   Strategic Reserve, Ironclad (direct damage taken), Duelist's Rebuff (single target damage taken), Hardened
-#   (crowd control immunity duration), Mystic Tenacity (status effect duration), Tempered Soul, Shield Master
-#   (damage shield cost), War Mount (its number is not in the table: the tooltip says <<1>>), and the crafting,
-#   gold and fishing stars.
-# * Need a decision first: Spirit Mastery ("decreases the time it takes to resurrect by 33 %": `ResurrectionSpeed`
-#   exists, but is it a speed or a time?), Piercing Gaze and Out of Sight (stealth units: `StealthDetection` /
-#   `DetectionRadius`).
+#   Hunt, Unchained.
+# * No channel for what they do: Ironclad (direct damage taken) and Duelist's Rebuff (single target damage taken):
+#   `DamageTakenContext` has no `Direct` or `SingleTarget`; Hardened (crowd control immunity duration), Tempered Soul,
+#   Shield Master (damage shield cost), War Mount (its number is not in the table: the tooltip says <<1>>), Steadfast
+#   Enchantment, Discipline Artisan, and the crafting, harvesting, fishing, thieving and furnishing stars.

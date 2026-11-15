@@ -219,7 +219,7 @@ impl GearPiece {
                 EnchantType::MagickaRegen => {self.handle_enchant(get_enchant_jewellery_increase_magicka_recovery)},
                 EnchantType::PhysicalResistance => {self.handle_enchant(get_enchant_jewellery_increase_physical_resistance)},
                 EnchantType::PoisonResistance => {self.handle_enchant(get_enchant_jewellery_increase_poison_resistance)},
-                EnchantType::ReduceBlockCost => {self.handle_enchant(get_enchant_jewellery_reduce_block_cost)},
+                EnchantType::ReduceBlockAndBash => {self.handle_enchant(get_enchant_jewellery_reduce_block_cost)},
                 EnchantType::ReduceFeatCost => {self.handle_enchant(get_enchant_jewellery_reduce_feat_cost)},
                 EnchantType::ReducePotionCooldown => {self.handle_enchant(get_enchant_jewellery_reduce_potion_cooldown)},
                 EnchantType::ReduceSpellCost => {self.handle_enchant(get_enchant_jewellery_reduce_spell_cost)},

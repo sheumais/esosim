@@ -135,13 +135,13 @@ impl ConditionContext for Player {
         Some(self.get_number_of_distinct_armour_weights())
     }
 
-    /// Unknown (`None`) while the class is not set, and, as for `skill_line_slotted`, while the abilities on the bar
-    /// have no skill line recorded.
-    fn class_abilities_slotted(&self) -> Option<u8> {
+    /// Counted by the ability's native class, so the character's own class (and its subclassing) is not needed.
+    /// Unknown (`None`), as for `skill_line_slotted`, while the abilities on the bar have no skill line recorded.
+    fn class_abilities_slotted(&self, class: PlayerClass) -> Option<u8> {
         if self.ability_skill_lines.is_empty() && !self.active_bar_abilities().is_empty() {
             return None;
         }
-        self.get_number_of_active_class_skills()
+        Some(self.get_number_of_active_class_skills(class))
     }
 
     /// Both bars are known to the player, so this is never unknown.
@@ -188,7 +188,7 @@ impl ConditionContext for TargetContext<'_> {
     fn class(&self) -> Option<PlayerClass> { self.player.class() }
     fn food_active(&self) -> Option<bool> { self.player.food_active() }
     fn armour_weights_worn(&self) -> Option<u8> { self.player.armour_weights_worn() }
-    fn class_abilities_slotted(&self) -> Option<u8> { self.player.class_abilities_slotted() }
+    fn class_abilities_slotted(&self, class: PlayerClass) -> Option<u8> { self.player.class_abilities_slotted(class) }
     fn ability_slotted_any_bar(&self, ability_id: u32) -> Option<bool> { self.player.ability_slotted_any_bar(ability_id) }
     fn in_pvp_area(&self) -> Option<bool> { self.player.in_pvp_area() }
     fn near_keep(&self) -> Option<bool> { self.player.near_keep() }
@@ -408,18 +408,22 @@ mod tests {
         let mut p = player(); // a Necromancer
         p.ability_skill_lines = [(10, line("Bone Tyrant")), (11, line("Grave Lord")), (20, line("Living Death")), (21, SkillLine::Support)].into();
         p.backup_abilities = vec![20, 21];
-        let slotted = |n| Condition::ClassAbilitiesSlotted { at_least: n };
+        let slotted = |n| Condition::ClassAbilitiesSlotted { class: PlayerClass::Necromancer, at_least: n };
         assert_eq!(holds(slotted(2), &p), Some(true));
         assert_eq!(holds(slotted(3), &p), Some(false));
         p.active_bar = ActiveBar::Backup;
         assert_eq!(holds(slotted(1), &p), Some(true));
         assert_eq!(holds(slotted(2), &p), Some(false), "the guild-line ability on the back bar does not count");
-        // unknown, as for a skill line, while the bar has abilities and no line is known; unknown with no class
+        // it is the ability's class that counts, not the character's: this Necromancer slots no Nightblade ability
+        let nightblade = Condition::ClassAbilitiesSlotted { class: PlayerClass::Nightblade, at_least: 1 };
+        assert_eq!(holds(nightblade.clone(), &p), Some(false));
+        p.ability_skill_lines.insert(30, line("Assassination"));
+        p.backup_abilities.push(30);
+        assert_eq!(holds(nightblade, &p), Some(true), "a subclassed character's Assassination ability counts");
+        // unknown, as for a skill line, while the bar has abilities and no line is known
         let mut loading = Player::new();
-        loading.class = Some(PlayerClass::Necromancer);
         loading.primary_abilities = vec![10];
         assert_eq!(holds(slotted(1), &loading), None);
-        assert_eq!(holds(slotted(1), &Player::new()), None);
         loading.primary_abilities.clear();
         assert_eq!(holds(slotted(1), &loading), Some(false));
     }

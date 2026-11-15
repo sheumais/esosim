@@ -2,7 +2,7 @@ use eso_skill_data::enums::skill_line::SkillLine;
 
 use std::sync::LazyLock;
 
-use esosim_types::{ArmourWeight, Condition, EffectDef, EffectSource, SetBehaviour, Stacking, WeaponType};
+use esosim_types::{ArmourWeight, Condition, EffectDef, EffectSource, PlayerClass, SetBehaviour, Stacking, WeaponType};
 
 use crate::{data::enums::gear::ItemType, entity::player::Player};
 
@@ -10,9 +10,9 @@ use crate::{data::enums::gear::ItemType, entity::player::Player};
 pub enum GrantCondition {
     EquippedItemTypeCount(ItemType),
     ActiveSkillsFromLine(SkillLine),
-    /// One stack per ability on the active bar from any of the build's own class lines (`Player::class`): "for each
-    /// Sorcerer ability slotted" is one count over the three lines.
-    ActiveClassSkills,
+    /// One stack per ability on the active bar from any of the three own lines of the class: "for each Sorcerer
+    /// ability slotted" is one count over the three Sorcerer lines, whatever the build's own class is.
+    ActiveClassSkills(PlayerClass),
     /// One stack per armour weight worn (Heavy, Medium, Light), 0 to 3: "per type of armour".
     DistinctArmourWeights,
     /// One stack per weapon of the type in the hands of the active bar: "each axe" is 0, 1 or 2.
@@ -34,8 +34,8 @@ impl GrantRule {
                 player.get_number_of_equipped_item_type(&t) as u32,
             GrantCondition::ActiveSkillsFromLine(l) =>
                 player.get_number_of_active_skills_from_skill_line(&l) as u32,
-            GrantCondition::ActiveClassSkills =>
-                player.get_number_of_active_class_skills().unwrap_or(0) as u32,
+            GrantCondition::ActiveClassSkills(class) =>
+                player.get_number_of_active_class_skills(class) as u32,
             GrantCondition::DistinctArmourWeights =>
                 player.get_number_of_distinct_armour_weights() as u32,
             GrantCondition::WeaponsOfType(t) =>
@@ -129,7 +129,7 @@ fn counted_by(condition: &Condition) -> Option<GrantCondition> {
         })),
         Condition::SkillLineSlotted { skill_line, .. } => Some(GrantCondition::ActiveSkillsFromLine(*skill_line)),
         Condition::ArmourWeightsWorn { .. } => Some(GrantCondition::DistinctArmourWeights),
-        Condition::ClassAbilitiesSlotted { .. } => Some(GrantCondition::ActiveClassSkills),
+        Condition::ClassAbilitiesSlotted { class, .. } => Some(GrantCondition::ActiveClassSkills(*class)),
         Condition::WeaponTypeEquipped { weapon, .. } => Some(GrantCondition::WeaponsOfType(*weapon)),
         Condition::All(parts) => parts.iter().find_map(counted_by),
         _ => None,
@@ -148,18 +148,36 @@ fn counted_by(condition: &Condition) -> Option<GrantCondition> {
 /// aggregation. Rules come out in effect id order.
 ///
 /// The counts are `ArmourPieces` (pieces of one weight), `ArmourWeightsWorn` (how many weights), `SkillLineSlotted` (one
-/// line) and `ClassAbilitiesSlotted` (the build's three class lines together).
+/// line) and `ClassAbilitiesSlotted` (the three lines of one class together).
+///
+/// A class passive here belongs to the build's class, which is right for a character that did not subclass. For one
+/// that did, use [`passive_effect_rules_with`].
 pub fn passive_effect_rules<'a>(
     effects: impl IntoIterator<Item = &'a EffectDef>,
     race: &str,
     class: &str,
     unlocked: &[u32],
 ) -> Vec<GrantRule> {
+    passive_effect_rules_with(effects, race, |name, _| name == class, unlocked)
+}
+
+/// [`passive_effect_rules`] with the class decided by the caller: `has_class_passive(class_name, ability_id)` says
+/// whether the character has the class passive `ability_id` of the class `class_name` (the `name` of the
+/// effect's `EffectSource::Class`). That is where subclassing comes in: a passive follows its skill line, so a
+/// Dragonknight with Shadow has Shadow's passives, a Nightblade passive does not count for a character without the
+/// line, and a Class Mastery passive needs all three own lines (`Subclassing::has_class_passive`; `Build::to_player`
+/// builds the closure from the bundle's skill lines). Everything else is as in `passive_effect_rules`.
+pub fn passive_effect_rules_with<'a>(
+    effects: impl IntoIterator<Item = &'a EffectDef>,
+    race: &str,
+    has_class_passive: impl Fn(&str, u32) -> bool,
+    unlocked: &[u32],
+) -> Vec<GrantRule> {
     let mut found: Vec<(u32, GrantCondition)> = effects
         .into_iter()
         .filter(|def| match &def.source {
             EffectSource::Race { name, ability_id } => name == race && unlocked.contains(ability_id),
-            EffectSource::Class { name, ability_id } => name == class && unlocked.contains(ability_id),
+            EffectSource::Class { name, ability_id } => unlocked.contains(ability_id) && has_class_passive(name, *ability_id),
             EffectSource::Passive { ability_id } => unlocked.contains(ability_id),
             _ => false,
         })
@@ -372,6 +390,33 @@ mod tests {
         assert!(rules[0].evaluate(&empty).is_none() && rules[1].evaluate(&empty).is_none());
     }
 
+    /// Subclassing: whether a character has a class passive is the caller's call (it knows the lines), and an
+    /// unlocked passive is still needed. `passive_effect_rules` is the same with "the passive names the build's class".
+    #[test]
+    fn a_class_passive_is_decided_by_the_caller_and_still_has_to_be_unlocked() {
+        let class = |name: &str, ability_id| EffectSource::Class { name: name.into(), ability_id };
+        let defs = [
+            passive(1, class("Nightblade", 1), Stacking::Unique, Condition::Always),
+            passive(2, class("Dragonknight", 2), Stacking::Unique, Condition::Always),
+            passive(3, class("Templar", 3), Stacking::Unique, Condition::Always),
+            passive(4, EffectSource::Passive { ability_id: 4 }, Stacking::Unique, Condition::Always),
+        ];
+        let ids = |has: &dyn Fn(&str, u32) -> bool, unlocked: &[u32]| {
+            passive_effect_rules_with(&defs, "Dunmer", has, unlocked).iter().map(|r| r.effect_id).collect::<Vec<_>>()
+        };
+        // a Dragonknight that took a Nightblade line: ability 1 is available, 3 is not
+        assert_eq!(ids(&|_: &str, id: u32| id != 3, &[1, 2, 3, 4]), [1, 2, 4], "a non-class passive is not up to the caller");
+        // the closure is given the class name and the ability id
+        assert_eq!(ids(&|name: &str, _: u32| name == "Nightblade", &[1, 2, 3]), [1]);
+        assert_eq!(ids(&|_: &str, id: u32| id == 2, &[1, 2, 3]), [2]);
+        // available is not unlocked
+        assert_eq!(ids(&|_: &str, _: u32| true, &[2]), [2]);
+        assert!(ids(&|_: &str, _: u32| true, &[]).is_empty());
+        // the old behaviour: only the build's own class
+        let own: Vec<u32> = passive_effect_rules(&defs, "Dunmer", "Dragonknight", &[1, 2, 3]).iter().map(|r| r.effect_id).collect();
+        assert_eq!(own, [2]);
+    }
+
     fn line_named(name: &str) -> SkillLine {
         (0u32..4096).filter_map(|i| SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap()
     }
@@ -403,7 +448,7 @@ mod tests {
     #[test]
     fn distinct_weights_and_class_abilities_are_counted_as_stacks() {
         let weights = Condition::ArmourWeightsWorn { at_least: 1 };
-        let class = Condition::ClassAbilitiesSlotted { at_least: 1 };
+        let class = Condition::ClassAbilitiesSlotted { class: esosim_types::PlayerClass::Nightblade, at_least: 1 };
         let nightblade = |ability_id| EffectSource::Class { name: "Nightblade".into(), ability_id };
         let defs = [
             passive(1, EffectSource::Passive { ability_id: 1 }, Stacking::Additive, weights.clone()),
@@ -443,10 +488,11 @@ mod tests {
             (5, SkillLine::MagesGuild),
         ]);
         assert_eq!((stacks(&player, 2), stacks(&player, 3), stacks(&player, 4)), (Some(3), Some(3), Some(1)));
-        player.class = Some(esosim_types::PlayerClass::Sorcerer);
-        assert_eq!(stacks(&player, 2), Some(1));
+        // the ability's class counts, not the character's: an Arcanist with Assassination slots Nightblade abilities
+        player.class = Some(esosim_types::PlayerClass::Arcanist);
+        assert_eq!(stacks(&player, 2), Some(3));
         player.class = None;
-        assert_eq!(stacks(&player, 2), None, "no class, nothing counted");
+        assert_eq!(stacks(&player, 2), Some(3), "the character's class is not asked");
     }
 
     /// Roadmap 2.4, gap "a skill that gives its buff from either bar": an effect conditioned on

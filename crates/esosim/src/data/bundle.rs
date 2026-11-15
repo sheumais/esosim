@@ -2,7 +2,8 @@
 //!
 //! Holds the `EffectDef`s (hand-written files, the champion point stars' effects and the reviewed rows of
 //! the compiler's `effects.jsonl`, which is where the mundus stones live), the champion point stars and
-//! which skill line each ability is in.
+//! which skill line each ability is in (`skill_lines.csv`, which also holds the scribing grimoires: the game data puts
+//! them in no line, so the compiler files them under the line of `grimoires.csv`).
 //! Everything is compiled in with `include_str!`, so it works in WASM with no file IO.
 
 use std::collections::{BTreeMap, HashMap};
@@ -211,6 +212,7 @@ impl Bundle {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use esosim_types::skill_serde::skill_line_named;
 
     #[test]
     fn embedded_data_loads_and_has_no_dangling_ids() {
@@ -290,6 +292,31 @@ mod tests {
         let err = Bundle::default().add_skill_lines_csv(&format!("{a},5,6\n{b},6\n")).unwrap_err();
         assert!(err.contains("ability 6 is in two skill lines"), "{err}");
         assert!(Bundle::default().add_skill_lines_csv("x,5\n").is_err());
+    }
+
+    /// The game data puts a scribed ability in no skill line; the compiler files each grimoire under the line of
+    /// `grimoires.csv`. One ability id of each grimoire, and the line the in-game grimoire is in.
+    #[test]
+    fn every_scribing_grimoire_is_in_its_skill_line() {
+        let b = Bundle::embedded();
+        for (ability, grimoire, line) in [
+            (217228, "Elemental Explosion", "Destruction Staff"),
+            (217257, "Mender's Bond", "Restoration Staff"),
+            (217061, "Shield Throw", "One Hand and Shield"),
+            (227609, "Smash", "Two Handed"),
+            (217340, "Traveling Knife", "Dual Wield"),
+            (216674, "Vault", "Bow"),
+            (221930, "Wield Soul", "Soul Magic"),
+            (217979, "Soul Burst", "Soul Magic"),
+            (217633, "Torchbearer", "Fighters Guild"),
+            (240150, "Ulfsild's Contingency", "Mages Guild"),
+            (230289, "Banner Bearer", "Support"),
+            (220545, "Trample", "Assault"),
+        ] {
+            let line = skill_line_named(line).unwrap_or_else(|| panic!("no skill line {line}"));
+            assert_eq!(b.skill_line_of(ability), Some(line), "{grimoire} ({ability})");
+            assert!(b.abilities_in_skill_line(&line).contains(&ability), "{grimoire} ({ability})");
+        }
     }
 
     #[test]

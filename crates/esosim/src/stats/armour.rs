@@ -2,7 +2,7 @@
 
 use crate::engine::aggregator::ChannelSet;
 use crate::engine::effect::{Channel, ResistableDamageType as Dmg};
-use esosim_types::CappedStat;
+use esosim_types::{CappedStat, DamageDoneContext};
 
 /// Resistance per 100 % mitigation at the effective level 66 (66 * 1000).
 const RESISTANCE_PER_UNIT: f32 = 66_000.0;
@@ -34,9 +34,18 @@ pub fn resistance(c: &ChannelSet, kind: Dmg) -> u32 {
     layered(c, kind, Channel::Armour)
 }
 
+/// The penetration channel for a damage type: `All` is the all-damage context, anything else a
+/// `DamageDoneContext::Type`.
+pub fn penetration_channel(kind: Dmg) -> Channel {
+    match kind {
+        Dmg::All => Channel::Penetration(DamageDoneContext::All),
+        k => Channel::Penetration(DamageDoneContext::Type(k)),
+    }
+}
+
 /// Penetration against `kind`, layered the same way.
 pub fn penetration(c: &ChannelSet, kind: Dmg) -> u32 {
-    layered(c, kind, Channel::Penetration)
+    layered(c, kind, penetration_channel)
 }
 
 /// Resistance left after penetration. There is no over-penetration: 0 resistance is 0 whether the
@@ -88,8 +97,8 @@ mod tests {
     #[test]
     fn penetration_layers_the_same_way() {
         let mut c = ChannelSet::new();
-        c.add_additive(Channel::Penetration(Dmg::All), 2974);
-        c.add_additive(Channel::Penetration(Dmg::Martial), 1000);
+        c.add_additive(Channel::Penetration(DamageDoneContext::All), 2974);
+        c.add_additive(Channel::Penetration(DamageDoneContext::Type(Dmg::Martial)), 1000);
         assert_eq!(penetration(&c, Dmg::Bleed), 3974);
         assert_eq!(penetration(&c, Dmg::Shock), 2974);
     }

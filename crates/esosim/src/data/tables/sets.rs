@@ -84,7 +84,7 @@ pub static SETS: LazyLock<SetTable> = LazyLock::new(|| {
 
 #[cfg(test)]
 mod tests {
-    use esosim_types::DamageDoneContext::All;
+    use esosim_types::PowerContext::All;
 
 use crate::{
         data::enums::gear::{GearSlot, ItemQuality, ItemType},

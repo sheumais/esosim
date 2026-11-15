@@ -1,0 +1,2081 @@
+{
+  "build": {
+    "attributes": {
+      "health": 44,
+      "magicka": 0,
+      "stamina": 20
+    },
+    "back_bar": [
+      40242,
+      24163,
+      23213,
+      24595,
+      23277,
+      40223
+    ],
+    "champion": {
+      "points": {
+        "2": 50,
+        "6": 20,
+        "10": 20,
+        "11": 20,
+        "14": 20,
+        "15": 20,
+        "16": 20,
+        "17": 40,
+        "18": 40,
+        "20": 20,
+        "21": 30,
+        "22": 30,
+        "25": 50,
+        "34": 50,
+        "35": 50,
+        "37": 30,
+        "38": 20,
+        "39": 20,
+        "40": 30,
+        "42": 16,
+        "43": 30,
+        "44": 6,
+        "45": 10,
+        "51": 50,
+        "53": 10,
+        "56": 50,
+        "58": 50,
+        "66": 50,
+        "69": 50,
+        "70": 50,
+        "75": 10,
+        "78": 75,
+        "79": 50,
+        "81": 50,
+        "82": 75,
+        "85": 30,
+        "86": 50,
+        "91": 25,
+        "92": 50,
+        "99": 20,
+        "108": 20,
+        "113": 20,
+        "128": 20,
+        "133": 50,
+        "134": 50,
+        "136": 50,
+        "159": 50,
+        "264": 50,
+        "267": 50,
+        "270": 50,
+        "273": 50,
+        "277": 50,
+        "279": 50
+      },
+      "slotted": [
+        92,
+        66,
+        78,
+        82,
+        134,
+        136,
+        133,
+        159,
+        34,
+        35,
+        51,
+        270
+      ]
+    },
+    "class": "Sorcerer",
+    "external_buffs": [120028, 268274],
+    "front_bar": [
+      42056,
+      29489,
+      40215,
+      28311,
+      61519,
+      40237
+    ],
+    "gear": {
+      "chest": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 3215,
+          "armor_type": {
+            "id": 3,
+            "name": "ARMORTYPE_HEAVY"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 17,
+            "description": "Adds 434 Maximum Magicka.\nAdds 477 Maximum Health.\nAdds 434 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 2,
+          "equip_type": {
+            "id": 3,
+            "name": "EQUIP_TYPE_CHEST"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:207729:364:50:68343:370:50:0:0:0:0:0:0:0:0:1:149:0:1:0:5000:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 207729,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 771,
+            "max_equipped": 5,
+            "name": "Perfected Lucent Echoes",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "chest",
+          "trait": {
+            "id": 13,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_REINFORCED"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorReinforced",
+        "item_id": 207729,
+        "item_type": "Heavy",
+        "name": "Lucent Echoes Perfected Cuirass",
+        "quality": "Legendary",
+        "set_id": 771
+      },
+      "feet": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 2425,
+          "armor_type": {
+            "id": 3,
+            "name": "ARMORTYPE_HEAVY"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 17,
+            "description": "Adds 175 Maximum Magicka.\nAdds 193 Maximum Health.\nAdds 175 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 9,
+          "equip_type": {
+            "id": 10,
+            "name": "EQUIP_TYPE_FEET"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:207735:364:50:68343:370:50:0:0:0:0:0:0:0:0:1:149:0:1:0:3600:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 207735,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 771,
+            "max_equipped": 5,
+            "name": "Perfected Lucent Echoes",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "feet",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 207735,
+        "item_type": "Heavy",
+        "name": "Lucent Echoes Perfected Sabatons",
+        "quality": "Legendary",
+        "set_id": 771
+      },
+      "hands": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 1386,
+          "armor_type": {
+            "id": 3,
+            "name": "ARMORTYPE_HEAVY"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 17,
+            "description": "Adds 175 Maximum Magicka.\nAdds 193 Maximum Health.\nAdds 175 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 16,
+          "equip_type": {
+            "id": 13,
+            "name": "EQUIP_TYPE_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:207742:364:50:68343:370:50:18:27:0:0:0:0:0:0:2049:149:0:1:0:4850:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 207742,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 771,
+            "max_equipped": 5,
+            "name": "Perfected Lucent Echoes",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "hands",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 207742,
+        "item_type": "Heavy",
+        "name": "Lucent Echoes Perfected Gauntlets",
+        "quality": "Legendary",
+        "set_id": 771
+      },
+      "head": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 1823,
+          "armor_type": {
+            "id": 2,
+            "name": "ARMORTYPE_MEDIUM"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 25,
+            "description": "Adds 434 Maximum Magicka.\nAdds 477 Maximum Health.\nAdds 434 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 0,
+          "equip_type": {
+            "id": 1,
+            "name": "EQUIP_TYPE_HEAD"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:183909:364:50:68343:370:50:18:25:0:0:0:0:0:0:2049:67:0:1:0:4850:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 183909,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 634,
+            "max_equipped": 2,
+            "name": "Nunatak",
+            "num_bonuses": 2,
+            "num_effect_contributions": 0,
+            "num_equipped": 1,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "head",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 183909,
+        "item_type": "Medium",
+        "name": "Nunatak's Mask",
+        "quality": "Legendary",
+        "set_id": 634
+      },
+      "legs": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 2813,
+          "armor_type": {
+            "id": 3,
+            "name": "ARMORTYPE_HEAVY"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 17,
+            "description": "Adds 434 Maximum Magicka.\nAdds 477 Maximum Health.\nAdds 434 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 8,
+          "equip_type": {
+            "id": 9,
+            "name": "EQUIP_TYPE_LEGS"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:207761:364:50:68343:370:50:0:0:0:0:0:0:0:0:1:149:0:1:0:2650:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 207761,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 771,
+            "max_equipped": 5,
+            "name": "Perfected Lucent Echoes",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "legs",
+          "trait": {
+            "id": 13,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_REINFORCED"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorReinforced",
+        "item_id": 207761,
+        "item_type": "Heavy",
+        "name": "Lucent Echoes Perfected Greaves",
+        "quality": "Legendary",
+        "set_id": 771
+      },
+      "main_hand": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ChargedWeapon"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 6,
+            "category": {
+              "id": 3,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_CHARGED_WEAPON"
+            },
+            "default_id": 29,
+            "description": "Deals 2787 Shock Damage.",
+            "final_id": 6,
+            "has_charges": true,
+            "header": "Charged Weapon Enchantment"
+          },
+          "equip_slot": 4,
+          "equip_type": {
+            "id": 6,
+            "name": "EQUIP_TYPE_TWO_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:187552:364:50:26844:370:50:8:25:0:0:0:0:0:0:2049:130:0:1:0:166:0|h|h",
+          "link_fields": {
+            "enchant_id": 26844,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 187552,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 651,
+            "max_equipped": 5,
+            "name": "Perfected Pearlescent Ward",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "main_hand",
+          "trait": {
+            "id": 8,
+            "name": "ITEM_TRAIT_TYPE_WEAPON_DECISIVE"
+          },
+          "weapon_power": 1335,
+          "weapon_type": {
+            "id": 13,
+            "name": "WEAPONTYPE_FROST_STAFF"
+          }
+        },
+        "gear_trait": "WeaponDecisive",
+        "item_id": 187552,
+        "item_type": "FrostStaff",
+        "name": "Perfected Pearlescent Ice Staff",
+        "quality": "Legendary",
+        "set_id": 651
+      },
+      "main_hand_backup": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ReduceArmor"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 7,
+            "category": {
+              "id": 4,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_REDUCE_ARMOR"
+            },
+            "default_id": 29,
+            "description": "Reduce the target's Physical and Spell Resistance by 2108 for 5 seconds.",
+            "final_id": 7,
+            "has_charges": true,
+            "header": "Crusher Enchantment"
+          },
+          "equip_slot": 20,
+          "equip_type": {
+            "id": 6,
+            "name": "EQUIP_TYPE_TWO_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:187552:364:50:26845:370:50:0:0:0:0:0:0:0:0:1:130:0:1:0:84:0|h|h",
+          "link_fields": {
+            "enchant_id": 26845,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 187552,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 651,
+            "max_equipped": 5,
+            "name": "Perfected Pearlescent Ward",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "main_hand_backup",
+          "trait": {
+            "id": 4,
+            "name": "ITEM_TRAIT_TYPE_WEAPON_INFUSED"
+          },
+          "weapon_power": 1335,
+          "weapon_type": {
+            "id": 13,
+            "name": "WEAPONTYPE_FROST_STAFF"
+          }
+        },
+        "gear_trait": "WeaponInfused",
+        "item_id": 187552,
+        "item_type": "FrostStaff",
+        "name": "Perfected Pearlescent Ice Staff",
+        "quality": "Legendary",
+        "set_id": 651
+      },
+      "necklace": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ReduceSpellCost"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 86,
+            "category": {
+              "id": 25,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_REDUCE_SPELL_COST"
+            },
+            "default_id": 18,
+            "description": "Reduce Magicka cost of spells by 203. This effect does not work with abilities that drain their cost multiple times over their activation.",
+            "final_id": 86,
+            "has_charges": true,
+            "header": "Reduce Spell Cost Enchantment"
+          },
+          "equip_slot": 1,
+          "equip_type": {
+            "id": 2,
+            "name": "EQUIP_TYPE_NECK"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:187757:364:50:45870:370:50:29:25:0:0:0:0:0:0:2049:130:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 45870,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 187757,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 651,
+            "max_equipped": 5,
+            "name": "Perfected Pearlescent Ward",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "necklace",
+          "trait": {
+            "id": 29,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_HARMONY"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryHarmony",
+        "item_id": 187757,
+        "item_type": "Necklace",
+        "name": "Perfected Pearlescent Amulet",
+        "quality": "Legendary",
+        "set_id": 651
+      },
+      "ring1": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ReduceSpellCost"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 86,
+            "category": {
+              "id": 25,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_REDUCE_SPELL_COST"
+            },
+            "default_id": 18,
+            "description": "Reduce Magicka cost of spells by 203. This effect does not work with abilities that drain their cost multiple times over their activation.",
+            "final_id": 86,
+            "has_charges": true,
+            "header": "Reduce Spell Cost Enchantment"
+          },
+          "equip_slot": 11,
+          "equip_type": {
+            "id": 12,
+            "name": "EQUIP_TYPE_RING"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:187756:364:50:45870:370:50:29:25:0:0:0:0:0:0:2049:130:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 45870,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 187756,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 651,
+            "max_equipped": 5,
+            "name": "Perfected Pearlescent Ward",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "ring1",
+          "trait": {
+            "id": 29,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_HARMONY"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryHarmony",
+        "item_id": 187756,
+        "item_type": "Ring",
+        "name": "Perfected Pearlescent Ring",
+        "quality": "Legendary",
+        "set_id": 651
+      },
+      "ring2": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ReduceBlockAndBash"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 89,
+            "category": {
+              "id": 28,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_REDUCE_BLOCK_AND_BASH"
+            },
+            "default_id": 18,
+            "description": "Reduce the cost of Block by 203.",
+            "final_id": 89,
+            "has_charges": true,
+            "header": "Bracing Enchantment"
+          },
+          "equip_slot": 12,
+          "equip_type": {
+            "id": 12,
+            "name": "EQUIP_TYPE_RING"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:187756:364:50:45873:370:50:29:25:0:0:0:0:0:0:2049:130:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 45873,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 187756,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 651,
+            "max_equipped": 5,
+            "name": "Perfected Pearlescent Ward",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "ring2",
+          "trait": {
+            "id": 29,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_HARMONY"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryHarmony",
+        "item_id": 187756,
+        "item_type": "Ring",
+        "name": "Perfected Pearlescent Ring",
+        "quality": "Legendary",
+        "set_id": 651
+      },
+      "shoulders": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 1221,
+          "armor_type": {
+            "id": 1,
+            "name": "ARMORTYPE_LIGHT"
+          },
+          "display_quality": {
+            "id": 6,
+            "name": "ITEM_DISPLAY_QUALITY_MYTHIC_OVERRIDE"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 19,
+            "description": "Adds 175 Maximum Magicka.\nAdds 193 Maximum Health.\nAdds 175 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 3,
+          "equip_type": {
+            "id": 4,
+            "name": "EQUIP_TYPE_SHOULDERS"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:181695:364:50:68343:370:50:18:0:0:0:0:0:0:0:2049:0:0:1:0:1600:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 181695,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 627,
+            "max_equipped": 1,
+            "name": "Spaulder of Ruin",
+            "num_bonuses": 1,
+            "num_effect_contributions": 0,
+            "num_equipped": 1,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 0
+          },
+          "slot": "shoulders",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 181695,
+        "item_type": "Light",
+        "name": "Spaulder of Ruin",
+        "quality": "Legendary",
+        "set_id": 627
+      },
+      "waist": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "PrismaticDefense"
+        },
+        "esoui": {
+          "armor_rating": 1039,
+          "armor_type": {
+            "id": 3,
+            "name": "ARMORTYPE_HEAVY"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 146,
+            "category": {
+              "id": 36,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_PRISMATIC_DEFENSE"
+            },
+            "default_id": 17,
+            "description": "Adds 175 Maximum Magicka.\nAdds 193 Maximum Health.\nAdds 175 Maximum Stamina.",
+            "final_id": 146,
+            "has_charges": true,
+            "header": "Multi-Effect Enchantment"
+          },
+          "equip_slot": 6,
+          "equip_type": {
+            "id": 8,
+            "name": "EQUIP_TYPE_WAIST"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:207775:364:50:68343:370:50:0:0:0:0:0:0:0:0:1:149:0:1:0:4550:0|h|h",
+          "link_fields": {
+            "enchant_id": 68343,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 207775,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 771,
+            "max_equipped": 5,
+            "name": "Perfected Lucent Echoes",
+            "num_bonuses": 5,
+            "num_effect_contributions": 0,
+            "num_equipped": 0,
+            "num_perfected_effect_contributions": 0,
+            "num_perfected_equipped": 5
+          },
+          "slot": "waist",
+          "trait": {
+            "id": 18,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_DIVINES"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 207775,
+        "item_type": "Heavy",
+        "name": "Lucent Echoes Perfected Girdle",
+        "quality": "Legendary",
+        "set_id": 771
+      }
+    },
+    "level": 50,
+    "location": "Pve",
+    "mundus": {
+      "stones": [
+        13982
+      ]
+    },
+    "passives": [
+      45176,
+      45172,
+      45165,
+      45181,
+      45198,
+      45196,
+      45200,
+      45199,
+      45188,
+      45190,
+      45192,
+      45195,
+      263870,
+      263873,
+      45471,
+      45452,
+      45472,
+      45476,
+      45477,
+      45478,
+      45482,
+      45509,
+      45512,
+      45513,
+      45514,
+      150185,
+      152778,
+      45549,
+      45557,
+      45559,
+      45561,
+      45562,
+      150181,
+      45564,
+      45565,
+      45572,
+      45574,
+      150184,
+      152780,
+      45533,
+      45526,
+      45546,
+      45528,
+      45529,
+      45596,
+      40393,
+      74580,
+      55676,
+      55386,
+      39248,
+      45622,
+      36626,
+      45304,
+      45298,
+      45306,
+      45542,
+      45573,
+      47276,
+      47288,
+      46727,
+      46758,
+      103632,
+      44590,
+      44625,
+      47282
+    ],
+    "race": "Nord"
+  },
+  "expected": {
+    "advanced": {
+      "BASH_COST": {
+        "category": "Core Abilities",
+        "flat": 655,
+        "format": "FLAT",
+        "name": "Bash Cost"
+      },
+      "BASH_DAMAGE": {
+        "category": "Core Abilities",
+        "flat": 809,
+        "format": "FLAT",
+        "name": "Bash Damage"
+      },
+      "BLEED_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Bleed Damage",
+        "percent": 5
+      },
+      "BLEED_RESIST": {
+        "category": "Resistances",
+        "flat": 32278,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Bleed Resistance",
+        "percent": 48.90605927
+      },
+      "BLOCK_COST": {
+        "category": "Core Abilities",
+        "flat": 964,
+        "format": "FLAT",
+        "name": "Block Cost"
+      },
+      "BLOCK_MITIGATION": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Block Mitigation",
+        "percent": 91.99999237
+      },
+      "BLOCK_SPEED": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Block Move Speed",
+        "percent": 42
+      },
+      "CC_BREAK_COST": {
+        "category": "Core Abilities",
+        "flat": 4921,
+        "format": "FLAT",
+        "name": "Break Free Cost"
+      },
+      "COLD_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Frost Damage",
+        "percent": 5
+      },
+      "CRITICAL_DAMAGE": {
+        "category": "Damage Bonuses",
+        "format": "PERCENT",
+        "name": "Critical Damage",
+        "percent": 2
+      },
+      "CRITICAL_HEALING": {
+        "category": "Healing Bonuses",
+        "format": "PERCENT",
+        "name": "Critical Healing",
+        "percent": 2
+      },
+      "DISEASE_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Disease Damage",
+        "percent": 5
+      },
+      "DISEASE_RESIST": {
+        "category": "Resistances",
+        "flat": 32278,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Disease Resistance",
+        "percent": 48.90605927
+      },
+      "DODGE_COST": {
+        "category": "Core Abilities",
+        "flat": 0,
+        "format": "FLAT",
+        "name": "Dodge Roll Cost"
+      },
+      "FIRE_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Flame Damage",
+        "percent": 5
+      },
+      "FIRE_RESIST": {
+        "category": "Resistances",
+        "flat": 33004,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Flame Resistance",
+        "percent": 50.00606155
+      },
+      "FROST_RESIST": {
+        "category": "Resistances",
+        "flat": 37624,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Frost Resistance",
+        "percent": 57.00606155
+      },
+      "HEALING_DONE_BONUSES": {
+        "category": "Healing Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Healing Done",
+        "percent": 2
+      },
+      "HEALING_TAKEN_BONUSES": {
+        "category": "Healing Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Healing Taken",
+        "percent": 13
+      },
+      "MAGIC_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Magic Damage",
+        "percent": 5
+      },
+      "MAGIC_RESIST": {
+        "category": "Resistances",
+        "flat": 33004,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Magic Resistance",
+        "percent": 50.00606155
+      },
+      "OBLIVION_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Oblivion Damage",
+        "percent": 5
+      },
+      "PHYSICAL_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Physical Damage",
+        "percent": 10
+      },
+      "POISON_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Poison Damage",
+        "percent": 5
+      },
+      "POISON_RESIST": {
+        "category": "Resistances",
+        "flat": 32278,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Poison Resistance",
+        "percent": 48.90605927
+      },
+      "SHOCK_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Shock Damage",
+        "percent": 10
+      },
+      "SHOCK_RESIST": {
+        "category": "Resistances",
+        "flat": 33004,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Shock Resistance",
+        "percent": 50.00606155
+      },
+      "SNEAK_COST": {
+        "category": "Core Abilities",
+        "flat": 126,
+        "format": "FLAT",
+        "name": "Sneak Cost"
+      },
+      "SNEAK_SPEED_REDUCTION": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Sneak Speed",
+        "percent": 62
+      },
+      "SPRINT_COST": {
+        "category": "Core Abilities",
+        "flat": 442,
+        "format": "FLAT",
+        "name": "Sprint Cost"
+      },
+      "SPRINT_SPEED": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Sprint Speed",
+        "percent": 142
+      },
+      "SUBSCRIBER_ALL_XP": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Experience",
+        "percent": 0
+      },
+      "SUBSCRIBER_ALLIANCE_POINTS_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Alliance Points",
+        "percent": 0
+      },
+      "SUBSCRIBER_COIN_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Gold",
+        "percent": 0
+      },
+      "SUBSCRIBER_INSPIRATION_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Crafting Inspiration",
+        "percent": 0
+      },
+      "SUBSCRIBER_TELVAR_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Tel Var",
+        "percent": 0
+      },
+      "SUBSCRIBER_TOME_POINT_GAIN": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Tome Points",
+        "percent": 0
+      }
+    },
+    "derived": {
+      "ARMOR_RATING": {
+        "label": "Armor",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "ATTACK_POWER": {
+        "label": "Attack Power",
+        "value": 1869,
+        "without_bonus": 0
+      },
+      "BLOCK": {
+        "label": "Block",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "CRITICAL_CHANCE": {
+        "label": "Critical Chance",
+        "value": 539,
+        "without_bonus": 0
+      },
+      "CRITICAL_RESISTANCE": {
+        "label": "Critical Resistance",
+        "value": 1320,
+        "without_bonus": 0
+      },
+      "CRITICAL_STRIKE": {
+        "crit_chance_pct": 12.41328907,
+        "label": "Weapon Critical",
+        "value": 2720,
+        "without_bonus": 2181
+      },
+      "DAMAGE_RESIST_BLEED": {
+        "label": "Bleed Resistance",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_COLD": {
+        "label": "Frost Resistance",
+        "value": 37624,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_DISEASE": {
+        "label": "Disease Resistance",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_DROWN": {
+        "label": "Drowning Resistance",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_EARTH": {
+        "label": "Earth Resistance",
+        "value": 33004,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_FIRE": {
+        "label": "Flame Resistance",
+        "value": 33004,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_GENERIC": {
+        "label": "Generic Resistance",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_MAGIC": {
+        "label": "Magic Resistance",
+        "value": 33004,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_OBLIVION": {
+        "label": "Oblivion Resistance",
+        "value": 33004,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_PHYSICAL": {
+        "label": "Physical Resistance",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_POISON": {
+        "label": "Poison Resistance",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_SHOCK": {
+        "label": "Shock Resistance",
+        "value": 33004,
+        "without_bonus": 0
+      },
+      "DODGE": {
+        "label": "Dodge",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALING_DONE": {
+        "label": "Healing Done",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALING_TAKEN": {
+        "label": "Healing Taken",
+        "value": 8,
+        "without_bonus": 0
+      },
+      "HEALTH_MAX": {
+        "label": "Maximum Health",
+        "value": 39750,
+        "without_bonus": 39750
+      },
+      "HEALTH_REGEN": {
+        "label": "Health Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALTH_REGEN_COMBAT": {
+        "label": "Health Recovery",
+        "value": 1135,
+        "without_bonus": 1135
+      },
+      "HEALTH_REGEN_IDLE": {
+        "label": "Health Recovery Idle",
+        "value": 2250,
+        "without_bonus": 2250
+      },
+      "MAGICKA_MAX": {
+        "label": "Maximum Magicka",
+        "value": 17572,
+        "without_bonus": 17572
+      },
+      "MAGICKA_REGEN": {
+        "label": "Magicka Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MAGICKA_REGEN_COMBAT": {
+        "label": "Magicka Recovery",
+        "value": 1941,
+        "without_bonus": 1941
+      },
+      "MAGICKA_REGEN_IDLE": {
+        "label": "Magicka Recovery Idle",
+        "value": 2577,
+        "without_bonus": 2577
+      },
+      "MISS": {
+        "label": "Miss",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MITIGATION": {
+        "label": "Resistance",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MOUNT_STAMINA_MAX": {
+        "label": "Mount Stamina",
+        "value": 7000,
+        "without_bonus": 7000
+      },
+      "MOUNT_STAMINA_REGEN_COMBAT": {
+        "label": "Mount Stamina Regen Combat",
+        "value": 100,
+        "without_bonus": 100
+      },
+      "MOUNT_STAMINA_REGEN_MOVING": {
+        "label": "Mount Stamina Regen Moving",
+        "value": 200,
+        "without_bonus": 200
+      },
+      "OFFENSIVE_PENETRATION": {
+        "label": "Offensive Penetration",
+        "value": 4613,
+        "without_bonus": 0
+      },
+      "PHYSICAL_PENETRATION": {
+        "label": "Physical Penetration",
+        "value": 4613,
+        "without_bonus": 0
+      },
+      "PHYSICAL_RESIST": {
+        "label": "Physical Resistance",
+        "value": 32278,
+        "without_bonus": 0
+      },
+      "POWER": {
+        "label": "Weapon Damage",
+        "value": 2949,
+        "without_bonus": 1000
+      },
+      "REGEN": {
+        "label": "Regen",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "SPELL_CRITICAL": {
+        "crit_chance_pct": 12.41328907,
+        "label": "Spell Critical",
+        "value": 2720,
+        "without_bonus": 2181
+      },
+      "SPELL_MITIGATION": {
+        "label": "Spell Resistance",
+        "value": 51,
+        "without_bonus": 51
+      },
+      "SPELL_PENETRATION": {
+        "label": "Spell Penetration",
+        "value": 4613,
+        "without_bonus": 0
+      },
+      "SPELL_POWER": {
+        "label": "Spell Damage",
+        "value": 2949,
+        "without_bonus": 1000
+      },
+      "SPELL_RESIST": {
+        "label": "Spell Resistance",
+        "value": 33004,
+        "without_bonus": 0
+      },
+      "STAMINA_MAX": {
+        "label": "Maximum Stamina",
+        "value": 23897,
+        "without_bonus": 23897
+      },
+      "STAMINA_REGEN": {
+        "label": "Stamina Recovery",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "STAMINA_REGEN_COMBAT": {
+        "label": "Stamina Recovery",
+        "value": 1159,
+        "without_bonus": 1159
+      },
+      "STAMINA_REGEN_IDLE": {
+        "label": "Stamina Recovery Idle",
+        "value": 1692,
+        "without_bonus": 1692
+      },
+      "WEAPON_AND_SPELL_DAMAGE": {
+        "label": "Weapon and Spell Damage",
+        "value": 1869,
+        "without_bonus": 0
+      }
+    },
+    "sheet": {
+      "crit_chance": 0.1241328907,
+      "critical_resistance": 1320,
+      "max_health": 39750,
+      "max_magicka": 17572,
+      "max_stamina": 23897,
+      "physical_penetration": 4613,
+      "physical_resistance": 32278,
+      "power": 2949,
+      "spell_crit_chance": 0.1241328907,
+      "spell_penetration": 4613,
+      "spell_power": 2949,
+      "spell_resistance": 33004
+    }
+  },
+  "extra": {
+    "artificial_effects": [],
+    "bars": {
+      "back": [
+        {
+          "ability_id": 40242,
+          "name": "Razor Caltrops",
+          "slot": 1,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 24163,
+          "name": "Bound Aegis",
+          "slot": 2,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 23213,
+          "name": "Boundless Storm",
+          "slot": 3,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 24595,
+          "name": "Dark Deal",
+          "slot": 4,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 23277,
+          "name": "Ball of Lightning",
+          "slot": 5,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 40223,
+          "name": "Aggressive Horn",
+          "slot": 6,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": true
+        }
+      ],
+      "front": [
+        {
+          "ability_id": 42056,
+          "name": "Inner Rage",
+          "slot": 1,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 29489,
+          "name": "Hardened Ward",
+          "slot": 2,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 40215,
+          "name": "Charging Maneuver",
+          "slot": 3,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 28311,
+          "name": "Vibrant Shroud",
+          "slot": 4,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 61519,
+          "name": "Lingering Flare",
+          "slot": 5,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 40237,
+          "name": "Reviving Barrier",
+          "slot": 6,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": true
+        }
+      ]
+    },
+    "buffs": [
+      {
+        "ability_id": 72824,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": true,
+        "cast_by_player": true,
+        "duration_s": 870.6,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Smoked Bear Haunch",
+        "remaining_s": 835.9,
+        "stacks": 0
+      },
+      {
+        "ability_id": 76618,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Aegis",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61693,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Resolve",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 63569,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Gallop",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 13982,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "mundus": true,
+        "name": "Boon: The Atronach",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61721,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Protection",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 62320,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 60,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Exploitation",
+        "remaining_s": 53.1,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61722,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Major Protection",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 114908,
+        "ability_type": "ABILITY_TYPE_COMBATRESOURCE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 10,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Dark Deal",
+        "remaining_s": 4.1,
+        "stacks": 0
+      },
+      {
+        "ability_id": 252507,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 10,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Blood Magic",
+        "remaining_s": 7.8,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61744,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 20,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Berserk",
+        "remaining_s": 14.1,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61736,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 8,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Major Expedition",
+        "remaining_s": 4.8,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61694,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 30,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Major Resolve",
+        "remaining_s": 12.4,
+        "stacks": 0
+      },
+      {
+        "ability_id": 23213,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 30,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Boundless Storm",
+        "remaining_s": 12.4,
+        "stacks": 0
+      },
+      {
+        "ability_id": 40224,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 30,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Aggressive Horn",
+        "remaining_s": 19.2,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61735,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 8,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Expedition",
+        "remaining_s": 4.8,
+        "stacks": 0
+      },
+      {
+        "ability_id": 24163,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 6.5,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Bound Aegis",
+        "remaining_s": 1.3,
+        "stacks": 0
+      },
+      {
+        "ability_id": 268274,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 20,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Calculated Defense",
+        "remaining_s": 15.3,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61549,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 10,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Vitality",
+        "remaining_s": 5.8,
+        "stacks": 0
+      },
+      {
+        "ability_id": 29489,
+        "ability_type": "ABILITY_TYPE_DAMAGESHIELD",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 6,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Hardened Ward",
+        "remaining_s": 3.8,
+        "stacks": 0
+      },
+      {
+        "ability_id": 172621,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Pearlescent Ward",
+        "stacks": 0
+      }
+    ],
+    "champion": {
+      "slotted": [
+        {
+          "ability_id": 149286,
+          "id": 92,
+          "name": "Gifted Rider",
+          "slot": 1
+        },
+        {
+          "ability_id": 142125,
+          "id": 66,
+          "name": "Steed's Blessing",
+          "slot": 2
+        },
+        {
+          "ability_id": 142217,
+          "id": 78,
+          "name": "Master Gatherer",
+          "slot": 3
+        },
+        {
+          "ability_id": 142223,
+          "id": 82,
+          "name": "War Mount",
+          "slot": 4
+        },
+        {
+          "ability_id": 151749,
+          "id": 134,
+          "name": "Duelist's Rebuff",
+          "slot": 5
+        },
+        {
+          "ability_id": 151750,
+          "id": 136,
+          "name": "Enduring Resolve",
+          "slot": 6
+        },
+        {
+          "ability_id": 151748,
+          "id": 133,
+          "name": "Unassailable",
+          "slot": 7
+        },
+        {
+          "ability_id": 64079,
+          "id": 159,
+          "name": "Bulwark",
+          "slot": 8
+        },
+        {
+          "ability_id": 142035,
+          "id": 34,
+          "name": "Fortified",
+          "slot": 9
+        },
+        {
+          "ability_id": 142074,
+          "id": 35,
+          "name": "Rejuvenation",
+          "slot": 10
+        },
+        {
+          "ability_id": 142092,
+          "id": 51,
+          "name": "Expert Evasion",
+          "slot": 11
+        },
+        {
+          "ability_id": 160044,
+          "id": 270,
+          "name": "Celerity",
+          "slot": 12
+        }
+      ]
+    },
+    "character": {
+      "champion_points": 2120,
+      "champion_points_earned": 2120,
+      "character_id": "8796093077885741",
+      "class": "Sorcerer",
+      "class_id": 2,
+      "class_localised": "Sorcerer",
+      "display_name": "@TheMrPancake",
+      "effective_level": 66,
+      "level": 50,
+      "name": "Vibrant Shroud",
+      "race": "Nord",
+      "race_id": 5,
+      "race_localised": "Nord"
+    },
+    "meta": {
+      "active_bar": "front",
+      "active_hotbar": {
+        "id": 0,
+        "name": "HOTBAR_CATEGORY_PRIMARY"
+      },
+      "addon_version": "1.0.5",
+      "api_version": 101052,
+      "in_combat": false,
+      "in_pvp_area": false,
+      "language": "en",
+      "schema": 1,
+      "timestamp": 1794725767,
+      "world": "PTS"
+    },
+    "mundus": [
+      {
+        "ability_id": 13982,
+        "advanced_stat_effects": [],
+        "name": "Boon: The Atronach"
+      }
+    ],
+    "sets": {
+      "627": {
+        "max_equipped": 1,
+        "name": "Spaulder of Ruin",
+        "num_effect_contributions": 0,
+        "num_equipped": 1,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 0
+      },
+      "634": {
+        "max_equipped": 2,
+        "name": "Nunatak",
+        "num_effect_contributions": 0,
+        "num_equipped": 1,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 0
+      },
+      "651": {
+        "max_equipped": 5,
+        "name": "Perfected Pearlescent Ward",
+        "num_effect_contributions": 0,
+        "num_equipped": 0,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 5
+      },
+      "771": {
+        "max_equipped": 5,
+        "name": "Perfected Lucent Echoes",
+        "num_effect_contributions": 0,
+        "num_equipped": 0,
+        "num_perfected_effect_contributions": 0,
+        "num_perfected_equipped": 5
+      }
+    },
+    "warnings": []
+  },
+  "hidden": [],
+  "name": "Vibrant Shroud Nord Sorcerer, CP2120, front bar",
+  "patch": "U52",
+  "source": "GoldenFixture addon v1.0.5: /goldenfixture on @TheMrPancake (API 101052)",
+  "tolerance": {}
+}

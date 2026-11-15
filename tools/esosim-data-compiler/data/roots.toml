@@ -113,3 +113,4 @@ tags = [
 # is on ordinary class passives too. The category is the closure of these roots, so most of its records are not masteries.
 [class_mastery]
 skill_line = [351, 352, 353, 354, 355, 356, 357]
+name_prefix = ["Vampire Stage "]

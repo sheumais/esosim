@@ -290,13 +290,13 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
                 Some(_) => {}
             }
         }
-        if has_categories && (!spec.names.is_empty() || spec.name_prefix.is_some()) {
+        if has_categories && (!spec.names.is_empty() || !spec.name_prefix.is_empty()) {
             let found = abilities
                 .iter()
                 .filter(|a| a.categories.contains(category))
                 .filter(|a| {
                     spec.names.iter().any(|n| *n == a.name)
-                        || spec.name_prefix.as_deref().is_some_and(|p| a.name.starts_with(p))
+                        || spec.name_prefix.iter().any(|p| a.name.starts_with(p))
                 })
                 .count();
             if let Some(expected) = spec.expect {

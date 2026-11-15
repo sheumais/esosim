@@ -5,7 +5,7 @@
 //! * `data/sets.jsonl`      one set per line (embedded below)
 //! * `data/set_behaviour.jsonl` one line per set: its behaviour class and classified ability blocks (roadmap 2.1b)
 //! * `data/set_items.csv`  `set id,item id,...` per set: which items belong to which set (roadmap 2.1e)
-//! * `data/skill_lines.csv` `skill line id,ability id,...` per skill line: which abilities are in which line (roadmap 1.4)
+//! * `data/skill_lines.csv` `skill line id,ability id,...` per skill line: which abilities are in which line (roadmap 1.4); the scribing grimoires' abilities are in it too, filed by the compiler under the line of its `grimoires.csv`
 //! * `data/effects.jsonl` overrides + high-confidence auto-classified effects, one `EffectDef` per line plus a `provenance` (roadmap 2.0)
 //! * `data/passive_ranks.csv` one passive per line: the ability ids of its ranks, lowest rank first (roadmap 2.4)
 //! * `data/cp.jsonl`       one champion point star per line: stages, cost and value per stage, its tree (roadmap 2.2a, 2.2b)

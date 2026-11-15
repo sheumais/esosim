@@ -23,6 +23,7 @@ pub mod items;
 mod manifest;
 mod passives;
 pub mod overrides;
+pub mod scribing;
 pub mod resolved;
 pub mod roots;
 mod setdata;
@@ -64,6 +65,8 @@ pub struct Options {
     pub cp_effects_toml: String,
     /// Text of `cp_trees.toml`: which tree each champion point star is in, and its way in (roadmap 2.2b).
     pub cp_trees_toml: String,
+    /// Text of `grimoires.csv`: the skill line of each scribing grimoire (`scribing.rs`).
+    pub grimoires_csv: String,
     pub hand_written: Vec<(String, String)>,
 }
 
@@ -74,6 +77,7 @@ impl Default for Options {
             overrides_toml: overrides::OVERRIDES_TOML.to_string(),
             cp_effects_toml: cp::CP_EFFECTS_TOML.to_string(),
             cp_trees_toml: cp::CP_TREES_TOML.to_string(),
+            grimoires_csv: scribing::GRIMOIRES_CSV.to_string(),
             hand_written: Vec::new(),
         }
     }
@@ -243,6 +247,8 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
 
     // before the table moves into the corpus
     let passive_families = passives::families(&data.skills);
+    // the game gives a scribed ability no skill line; `grimoires.csv` says which line each grimoire is in
+    let (scribing_lines, scribing_report) = scribing::lines(&data.skills, &scribing::parse(&opts.grimoires_csv)?)?;
     let corpus = Corpus::build(data.skills, lang);
     let graph = Graph::build(&corpus);
     let mut cp_stars = cp::stars(&data.cp, |id| corpus.names.get(&id).cloned())?;
@@ -290,16 +296,17 @@ fn build(data: manifest::GameData, opts: &Options) -> Result<Bundle, String> {
         set_ids_rs: sets.ids_rs,
         set_behaviour_jsonl: behaviour::to_jsonl(&set_behaviours)?,
         set_items_csv: sets.items_csv,
-        skill_lines_csv: compile::skill_lines_csv(&abilities),
+        skill_lines_csv: compile::skill_lines_csv(&abilities, &scribing_lines),
         passive_ranks_csv,
         effects_jsonl,
         cp_effects_jsonl: cp::effects_to_jsonl(&cp_effects)?,
         item_types_csv: data.item_types_csv,
         behaviour_report: report.summary(),
         roots_report: format!(
-            "{}\n{}\ncp table: {} record(s) read, {} real star(s) (a star has an ability and a map position)\ncp {cp_trees_report}{}",
+            "{}\n{}\n{}\ncp table: {} record(s) read, {} real star(s) (a star has an ability and a map position)\ncp {cp_trees_report}{}",
             roots_report.summary(),
             passive_report.summary(),
+            scribing_report.summary(),
             data.cp.len(),
             cp_stars.len(),
             if one_way.is_empty() {
@@ -349,7 +356,7 @@ mod tests {
     /// The shipped inputs, except for the champion point ones: the test games have no CP table, and
     /// the shipped mapping and trees name the real stars.
     fn no_cp() -> Options {
-        Options { cp_effects_toml: String::new(), cp_trees_toml: String::new(), ..Options::default() }
+        Options { cp_effects_toml: String::new(), cp_trees_toml: String::new(), grimoires_csv: String::new(), ..Options::default() }
     }
 
     fn data() -> manifest::GameData {

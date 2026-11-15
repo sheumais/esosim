@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use esosim_types::{CpLoadout, Location, MundusLoadout, PlayerClass, Race};
+use esosim_types::{CpLoadout, Location, MundusLoadout, PlayerClass, Race, SubclassSwap};
 
 use crate::entity::{enemy::EnemyPreset, gear::Loadout};
 use crate::stats::sheet::Attributes;
@@ -16,6 +16,12 @@ use crate::stats::sheet::Attributes;
 pub struct Build {
     pub race: Race,
     pub class: PlayerClass,
+    /// Subclassing: own class skill lines given up for a line of another class, at most two, from two different
+    /// classes. Empty (and left out of the JSON) = the pure class, which is the only build with Class Mastery.
+    /// A passive follows its line, so what a Dragonknight with Shadow gets is Shadow's passives. A swap the game
+    /// would not allow is left out of the sheet and named by `Build::subclass_issues`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub subclass: Vec<SubclassSwap>,
     pub level: u8,
     pub attributes: Attributes,
     /// Ability ids of the stones, in pick order.
@@ -80,6 +86,7 @@ mod tests {
         Build {
             race: Race::Dunmer,
             class: PlayerClass::Nightblade,
+            subclass: vec![],
             level: 50,
             attributes: Attributes { health: 12, magicka: 0, stamina: 52 },
             mundus: MundusLoadout::new([13975]),
@@ -110,6 +117,24 @@ mod tests {
         assert_eq!(build.enemy, EnemyPreset::TrialDummy);
         assert!(build.front_bar.is_empty() && build.food.is_none());
         assert_eq!(build.location, None);
+        assert!(build.subclass.is_empty(), "no subclassing unless the build says so");
+    }
+
+    #[test]
+    fn a_subclass_is_optional_and_survives_json() {
+        use eso_skill_data::enums::skill_line::SkillLine;
+        let line = |name: &str| (0u32..4096).filter_map(|i| SkillLine::from_id(&i)).find(|l| l.as_str() == name).unwrap();
+        let mut build = sample();
+        assert!(!build.to_json().unwrap().contains("subclass"), "pure class: not written");
+        build.subclass = vec![SubclassSwap::new(line("Assassination"), line("Storm Calling"))];
+        let json = build.to_json().unwrap();
+        assert!(json.contains(r#""replaces": "Assassination""#) && json.contains(r#""with": "Storm Calling""#), "{json}");
+        assert_eq!(Build::from_json(&json).unwrap(), build);
+        // written by hand: a build file with no subclass key still loads
+        let by_hand = r#"{"race":"Nord","class":"Templar","level":50,"attributes":{"health":0,"magicka":64,"stamina":0},
+            "subclass":[{"replaces":"Restoring Light","with":"Dark Magic"}]}"#;
+        let build = Build::from_json(by_hand).unwrap();
+        assert_eq!(build.subclass, [SubclassSwap::new(line("Restoring Light"), line("Dark Magic"))]);
     }
 
     #[test]

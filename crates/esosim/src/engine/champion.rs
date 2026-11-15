@@ -41,7 +41,7 @@ mod tests {
     use crate::engine::aggregator::ChannelSet;
     use crate::engine::effect::{
         AggKind::{Additive, Multiplicative},
-        Channel, ConditionContext, DamageDoneContext, DamageTakenContext,
+        Channel, ConditionContext, DamageDoneContext, DamageTakenContext, PowerContext,
         ResistableDamageType as Dmg,
     };
     use crate::engine::registry::EffectRegistry;
@@ -68,7 +68,7 @@ mod tests {
             assert_eq!((star.ability_id, &star.name), (fx.id, &fx.name));
             assert_eq!(fx.stacking, Stacking::PerStack { max: star.max_stages }, "{}", fx.name);
         }
-        assert_eq!(modelled, 44);
+        assert_eq!(modelled, 62);
     }
 
     #[test]
@@ -88,20 +88,22 @@ mod tests {
         assert!(armour(50) > armour(49));
         assert_eq!(armour(900), armour(50), "points past the last stage do nothing");
         // Piercing: 350 a stage, 10 points a stage, 2 stages; 9 points is no stage yet
-        let pen = Channel::Penetration(Dmg::All);
+        let pen = Channel::Penetration(DamageDoneContext::All);
         assert_eq!([9, 10, 20, 500].map(|p| sheet(&loadout(&[(10, p)], &[])).get(pen)), [0, 350, 700, 700]);
         assert_eq!(sheet(&loadout(&[(11, 20)], &[])).get(Channel::CriticalChance), 320);
     }
 
     #[test]
     fn a_slottable_star_applies_only_while_slotted() {
-        // Wrathful Strikes: 41 a stage, 10 points a stage, 5 stages: the 205 of the damage tests
-        let power = Channel::Power(DamageDoneContext::All, Additive);
+        // Wrathful Strikes: 41 a stage, 10 points a stage, 5 stages: the 205 on abilities that damage enemies
+        let power = Channel::Power(PowerContext::Damage(DamageDoneContext::Abilities), Additive);
         assert_eq!(sheet(&loadout(&[(8, 50)], &[])).get(power), 0);
         assert_eq!(sheet(&loadout(&[(8, 50)], &[8])).get(power), 205);
         assert_eq!(sheet(&loadout(&[(8, 50)], &[9])).get(power), 0, "another star's slot is no help");
         // Untamed Aggression is always on and feeds the same channel
-        assert_eq!(sheet(&loadout(&[(4, 7), (8, 50)], &[8])).get(power), 226); // 205 + 7 * 3
+        assert_eq!(sheet(&loadout(&[(4, 7), (8, 50)], &[8])).get(power), 205);
+        // ...Untamed Aggression's 7 * 3 is general power; Wrathful Strikes is not
+        assert_eq!(sheet(&loadout(&[(4, 7), (8, 50)], &[8])).get(Channel::Power(PowerContext::All, Additive)), 21);
     }
 
     #[test]
@@ -160,7 +162,7 @@ mod tests {
 
     #[test]
     fn war_mage_and_mighty_are_power_for_their_own_damage_types_only() {
-        let power = |t| Channel::Power(DamageDoneContext::Type(t), Additive);
+        let power = |t| Channel::Power(PowerContext::Damage(DamageDoneContext::Type(t)), Additive);
         let c = sheet(&loadout(&[(21, 30)], &[]));
         for t in [Dmg::Magic, Dmg::Flame, Dmg::Frost, Dmg::Shock] {
             assert_eq!(c.get(power(t)), 100, "{t:?}");
@@ -171,7 +173,7 @@ mod tests {
             assert_eq!(c.get(power(t)), 100, "{t:?}");
         }
         assert_eq!(c.get(power(Dmg::Flame)), 0);
-        assert_eq!(c.get(Channel::Power(DamageDoneContext::All, Additive)), 0);
+        assert_eq!(c.get(Channel::Power(PowerContext::All, Additive)), 0);
     }
 
     #[test]
@@ -209,6 +211,44 @@ mod tests {
     }
 
     #[test]
+    fn healing_stars_feed_their_own_channels() {
+        use esosim_types::channel::HealingDoneContext;
+        // Fighting Finesse: 4 a stage, 2 stages, to Critical Damage AND Critical Healing
+        let c = sheet(&loadout(&[(12, 500)], &[12]));
+        assert_eq!((c.get(Channel::CriticalDamage), c.get(Channel::CriticalHealing)), (8, 8));
+        // Rejuvenator: 41 a stage, 5 stages, for healing abilities only (never general power)
+        let c = sheet(&loadout(&[(9, 500)], &[9]));
+        assert_eq!(c.get(Channel::Power(PowerContext::Healing(HealingDoneContext::All), Additive)), 205);
+        assert_eq!(c.get(Channel::Power(PowerContext::All, Additive)), 0);
+        // Soothing Tide: 2 % a stage, 5 stages, area of effect heals only
+        let c = sheet(&loadout(&[(24, 500)], &[24]));
+        assert_eq!(c.get(Channel::HealingDone(HealingDoneContext::AreaOfEffect)), 10);
+        assert_eq!(c.get(Channel::HealingDone(HealingDoneContext::SingleTarget)), 0);
+    }
+
+    #[test]
+    fn stealth_resurrection_and_status_duration_stars_use_their_units() {
+        // Piercing Gaze: 100 (cm) a stage in the table, 3 stages: metres of stealth detection
+        assert_eq!(sheet(&loadout(&[(45, 500)], &[])).get(Channel::StealthDetection), 3);
+        // Spirit Mastery: 33 percentage points off the resurrection time
+        assert_eq!(sheet(&loadout(&[(56, 500)], &[])).get(Channel::ResurrectionSpeed), 33);
+        // Mystic Tenacity: 5 % a stage, 5 stages, a cut stored negative in the multiplicative bucket
+        let c = sheet(&loadout(&[(53, 500)], &[]));
+        assert_eq!(c.get_multiplicative_bps(Channel::StatusEffectDuration(Multiplicative)), -2500);
+        // Out of Sight needs the build to say it is sneaking
+        assert_eq!(sheet(&loadout(&[(68, 500)], &[])).get(Channel::DetectionRadius), 0);
+    }
+
+    #[test]
+    fn stars_with_a_combat_time_condition_stay_off_until_it_is_decided() {
+        // Backstabber, Exploiter, Hasty and Sustained by Suffering all wait for the build to say so
+        let c = sheet(&loadout(&[(31, 500), (277, 500), (42, 500), (273, 500)], &[31, 277, 42, 273]));
+        assert_eq!(c.get(Channel::CriticalDamage), 0);
+        assert_eq!(c.get(Channel::MovementSpeed), 0);
+        assert_eq!(c.get_multiplicative_bps(Channel::DamageDone(DamageDoneContext::All, Multiplicative)), 0);
+    }
+
+    #[test]
     fn a_fifth_slot_in_one_tree_is_reported_not_refused() {
         let b = Bundle::embedded();
         // Rejuvenator, Wrathful Strikes, Biting Aura, Deadly Aim and Thaumaturge are all in one tree
@@ -219,8 +259,9 @@ mod tests {
             b.champion_point_issues(l).into_iter().filter(|i| matches!(i, CpIssue::TooManySlotted { .. })).collect::<Vec<_>>()
         };
         assert_eq!(slot_issues(&l), vec![CpIssue::TooManySlotted { tree, slotted: 5, max: 4 }]);
-        // and they all still apply
-        assert_eq!(sheet(&l).get(Channel::Power(DamageDoneContext::All, Additive)), 205);
+        // and they all still apply (Wrathful Strikes is ability-only, so not general power)
+        assert_eq!(sheet(&l).get(Channel::Power(PowerContext::Damage(DamageDoneContext::Abilities), Additive)), 205);
+        assert_eq!(sheet(&l).get(Channel::Power(PowerContext::All, Additive)), 0);
         // four is legal
         assert_eq!(slot_issues(&loadout(&[(8, 50), (9, 50), (23, 50), (25, 50)], &[8, 9, 23, 25])), vec![]);
     }

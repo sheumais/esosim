@@ -78,6 +78,17 @@ pub enum PlayerClass {
 }
 
 impl PlayerClass {
+    /// Every class, in the order the game lists them.
+    pub const ALL: [PlayerClass; 7] = [
+        PlayerClass::Dragonknight,
+        PlayerClass::Sorcerer,
+        PlayerClass::Nightblade,
+        PlayerClass::Warden,
+        PlayerClass::Necromancer,
+        PlayerClass::Templar,
+        PlayerClass::Arcanist,
+    ];
+
     /// The names of the class's three own skill lines, as `SkillLine::as_str` writes them. Weapon, armour, guild,
     /// world, Alliance War and racial lines are not the class's own.
     pub fn skill_line_names(self) -> [&'static str; 3] {
@@ -111,6 +122,13 @@ impl PlayerClass {
                 .collect()
         });
         LINES.get(&self).map(Vec::as_slice).unwrap_or(&[])
+    }
+
+    /// The class that has `line` as one of its three own lines (Shadow -> Nightblade). `None` for every line that is no
+    /// class's own: weapon, armour, guild, world, Alliance War, racial and the class mastery lines. This is the line's
+    /// *native* class: a subclassed character holds lines of several classes (see `crate::subclass`).
+    pub fn of_skill_line(line: SkillLine) -> Option<PlayerClass> {
+        PlayerClass::ALL.into_iter().find(|class| class.skill_lines().contains(&line))
     }
 }
 
@@ -245,10 +263,12 @@ pub enum Condition {
     /// the active bar's gear, 0 to 3 (Undaunted Mettle). `ArmourPieces` counts pieces of one weight; this counts
     /// weights.
     ArmourWeightsWorn { at_least: u8 },
-    /// "for each Sorcerer / Nightblade ability slotted": the abilities on the active bar from all three skill lines
-    /// of the character's own class (`PlayerClass::skill_lines`), in one number (Expert Mage, Pressure Points).
-    /// Weapon, guild, world and Alliance War lines do not count; what is on the bar counts, an ultimate included.
-    ClassAbilitiesSlotted { at_least: u8 },
+    /// "for each Sorcerer / Nightblade ability slotted" (Expert Mage, Pressure Points): the abilities on the active
+    /// bar whose skill line is one of `class`'s three own lines (`PlayerClass::of_skill_line`), in one number. It
+    /// is about where the ability comes from, not who slots it: an Arcanist with Assassination instead of one of
+    /// its own lines counts its Nightblade abilities for Pressure Points, and loses the Arcanist ones. Weapon,
+    /// guild, world and Alliance War lines do not count; what is on the bar counts, an ultimate included.
+    ClassAbilitiesSlotted { class: PlayerClass, at_least: u8 },
     /// The ability is slotted on either bar, not only the active one: for the skills that give their buff from
     /// whichever bar they are on (Dark Cloak, Bound Aegis). Which skills do is game data and is listed by hand.
     AbilitySlottedAnyBar { ability_id: u32 },
@@ -279,8 +299,8 @@ pub trait ConditionContext {
     fn food_active(&self) -> Option<bool> { None }
     /// Distinct armour weights worn (0 to 3).
     fn armour_weights_worn(&self) -> Option<u8> { None }
-    /// Abilities on the active bar that belong to the character's own class lines.
-    fn class_abilities_slotted(&self) -> Option<u8> { None }
+    /// Abilities on the active bar that belong to the skill lines of `class`, whatever the character's own class.
+    fn class_abilities_slotted(&self, _class: PlayerClass) -> Option<u8> { None }
     /// Whether the ability is slotted on either bar. There is no default from `ability_slotted`: an ability that is
     /// not on the active bar may well be on the other.
     fn ability_slotted_any_bar(&self, _ability_id: u32) -> Option<bool> { None }
@@ -484,7 +504,7 @@ impl Condition {
             }
             Condition::NearKeep => ctx.near_keep(),
             Condition::ArmourWeightsWorn { at_least } => ctx.armour_weights_worn().map(|n| n >= *at_least),
-            Condition::ClassAbilitiesSlotted { at_least } => ctx.class_abilities_slotted().map(|n| n >= *at_least),
+            Condition::ClassAbilitiesSlotted { class, at_least } => ctx.class_abilities_slotted(*class).map(|n| n >= *at_least),
             Condition::AbilitySlottedAnyBar { ability_id } => ctx.ability_slotted_any_bar(*ability_id),
             Condition::WeaponTypeEquipped { weapon, at_least } => ctx.weapons_of_type(*weapon).map(|n| n >= *at_least),
             Condition::TargetWithinMeters(m) => ctx.target_distance().map(|d| d <= f32::from(*m)),
@@ -582,8 +602,8 @@ impl fmt::Display for Condition {
             }
             Condition::NearKeep => f.write_str("near a Keep"),
             Condition::ArmourWeightsWorn { at_least } => write!(f, "{at_least} or more types of armour worn"),
-            Condition::ClassAbilitiesSlotted { at_least } => {
-                write!(f, "{at_least} or more abilities of your class slotted")
+            Condition::ClassAbilitiesSlotted { class, at_least } => {
+                write!(f, "{at_least} or more {class:?} abilities slotted")
             }
             Condition::AbilitySlottedAnyBar { ability_id } => write!(f, "ability {ability_id} slotted on either bar"),
             Condition::WeaponTypeEquipped { weapon, at_least } => {
@@ -686,7 +706,7 @@ mod tests {
             Condition::RecentlyOccurred { event: TriggerEvent::Kill, within_ms: 2000 },
             Condition::NearKeep,
             Condition::ArmourWeightsWorn { at_least: 2 },
-            Condition::ClassAbilitiesSlotted { at_least: 3 },
+            Condition::ClassAbilitiesSlotted { class: PlayerClass::Nightblade, at_least: 3 },
             Condition::AbilitySlottedAnyBar { ability_id: 9 },
             Condition::WeaponTypeEquipped { weapon: WeaponType::Axe, at_least: 2 },
             Condition::TargetWithinMeters(15),
@@ -779,7 +799,7 @@ mod tests {
         fn in_pvp_area(&self) -> Option<bool> { Some(false) }
         fn near_keep(&self) -> Option<bool> { Some(false) }
         fn armour_weights_worn(&self) -> Option<u8> { Some(2) }
-        fn class_abilities_slotted(&self) -> Option<u8> { Some(4) }
+        fn class_abilities_slotted(&self, c: PlayerClass) -> Option<u8> { Some(if c == PlayerClass::Nightblade { 4 } else { 0 }) }
         fn ability_slotted_any_bar(&self, id: u32) -> Option<bool> { Some(id == 9) }
         fn target_is(&self, k: TargetKind) -> Option<bool> { Some(k == TargetKind::Monster) }
         fn skill_line_active(&self, l: SkillLine) -> Option<u8> { Some(if l == SkillLine::BoneTyrant { 2 } else { 0 }) }
@@ -822,8 +842,10 @@ mod tests {
         no(Condition::NearKeep);
         yes(Condition::ArmourWeightsWorn { at_least: 2 });
         no(Condition::ArmourWeightsWorn { at_least: 3 });
-        yes(Condition::ClassAbilitiesSlotted { at_least: 4 });
-        no(Condition::ClassAbilitiesSlotted { at_least: 5 });
+        let nightblade = |at_least| Condition::ClassAbilitiesSlotted { class: PlayerClass::Nightblade, at_least };
+        yes(nightblade(4));
+        no(nightblade(5));
+        no(Condition::ClassAbilitiesSlotted { class: PlayerClass::Sorcerer, at_least: 1 });
         yes(Condition::AbilitySlottedAnyBar { ability_id: 9 });
         no(Condition::AbilitySlottedAnyBar { ability_id: 10 });
         yes(Condition::SkillLineAbilityActive { skill_line: SkillLine::BoneTyrant, at_least: 2 });
@@ -877,10 +899,11 @@ mod tests {
     fn the_new_conditions_round_trip_and_read_as_text() {
         assert_eq!(Condition::NearKeep.to_string(), "near a Keep");
         assert_eq!(Condition::ArmourWeightsWorn { at_least: 3 }.to_string(), "3 or more types of armour worn");
-        assert_eq!(Condition::ClassAbilitiesSlotted { at_least: 1 }.to_string(), "1 or more abilities of your class slotted");
+        let nightblade = Condition::ClassAbilitiesSlotted { class: PlayerClass::Nightblade, at_least: 1 };
+        assert_eq!(nightblade.to_string(), "1 or more Nightblade abilities slotted");
         assert_eq!(Condition::AbilitySlottedAnyBar { ability_id: 7 }.to_string(), "ability 7 slotted on either bar");
-        let json = serde_json::to_string(&Condition::ClassAbilitiesSlotted { at_least: 1 }).unwrap();
-        assert_eq!(json, r#"{"ClassAbilitiesSlotted":{"at_least":1}}"#);
+        let json = serde_json::to_string(&nightblade).unwrap();
+        assert_eq!(json, r#"{"ClassAbilitiesSlotted":{"class":"Nightblade","at_least":1}}"#);
         assert_eq!(serde_json::to_string(&Condition::NearKeep).unwrap(), r#""NearKeep""#);
     }
 

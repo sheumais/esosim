@@ -6,18 +6,21 @@ use crate::graph::Graph;
 use crate::resolved::*;
 use crate::roots::Roots;
 use eso_skill_data::SkillData34;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// `skill_lines.csv`: `skill line id,ability id,ability id,...` one line per skill line, lines and
-/// ids ascending (roadmap 1.4). Abilities that are in no skill line are left out.
-pub fn skill_lines_csv(abilities: &[ResolvedAbility]) -> String {
-    let mut by_line: BTreeMap<u32, Vec<u32>> = BTreeMap::new();
+/// ids ascending (roadmap 1.4). Abilities that are in no skill line are left out. `scribed` is the scribing
+/// grimoires' abilities by line (`scribing::lines`): the game gives them no line, so they are added here.
+pub fn skill_lines_csv(abilities: &[ResolvedAbility], scribed: &BTreeMap<u32, Vec<u32>>) -> String {
+    let mut by_line: BTreeMap<u32, BTreeSet<u32>> = BTreeMap::new();
     for a in abilities.iter().filter(|a| a.skill_line != 0) {
-        by_line.entry(a.skill_line).or_default().push(a.id);
+        by_line.entry(a.skill_line).or_default().insert(a.id);
+    }
+    for (line, ids) in scribed {
+        by_line.entry(*line).or_default().extend(ids);
     }
     let mut out = String::new();
-    for (line, mut ids) in by_line {
-        ids.sort_unstable();
+    for (line, ids) in by_line {
         out.push_str(&line.to_string());
         for id in ids {
             out.push(',');
@@ -151,6 +154,23 @@ mod tests {
         let mut s = SkillData34::default();
         s.ability_id1 = id;
         s
+    }
+
+    #[test]
+    fn scribed_abilities_join_the_lines_of_the_game_data_in_id_order() {
+        let ability = |id: u32, line: u32| {
+            let mut s = skill(id);
+            s.base_data.skill_line_id = line;
+            let c = Corpus::from_skills(vec![s.clone()]);
+            resolve(&s, &c, &Graph::build(&c))
+        };
+        let abilities = [ability(500, 44), ability(100, 44), ability(7, 0), ability(9, 22)];
+        let none = BTreeMap::new();
+        assert_eq!(skill_lines_csv(&abilities, &none), "22,9\n44,100,500\n");
+        let scribed = BTreeMap::from([(44, vec![240150, 217699]), (72, vec![216803])]);
+        assert_eq!(skill_lines_csv(&abilities, &scribed), "22,9\n44,100,500,217699,240150\n72,216803\n");
+        // an id both sources list is written once
+        assert_eq!(skill_lines_csv(&abilities, &BTreeMap::from([(44, vec![100])])), "22,9\n44,100,500\n");
     }
 
     #[test]

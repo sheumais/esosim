@@ -41,7 +41,8 @@ impl Channel {
             | DamageTaken(_, kind)
             | CostReduction(_, kind)
             | CostReductionSkillLine(_, kind)
-            | CostReductionCCA(_, kind) => (*kind).into(),
+            | CostReductionCCA(_, kind)
+            | StatusEffectDuration(kind) => (*kind).into(),
             // a fraction (0.091 = 9.1 %), summed over Divines pieces and scaling every mundus stone
             MundusBoost => Bucket::Multiplicative,
             CapRaise(_)
@@ -74,7 +75,6 @@ impl Channel {
             | DetectionRadius
             | MountSpeed
             | ResurrectionSpeed
-            | StatusEffectDuration
             | SwimmingSpeed
             | GoldGain
             | AlliancePointGain
@@ -82,6 +82,19 @@ impl Channel {
             | SneakEntryTime
             | DurationSkillLine(_) => Bucket::Additive,
         }
+    }
+}
+
+impl Channel {
+    /// Whether the aggregator keeps the fractional part of an additive value instead of rounding each source.
+    ///
+    /// Only the critical rating: the game's percentages of the level constant (6 % of 21,912 is 1314.72) are
+    /// added up unrounded and the sheet shows the total cut down to a whole number once, so rounding every source
+    /// first loses up to a point per source (6015 instead of 6017 on the Arcanist golden fixture). The integer
+    /// `ChannelSet::get` of such a channel is still the sum of the whole parts, which is what a single source
+    /// shows in the game's tooltip.
+    pub fn keeps_fraction(&self) -> bool {
+        matches!(self, Channel::CriticalChance)
     }
 }
 
