@@ -310,6 +310,7 @@ mod tests {
             buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: None,
         }
     }

@@ -32,13 +32,11 @@ pub enum DamageDoneContext {
     Monsters,
     NonCritical,
     Bash,
-    Channeled, // Denoted by flag 4 = 1 on an ability
-    /// Damaging abilities cast at enemies (Wrathful Strikes), as opposed to general weapon/spell damage.
-    /// Not part of `All`, so it never shows on the character sheet's power.
+    Channeled,
+    StatusEffect(StatusEffect),
     Abilities,
-    /// Abilities of one skill line ("your Two Handed abilities", "your Bow abilities"). Written as the
-    /// line's name, like the skill-line channels below.
     SkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
+    Mechanic(#[serde(with = "crate::skill_serde::mechanic")] Mechanic),
     Type(ResistableDamageType),
 }
 
@@ -89,6 +87,8 @@ pub enum StatusEffectContext {
     Martial,
     Magical,
     Type(StatusEffect),
+    /// Status effects applied by the abilities of one skill line. Written as the line's name.
+    SkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
 }
 
 
@@ -131,6 +131,7 @@ pub enum Channel {
     /// Single Target DoT (per tick)    3%
     /// AoE DoT (per tick, ground DoTs tick every 1s)   1%
     /// Light Attacks, Heavy Attacks, Status Effects    0%
+    /// This stat increases it relatively, e.g. 100% chance makes weapon enchants 40%.
     StatusEffectChance(StatusEffectContext),
     DecisiveUltimateChance,
     KillExperience,
@@ -154,18 +155,10 @@ pub enum Channel {
 
     DodgeChance,
     MissChance,
-    /// How far you see through stealth, in metres (centimetres are fractions: Piercing Gaze is 1 m a stage). A sneaking
-    /// target is seen when `StealthDetection` minus the target's `DetectionRadius` is at least the distance between
-    /// you: 10 m of detection against 15 m of radius sees nothing, 50 m against 10 m sees the target from 40 m.
     StealthDetection,
-    /// How much of an enemy's detection you cancel while sneaking, in metres: the more, the better hidden (Out of
-    /// Sight is 1 m a stage). See `StealthDetection` for how the two meet.
     DetectionRadius,
     MountSpeed,
-    /// In percentage points by which the time to resurrect another player is cut (Spirit Mastery: 33).
     ResurrectionSpeed,
-    /// The duration of the status effects the enemy player applies to you, as a fraction of it: a cut is negative
-    /// (Mystic Tenacity: -0.05 a stage). Multiplicative like every percentage of a duration.
     StatusEffectDuration(AggKind),
     SwimmingSpeed,
     GoldGain,
@@ -173,4 +166,9 @@ pub enum Channel {
     InspirationGain,
     SneakEntryTime,
     DurationSkillLine(#[serde(with = "crate::skill_serde::skill_line")] SkillLine),
+
+    SprintSpeed,
+    BlockMitigationAgainst(DamageTakenContext),
+    StatusEffectDamage(StatusEffectContext),
+    CriticalChanceHealing,
 }

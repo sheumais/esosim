@@ -280,6 +280,7 @@ use super::*;
             buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: None,
         };
         let mut defs: Vec<EffectDef> = Bundle::embedded().effects.values().cloned().collect();

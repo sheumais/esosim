@@ -192,6 +192,21 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
                         o.def.id, a.name, o.game_name
                     ));
                 }
+                if let Some(tr) = &o.def.trigger {
+                    // drift guard for a proc: the game's own trigger list for the record should still hold the
+                    // kind the override reacts to. Only a warning: a proc can live on the ability that applies it.
+                    let wanted = tr.event.list26_kinds();
+                    let own: Vec<u32> = a.triggers.iter().filter_map(|t| t.u2.first().copied()).filter(|k| *k != 0).collect();
+                    if !wanted.is_empty() && !own.is_empty() && !own.iter().any(|k| wanted.contains(k)) {
+                        r.warnings.push(format!(
+                            "{who}: its trigger `{}` is kind {:?} in the game's list, but the record's own kinds are {:?}",
+                            tr.event, wanted, own
+                        ));
+                    }
+                    if tr.cooldown_ms.is_some() && o.def.cooldown_ms.is_some() && tr.cooldown_ms != o.def.cooldown_ms {
+                        r.errors.push(format!("{who}: trigger.cooldown_ms and cooldown_ms disagree: write the cooldown once"));
+                    }
+                }
                 if let Some(check) = &o.check {
                     // `overrides::parse` already made sure the field name and channel index are valid
                     let minus = match check.minus {

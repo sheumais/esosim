@@ -22,8 +22,8 @@ pub use bucket::{Bucket, Cap, CappedStat};
 pub use cca::CoreCombatAbility;
 pub use channel::{AggKind, Channel, DamageDoneContext, DamageTakenContext, PowerContext, ResourceKind};
 pub use condition::{
-    Affliction, ArmourWeight, Bar, Condition, ConditionContext, Form, Location, NoContext, PlayerClass, SelfState,
-    TargetKind, WeaponKind, WeaponType,
+    Affliction, ArmourWeight, Bar, Condition, ConditionContext, Form, HealthOf, HealthPart, Location, NoContext,
+    PlayerClass, SelfState, TargetKind, WeaponKind, WeaponType,
 };
 pub use cp::{CP_SLOTS_PER_TREE, CpIssue, CpLoadout, CpPerk, CpStar};
 pub use damage::ResistableDamageType;

@@ -91,10 +91,21 @@ impl ActiveEffects {
         // Major/Minor buffs already counted: several abilities give the same buff, which counts once
         let mut buff_codes: HashSet<u8> = HashSet::new();
         for id in ids {
-            let stacks = self.stacks[&id];
+            let mut stacks = self.stacks[&id];
             let Some(fx) = registry.get(id) else { continue };
+            // a proc is switched on by an event, which only a simulator sees: no sheet counts it
+            if fx.trigger.is_some() {
+                continue;
+            }
             if fx.condition != Condition::Always && fx.condition.evaluate(ctx) != Some(true) {
                 continue;
+            }
+            // a health gradient counts the steps of the Health the context knows: none known, or no step, is no effect
+            if fx.stacking.is_health_gradient() {
+                match fx.stacking.health_steps(ctx) {
+                    Some(steps) if steps > 0 => stacks = steps,
+                    _ => continue,
+                }
             }
             if let Some(code) = fx.buff_code {
                 if !buff_codes.insert(code) {
@@ -159,6 +170,30 @@ mod tests {
         assert!((def.value_at(armour, 10) - 346.1).abs() < 1e-9);
     }
 
+    /// Amplitude's shape: 1 % for every whole 10 % of the enemy's current Health, read from the context.
+    #[test]
+    fn a_health_gradient_takes_its_steps_from_the_context_and_is_left_out_without_one() {
+        use esosim_types::{HealthOf, HealthPart};
+        struct Enemy(Option<u8>);
+        impl ConditionContext for Enemy {
+            fn target_health_pct(&self) -> Option<u8> { self.0 }
+        }
+        let gradient = Stacking::PerHealthPct { of: HealthOf::Target, part: HealthPart::Current, step_pct: 10 };
+        let def = EffectDef {
+            channels: vec![ChannelValue { channel: Channel::CriticalDamage, value: 1.0, value_per_stack: 0.0 }],
+            ..test_def(1, gradient, Condition::Always)
+        };
+        let registry = EffectRegistry::from_defs([def]);
+        let mut active = ActiveEffects::new();
+        active.add(1);
+        let at = |h| active.aggregate_with(&registry, &Enemy(h)).get(Channel::CriticalDamage);
+        assert_eq!(at(Some(80)), 8);
+        assert_eq!(at(Some(100)), 10);
+        assert_eq!(at(Some(9)), 0); // no whole step
+        assert_eq!(at(None), 0); // no Health known: left out
+        assert_eq!(active.aggregate(&registry).get(Channel::CriticalDamage), 0);
+    }
+
     #[test]
     fn per_stack_is_capped() {
         let registry = EffectRegistry::embedded();
@@ -183,6 +218,7 @@ mod tests {
             buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: None,
         }
     }

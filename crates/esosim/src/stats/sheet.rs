@@ -10,7 +10,8 @@ use serde::{Deserialize, Serialize};
 
 pub use super::armour::{effective_resistance, penetration, resistance, resistance_to_mitigation};
 pub use super::critical::{
-    crit_chance, crit_damage_pct, crit_healing_pct, crit_rating, crit_rating_to_chance, effective_level,
+    crit_chance, crit_damage_pct, crit_healing_pct, crit_rating, crit_rating_to_chance, crit_resistance,
+    crit_resistance_pct, effective_level,
 };
 pub use super::power::power;
 pub use super::resource::{max_resource, recovery};
@@ -42,6 +43,9 @@ pub struct StatSheet {
     pub crit_chance: f32,
     pub crit_damage_pct: f32,
     pub crit_healing_pct: f32,
+    /// Critical resistance rating (66 to the percent), from `Channel::CriticalResistance`.
+    pub critical_resistance: u32,
+    pub critical_resistance_pct: f32,
     pub physical_resistance: u32,
     pub spell_resistance: u32,
     pub physical_penetration: u32,
@@ -71,6 +75,8 @@ pub fn derive_sheet(c: &ChannelSet, ctx: &StatContext) -> StatSheet {
         crit_chance: crit_chance(c, eff),
         crit_damage_pct: crit_damage_pct(c),
         crit_healing_pct: crit_healing_pct(c),
+        critical_resistance: crit_resistance(c),
+        critical_resistance_pct: crit_resistance_pct(c),
         physical_resistance: resistance(c, Dmg::Martial),
         spell_resistance: resistance(c, Dmg::Spell),
         physical_penetration: penetration(c, Dmg::Martial),
@@ -130,6 +136,8 @@ use super::*;
         assert!(with(Channel::CriticalChance).crit_chance > base.crit_chance);
         assert!(with(Channel::CriticalDamage).crit_damage_pct > base.crit_damage_pct);
         assert!(with(Channel::CriticalHealing).crit_healing_pct > base.crit_healing_pct);
+        assert!(with(Channel::CriticalResistance).critical_resistance > base.critical_resistance);
+        assert!(with(Channel::CriticalResistance).critical_resistance_pct > base.critical_resistance_pct);
         assert!(with(Channel::Armour(Dmg::Martial)).physical_resistance > base.physical_resistance);
         assert!(with(Channel::Armour(Dmg::Spell)).spell_resistance > base.spell_resistance);
         assert!(with(Channel::Penetration(esosim_types::DamageDoneContext::Type(Dmg::Martial))).physical_penetration > base.physical_penetration);

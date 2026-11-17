@@ -20,7 +20,7 @@
 //! load.
 
 use crate::channel::ResourceKind;
-use crate::trigger::TriggerEvent;
+use crate::trigger::{CastKind, TriggerEvent};
 use eso_skill_data::enums::skill_line::SkillLine;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -199,6 +199,28 @@ pub enum Form {
     Transformed,
 }
 
+/// Whose Health a condition or a gradient reads. The three are different numbers in a fight: the Health of the
+/// target you hit is not the Health of the ally a heal lands on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum HealthOf {
+    /// Your own ("based on your missing Health": Undeath, Elder Dragon).
+    Own,
+    /// The enemy you are fighting ("1 % for every 10 % current Health they have": Amplitude).
+    Target,
+    /// The ally (or yourself) a heal lands on ("in proportion to the severity of the target's wounds": Mending,
+    /// Near-Death Experience; "when you heal an ally under 50 %": Restoration Expert).
+    HealTarget,
+}
+
+/// Which part of that Health a gradient counts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum HealthPart {
+    /// What is lost: 100 minus the Health percentage.
+    Missing,
+    /// What is left: the Health percentage.
+    Current,
+}
+
 /// What kind of enemy the effect is against ("against monsters", "against players").
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TargetKind {
@@ -282,6 +304,17 @@ pub enum Condition {
     TargetFlanked,
     /// You have a negative effect on you (Curative Curse). Combat-time.
     SelfDebuffed,
+    /// The one a heal lands on has less than this percentage of its Health (Restoration Expert: "when you heal an
+    /// ally under 50 %"). `TargetHealthBelowPct` is the enemy's; this one is the ally's. Combat-time.
+    HealTargetHealthBelowPct(u8),
+    /// The one a heal lands on has this percentage of its Health or more. Combat-time.
+    HealTargetHealthAbovePct(u8),
+    /// You are a vampire of this stage or higher (Undeath: "while you are at Vampire Stage 3 or higher"); stage 0 is
+    /// not a vampire. Combat-time: feeding changes it, no gear or bar decides it.
+    VampireStage { at_least: u8 },
+    /// You are casting or channeling an ability of this kind (Deliberation: a Psijic Order ability). Narrower than
+    /// `SelfState::Channeling`, which holds for every ability with a cast or channel time. Combat-time.
+    Casting(CastKind),
 }
 
 /// What the evaluator knows. Every method defaults to "unknown", so a context only
@@ -348,6 +381,29 @@ pub trait ConditionContext {
     fn target_flanked(&self) -> Option<bool> { None }
     /// Whether you have a negative effect on you.
     fn self_debuffed(&self) -> Option<bool> { None }
+    /// Health percentage of the ally (or yourself) a heal lands on, whole percent.
+    fn heal_target_health_pct(&self) -> Option<u8> { None }
+    /// Vampire stage, 0 for a character that is not a vampire.
+    fn vampire_stage(&self) -> Option<u8> { None }
+    /// Whether you are casting or channeling an ability of this kind. The default answers only the kind it can
+    /// derive: a cast or channel time is [`SelfState::Channeling`]; "any ability", a skill line or a class need the
+    /// ability being cast, which only a simulator knows.
+    fn casting(&self, kind: CastKind) -> Option<bool> {
+        match kind {
+            CastKind::CastOrChannelTime => self.self_state(SelfState::Channeling),
+            _ => None,
+        }
+    }
+    /// Health percentage of `of`: the defaults route to [`self_health_pct`](Self::self_health_pct),
+    /// [`target_health_pct`](Self::target_health_pct) and [`heal_target_health_pct`](Self::heal_target_health_pct), so
+    /// a context that answers those answers every gradient.
+    fn health_pct_of(&self, of: HealthOf) -> Option<u8> {
+        match of {
+            HealthOf::Own => self.self_health_pct(),
+            HealthOf::Target => self.target_health_pct(),
+            HealthOf::HealTarget => self.heal_target_health_pct(),
+        }
+    }
 }
 
 /// Knows nothing: only `Always` (and combinations that reduce to it) evaluate.
@@ -426,7 +482,11 @@ impl Condition {
             | Condition::RecentlyOccurred { .. }
             | Condition::TargetWithinMeters(_)
             | Condition::TargetFlanked
-            | Condition::SelfDebuffed => false,
+            | Condition::SelfDebuffed
+            | Condition::HealTargetHealthBelowPct(_)
+            | Condition::HealTargetHealthAbovePct(_)
+            | Condition::VampireStage { .. }
+            | Condition::Casting(_) => false,
         }
     }
 
@@ -510,6 +570,10 @@ impl Condition {
             Condition::TargetWithinMeters(m) => ctx.target_distance().map(|d| d <= f32::from(*m)),
             Condition::TargetFlanked => ctx.target_flanked(),
             Condition::SelfDebuffed => ctx.self_debuffed(),
+            Condition::HealTargetHealthBelowPct(p) => ctx.heal_target_health_pct().map(|h| h < *p),
+            Condition::HealTargetHealthAbovePct(p) => ctx.heal_target_health_pct().map(|h| h >= *p),
+            Condition::VampireStage { at_least } => ctx.vampire_stage().map(|s| s >= *at_least),
+            Condition::Casting(kind) => ctx.casting(*kind),
         }
     }
 
@@ -612,6 +676,11 @@ impl fmt::Display for Condition {
             Condition::TargetWithinMeters(m) => write!(f, "the target is {m} m away or closer"),
             Condition::TargetFlanked => f.write_str("flanking the target"),
             Condition::SelfDebuffed => f.write_str("you have a negative effect on you"),
+            Condition::HealTargetHealthBelowPct(p) => write!(f, "the one you heal is below {p}% health"),
+            Condition::HealTargetHealthAbovePct(p) => write!(f, "the one you heal is at {p}% health or more"),
+            Condition::VampireStage { at_least } => write!(f, "at Vampire Stage {at_least} or higher"),
+            Condition::Casting(CastKind::Any) => f.write_str("while casting an ability"),
+            Condition::Casting(kind) => write!(f, "while {}", TriggerEvent::Cast(*kind).to_string().replacen("you cast", "casting", 1)),
         }
     }
 }
@@ -712,6 +781,10 @@ mod tests {
             Condition::TargetWithinMeters(15),
             Condition::TargetFlanked,
             Condition::SelfDebuffed,
+            Condition::HealTargetHealthBelowPct(50),
+            Condition::HealTargetHealthAbovePct(50),
+            Condition::VampireStage { at_least: 3 },
+            Condition::Casting(CastKind::SkillLine(SkillLine::PsijicOrder)),
         ]
     }
 

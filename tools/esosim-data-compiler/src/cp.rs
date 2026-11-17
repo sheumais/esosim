@@ -221,6 +221,7 @@ pub fn effects(stars: &[CpStar], map: &[StarEffect]) -> Result<Vec<EffectDef>, S
             buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: m.note.clone(),
         });
     }

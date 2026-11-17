@@ -1,7 +1,11 @@
 //! The owned, data-driven description of "something that changes your stats"
 //! (roadmap 1.5, Appendix A.1). Replaces the old `&'static Effect`.
 
-use crate::{Channel, condition::Condition};
+use crate::{
+    Channel,
+    trigger::Trigger,
+    condition::{Condition, ConditionContext, HealthOf, HealthPart},
+};
 use serde::{Deserialize, Serialize};
 
 /// Where an effect comes from. Drives UI grouping ("why do I have +2629 crit?") and the
@@ -48,6 +52,53 @@ pub enum Stacking {
     PerStack { max: u32 },
     /// Every source counts: value is `value * n` (e.g. one entry per gear piece).
     Additive,
+    /// The value grows with a Health percentage: `value` is the amount for each `step_pct` points of the Health
+    /// (the stacks are how many whole steps there are, up to `100 / step_pct`). "Up to 700 Health Recovery based on
+    /// your missing Health" is 7 a step at `step_pct: 1`; "1 % for every 10 % current Health they have" is 0.01 a
+    /// step at `step_pct: 10` on `Target`'s current Health. Unlike every other stacking the count is not something a
+    /// build holds: it comes from the fight (see [`Stacking::health_steps`]), so a calculator that has no Health
+    /// leaves the effect out and lists it as conditional.
+    PerHealthPct { of: HealthOf, part: HealthPart, step_pct: u8 },
+}
+
+impl Stacking {
+    /// The most whole steps a health gradient has (`100 / step_pct`; a step of 0 is read as 1).
+    pub fn max_health_steps(step_pct: u8) -> u32 {
+        100 / u32::from(step_pct.max(1))
+    }
+
+    /// For [`Stacking::PerHealthPct`], the number of whole steps `ctx` puts the Health at: `missing / step` or
+    /// `current / step`. `None` for any other stacking, or when the context does not know that Health.
+    pub fn health_steps(&self, ctx: &dyn ConditionContext) -> Option<u32> {
+        let Stacking::PerHealthPct { of, part, step_pct } = *self else { return None };
+        let pct = u32::from(ctx.health_pct_of(of)?.min(100));
+        let amount = match part {
+            HealthPart::Missing => 100 - pct,
+            HealthPart::Current => pct,
+        };
+        Some(amount / u32::from(step_pct.max(1)))
+    }
+
+    /// Whether the number of stacks is read from the fight and not held by the build.
+    pub fn is_health_gradient(&self) -> bool {
+        matches!(self, Stacking::PerHealthPct { .. })
+    }
+
+    /// For a health gradient, what it scales with in words ("per 10% of the enemy's current Health"), for the
+    /// calculator's list of conditional effects.
+    pub fn gradient_text(&self) -> Option<String> {
+        let Stacking::PerHealthPct { of, part, step_pct } = *self else { return None };
+        let whose = match of {
+            HealthOf::Own => "your",
+            HealthOf::Target => "the enemy's",
+            HealthOf::HealTarget => "the healed one's",
+        };
+        let part = match part {
+            HealthPart::Missing => "missing",
+            HealthPart::Current => "current",
+        };
+        Some(format!("per {step_pct}% of {whose} {part} Health"))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -80,6 +131,12 @@ pub struct EffectDef {
     /// For procs; only the simulator uses it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cooldown_ms: Option<u32>,
+    /// What fires the effect, for a proc ("when you deal critical damage, 33% chance, once every 5 seconds"). An
+    /// effect with a trigger is not on because of the build: no sheet counts it, and the calculator lists it as
+    /// conditional with the trigger in words. Only a simulator, which sees the events, switches it on (for
+    /// `duration_ms`, at most once every `cooldown_ms` when the trigger has none of its own). `None` = not a proc.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trigger: Option<Trigger>,
     /// Research notes carried over from the hand-written tables.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
@@ -92,6 +149,7 @@ impl EffectDef {
             Stacking::Unique => stacks.min(1),
             Stacking::PerStack { max } => stacks.min(max),
             Stacking::Additive => stacks,
+            Stacking::PerHealthPct { step_pct, .. } => stacks.min(Stacking::max_health_steps(step_pct)),
         }
     }
 
@@ -114,7 +172,7 @@ impl EffectDef {
         match self.stacking {
             Stacking::Unique => cv.value,
             Stacking::PerStack { .. } => cv.value + cv.value_per_stack * n as f64,
-            Stacking::Additive => cv.value * n as f64,
+            Stacking::Additive | Stacking::PerHealthPct { .. } => cv.value * n as f64,
         }
     }
 }
@@ -135,6 +193,7 @@ mod tests {
             buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: None,
         }
     }

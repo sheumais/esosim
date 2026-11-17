@@ -8,7 +8,7 @@
 //! sheet (`Build::sheet_against`) adds a target: the effects it settles switch on, and nothing else
 //! changes.
 
-use esosim_types::{ChannelValue, Condition, ConditionContext, EffectSource};
+use esosim_types::{ChannelValue, Condition, ConditionContext, EffectSource, Trigger};
 
 use crate::engine::grant_rule::GrantRule;
 use crate::engine::registry::EffectRegistry;
@@ -23,7 +23,13 @@ pub struct ConditionalEffect {
     pub condition: Condition,
     /// What it gives, per stack as the effect's data says (`EffectDef::channels`).
     pub channels: Vec<ChannelValue>,
+    /// For an effect whose stacks are the held count. A health gradient has no count until a fight gives it a Health:
+    /// this is the number of steps the target settles (`vs_target`'s context), 0 while it does not.
     pub stacks: u32,
+    /// What fires the effect, when it is a proc. A proc is always conditional: no sheet counts it.
+    pub trigger: Option<Trigger>,
+    /// What the effect scales with, when it is a health gradient ("per 10% of the enemy's current Health").
+    pub scales_with: Option<String>,
     /// Whether the target this was listed against settles the condition: `Some(true)` it applies and
     /// is in the second sheet, `Some(false)` it does not, `None` the target does not decide it either
     /// (or no target was given).
@@ -31,9 +37,18 @@ pub struct ConditionalEffect {
 }
 
 impl ConditionalEffect {
-    /// The condition in words, as `Condition`'s `Display` writes it.
+    /// The condition in words, as `Condition`'s `Display` writes it, with what a health gradient scales with after it
+    /// ("always, per 10% of the enemy's current Health").
     pub fn when(&self) -> String {
-        self.condition.to_string()
+        let mut text = match &self.trigger {
+            Some(t) if self.condition == Condition::Always => format!("when {t}"),
+            Some(t) => format!("when {t}, {}", self.condition),
+            None => self.condition.to_string(),
+        };
+        if let Some(scale) = &self.scales_with {
+            text = format!("{text}, {scale}");
+        }
+        text
     }
 }
 
@@ -55,17 +70,39 @@ impl Player {
         ids.into_iter()
             .filter_map(|id| {
                 let fx = registry.get(id)?;
-                if fx.condition == Condition::Always || fx.condition.evaluate(self).is_some() {
+                let gradient = fx.stacking.is_health_gradient();
+                // a gradient is undecided until a fight gives it the Health it reads (unless the build already rules
+                // it out); any other effect is undecided when its condition is
+                let undecided = if fx.trigger.is_some() {
+                    // a proc waits for its event, whatever the build says (unless the build already rules it out)
+                    fx.condition.evaluate(self) != Some(false)
+                } else if gradient {
+                    fx.stacking.health_steps(self).is_none() && fx.condition.evaluate(self) != Some(false)
+                } else {
+                    fx.condition != Condition::Always && fx.condition.evaluate(self).is_none()
+                };
+                if !undecided {
                     return None;
                 }
+                // what the target settles: the condition, and for a gradient also that it has a step to count
+                let steps = target.and_then(|ctx| fx.stacking.health_steps(ctx));
+                let vs_target = target.and_then(|ctx| match (fx.condition.evaluate(ctx), gradient, steps) {
+                    (Some(false), _, _) => Some(false),
+                    (_, _, _) if fx.trigger.is_some() => None,
+                    (_, true, None) => None,
+                    (_, true, Some(0)) => Some(false),
+                    (decided, _, _) => decided,
+                });
                 Some(ConditionalEffect {
                     id,
                     name: fx.name.clone(),
                     source: fx.source.clone(),
                     condition: fx.condition.clone(),
                     channels: fx.channels.clone(),
-                    stacks: fx.effective_stacks(active.stacks_of(id)),
-                    vs_target: target.and_then(|ctx| fx.condition.evaluate(ctx)),
+                    stacks: if gradient { steps.unwrap_or(0) } else { fx.effective_stacks(active.stacks_of(id)) },
+                    trigger: fx.trigger,
+                    scales_with: fx.stacking.gradient_text(),
+                    vs_target,
                 })
             })
             .collect()

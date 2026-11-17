@@ -297,6 +297,7 @@ mod tests {
             buff_code: None,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: None,
         }
     }
@@ -433,6 +434,66 @@ mod tests {
 
         // and the build's own sheet does not know about the target
         assert_eq!(format!("{:?}", b.sheet(&bundle)), format!("{first:?}"));
+    }
+
+    /// Roadmap 2.1: an effect with a `trigger` is a proc. No sheet counts it, even one whose condition is `Always` or
+    /// decided; the calculator lists it as conditional with the trigger in words, and a target does not settle it.
+    #[test]
+    fn a_proc_is_left_out_of_every_sheet_and_listed_with_its_trigger() {
+        use esosim_types::{Trigger, TriggerEvent};
+        let buff = |id| EffectSource::Buff { ability_id: id };
+        let proc_on = |id, condition, trigger| EffectDef { trigger: Some(trigger), ..effect(id, buff(id), condition, 1000.0) };
+        let potion = Trigger::on(TriggerEvent::DrinkPotion);
+        let crit = Trigger { event: TriggerEvent::DealCritical, chance_pct: Some(33), cooldown_ms: Some(5000) };
+        let jsonl: String = [
+            effect(20, buff(20), Condition::Always, 500.0),
+            proc_on(21, Condition::Always, potion),
+            proc_on(22, Condition::InCombat, crit),
+            // the build rules this one out: not listed
+            proc_on(23, Condition::ClassIs(PlayerClass::Templar), potion),
+        ]
+        .iter()
+        .map(|d| serde_json::to_string(d).unwrap() + "\n")
+        .collect();
+        let bundle = Bundle::from_jsonl(&jsonl).unwrap();
+        let mut b = build();
+        b.mundus = MundusLoadout::default();
+        b.champion = CpLoadout::default();
+        b.external_buffs = vec![20, 21, 22, 23];
+
+        assert_eq!(b.sheet(&bundle).crit_rating, 500, "only the plain effect counts");
+        let listed = b.conditional_effects(&bundle, None);
+        assert_eq!(listed.iter().map(|e| e.id).collect::<Vec<_>>(), vec![21, 22]);
+        assert_eq!(listed[0].when(), "when you drink a potion");
+        assert_eq!(listed[1].when(), "when you deal critical damage, 33% chance, at most once every 5 seconds, in combat");
+        assert_eq!(listed[0].trigger, Some(potion));
+
+        // a target does not fire a proc: still open, still out of the sheet
+        let bare = dummy(&[]);
+        assert_eq!(b.sheet_against(&bundle, &bare, &[]).crit_rating, 500);
+        assert!(b.conditional_effects(&bundle, Some((&bare, &[]))).iter().all(|e| e.vs_target.is_none()));
+    }
+
+    /// The override written in `overrides.toml` for Clever Alchemist's potion proc reaches the engine with its
+    /// condition and trigger, and the calculator shows it as conditional.
+    #[test]
+    fn the_shipped_proc_override_loads_and_is_shown_as_conditional() {
+        let bundle = Bundle::embedded();
+        let fx = bundle.effect(75746).expect("Clever Alchemist's proc is in effects.jsonl");
+        assert_eq!(fx.condition, Condition::InCombat);
+        assert_eq!(fx.trigger, Some(esosim_types::Trigger::on(esosim_types::TriggerEvent::DrinkPotion)));
+        assert_eq!(fx.duration_ms, Some(20_000));
+
+        // five pieces of the set: the proc is listed, with its condition and trigger as text, and no sheet counts it
+        const CLEVER_ALCHEMIST: u16 = 225;
+        let five = wearing_build(CLEVER_ALCHEMIST, 5, None);
+        let listed: Vec<_> = five.conditional_effects(bundle, None).into_iter().filter(|e| e.id == 75746).collect();
+        assert_eq!(listed.len(), 1, "listed once");
+        assert_eq!(listed[0].when(), "when you drink a potion, in combat");
+        let p = five.to_player(bundle);
+        assert_eq!(from_set(&p, Channel::Power(esosim_types::PowerContext::All, esosim_types::AggKind::Additive), CLEVER_ALCHEMIST, 5), 0.0);
+        // four pieces: the proc is not the build's at all
+        assert!(wearing_build(CLEVER_ALCHEMIST, 4, None).conditional_effects(bundle, None).iter().all(|e| e.id != 75746));
     }
 
     /// A build wearing `pieces` pieces of `set` (head, chest, legs, hands, feet in that order) and

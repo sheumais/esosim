@@ -404,7 +404,8 @@ static LEXICON: LazyLock<Vec<Noun>> = LazyLock::new(|| {
         // ---- everything else -----------------------------------------------
         noun("block_mitigation", r"block mitigation|amount of damage you (?:can )?block", |_| vec![C::BlockMitigation]),
         noun("mount_speed", r"mount(?:ed)? speed", |_| vec![C::MountSpeed]),
-        noun("movement_speed", r"movement speed(?: bonus| penalty)?|move speed|sprint speed", |_| vec![C::MovementSpeed]),
+        noun("sprint_speed", r"sprint speed", |_| vec![C::SprintSpeed]),
+        noun("movement_speed", r"movement speed(?: bonus| penalty)?|move speed", |_| vec![C::MovementSpeed]),
         noun("resurrection_speed", r"resurrect(?:ion)? speed", |_| vec![C::ResurrectionSpeed]),
         noun("ultimate_gain", r"ultimate (?:gain|generation)", |_| vec![C::UltimateGain]),
         noun("potion_effectiveness", r"potion effectiveness", |_| vec![C::PotionEffectiveness]),

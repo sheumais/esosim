@@ -149,6 +149,7 @@ mod tests {
             buff_code,
             duration_ms: None,
             cooldown_ms: None,
+            trigger: None,
             note: None,
         }
     }

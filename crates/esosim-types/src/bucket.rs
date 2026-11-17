@@ -80,7 +80,11 @@ impl Channel {
             | AlliancePointGain
             | InspirationGain
             | SneakEntryTime
-            | DurationSkillLine(_) => Bucket::Additive,
+            | DurationSkillLine(_)
+            | SprintSpeed
+            | BlockMitigationAgainst(_)
+            | StatusEffectDamage(_)
+            | CriticalChanceHealing => Bucket::Additive,
         }
     }
 }
@@ -88,13 +92,13 @@ impl Channel {
 impl Channel {
     /// Whether the aggregator keeps the fractional part of an additive value instead of rounding each source.
     ///
-    /// Only the critical rating: the game's percentages of the level constant (6 % of 21,912 is 1314.72) are
+    /// Only the critical rating (for damage and for healing): the game's percentages of the level constant (6 % of 21,912 is 1314.72) are
     /// added up unrounded and the sheet shows the total cut down to a whole number once, so rounding every source
     /// first loses up to a point per source (6015 instead of 6017 on the Arcanist golden fixture). The integer
     /// `ChannelSet::get` of such a channel is still the sum of the whole parts, which is what a single source
     /// shows in the game's tooltip.
     pub fn keeps_fraction(&self) -> bool {
-        matches!(self, Channel::CriticalChance)
+        matches!(self, Channel::CriticalChance | Channel::CriticalChanceHealing)
     }
 }
 

@@ -254,6 +254,7 @@ fn engine_value(sheet: &StatSheet, key: &str) -> Option<f64> {
         "crit_chance" | "spell_crit_chance" | "weapon_crit_chance" => sheet.crit_chance as f64,
         "crit_damage_pct" => sheet.crit_damage_pct as f64,
         "crit_healing_pct" => sheet.crit_healing_pct as f64,
+        "critical_resistance" => sheet.critical_resistance as f64,
         "physical_resistance" => sheet.physical_resistance as f64,
         "spell_resistance" => sheet.spell_resistance as f64,
         "physical_penetration" => sheet.physical_penetration as f64,
@@ -608,7 +609,7 @@ mod harness {
         let expected = vec![
             ("max_health".to_string(), 101.0),
             ("crit_chance".to_string(), 0.37413),
-            ("critical_resistance".to_string(), 1320.0),
+            ("some_unlisted_stat".to_string(), 1320.0),
             ("power".to_string(), 9999.0),
         ];
         let hidden = BTreeSet::from(["power".to_string()]);

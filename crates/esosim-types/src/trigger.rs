@@ -180,6 +180,24 @@ impl Trigger {
     }
 }
 
+impl fmt::Display for Trigger {
+    /// "you deal critical damage, 33% chance, at most once every 5 seconds"
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.event)?;
+        if let Some(p) = self.chance_pct {
+            write!(f, ", {p}% chance")?;
+        }
+        if let Some(ms) = self.cooldown_ms {
+            if ms % 1000 == 0 {
+                write!(f, ", at most once every {} second{}", ms / 1000, if ms == 1000 { "" } else { "s" })?;
+            } else {
+                write!(f, ", at most once every {:.1} seconds", ms as f64 / 1000.0)?;
+            }
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

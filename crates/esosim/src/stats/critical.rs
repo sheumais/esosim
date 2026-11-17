@@ -20,6 +20,19 @@ pub const EFFECTIVE_LEVEL: u8 = 66;
 /// Arcanist, 2181 + 539 = 2720 on the Sorcerer).
 pub const BASE_CRIT_RATING: f64 = 2181.0;
 
+/// Critical resistance rating per 1 % (`Channel::CriticalResistance` is in rating points, 66 to the percent).
+pub const CRIT_RESISTANCE_PER_PERCENT: f32 = 66.0;
+
+/// The critical resistance the sources add, never below 0. It has no base: the game's sheet shows 0 without bonus.
+pub fn crit_resistance(c: &ChannelSet) -> u32 {
+    c.get(Channel::CriticalResistance).max(0) as u32
+}
+
+/// Critical resistance in percent (rating / 66). Not capped: no cap has been measured.
+pub fn crit_resistance_pct(c: &ChannelSet) -> f32 {
+    crit_resistance(c) as f32 / CRIT_RESISTANCE_PER_PERCENT
+}
+
 /// Effective level for rating conversions. Assumes a level 50 character has CP160.
 pub fn effective_level(level: u8) -> u8 {
     if level >= 50 { EFFECTIVE_LEVEL } else { level }
@@ -81,6 +94,17 @@ pub fn crit_healing_pct(c: &ChannelSet) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn critical_resistance_is_a_rating_at_66_to_the_percent_and_floors_at_zero() {
+        let mut c = ChannelSet::new();
+        assert_eq!(crit_resistance(&c), 0);
+        c.add_additive(Channel::CriticalResistance, 1320);
+        assert_eq!(crit_resistance(&c), 1320);
+        assert!((crit_resistance_pct(&c) - 20.0).abs() < 1e-6);
+        c.add_additive(Channel::CriticalResistance, -5000);
+        assert_eq!(crit_resistance(&c), 0);
+    }
 
     #[test]
     fn test_calculate_defaults() {

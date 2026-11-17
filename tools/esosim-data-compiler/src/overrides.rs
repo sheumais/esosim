@@ -5,7 +5,7 @@
 //! by a person. The file is the `EffectDef` of `esosim-types` as TOML plus a few fields that only
 //! the compiler uses (`game_name`, `source_url`, `check`); see the header of `data/overrides.toml`.
 
-use esosim_types::{ChannelValue, Condition, EffectDef, EffectSource, Stacking};
+use esosim_types::{ChannelValue, Condition, EffectDef, EffectSource, Stacking, Trigger};
 use serde::Deserialize;
 use std::collections::BTreeSet;
 
@@ -55,6 +55,9 @@ struct RawOverride {
     duration_ms: Option<u32>,
     #[serde(default)]
     cooldown_ms: Option<u32>,
+    /// What fires a proc: `trigger = { event = { Cast = { SkillLine = "Psijic Order" } }, chance_pct = 33 }`.
+    #[serde(default)]
+    trigger: Option<Trigger>,
     #[serde(default)]
     note: Option<String>,
     #[serde(default)]
@@ -101,6 +104,11 @@ pub fn parse(text: &str) -> Result<Vec<Override>, String> {
         if r.channels.is_empty() {
             return Err(at("has no channels"));
         }
+        if let Some(t) = &r.trigger {
+            if t.chance_pct.is_some_and(|p| p == 0 || p > 100) {
+                return Err(at("trigger.chance_pct must be 1 to 100 (leave it out for \"always\")"));
+            }
+        }
         if let Some(c) = &r.check {
             if !matches!(c.field.as_str(), "value0" | "value1" | "value2") {
                 return Err(at("check.field must be value0, value1 or value2"));
@@ -121,6 +129,7 @@ pub fn parse(text: &str) -> Result<Vec<Override>, String> {
                 buff_code: r.buff_code,
                 duration_ms: r.duration_ms,
                 cooldown_ms: r.cooldown_ms,
+                trigger: r.trigger,
                 note: r.note,
             },
             game_name,
@@ -210,6 +219,21 @@ note = "Red CP"
     fn a_check_can_subtract_another_record() {
         let one = "[[effect]]\nid = 5\nname = \"X\"\nsource = \"Food\"\nchannels = [{ channel = \"CriticalChance\", value = 823 }]\ncheck = { field = \"value1\", minus = 150703 }\n";
         assert_eq!(parse(one).unwrap()[0].check.as_ref().unwrap().minus, Some(150703));
+    }
+
+    #[test]
+    fn a_trigger_loads_with_its_condition_and_a_bad_chance_is_an_error() {
+        let text = |chance: &str| format!(
+            "[[effect]]\nid = 75746\nname = \"Proc\"\nsource = {{ Set = {{ set_id = 225, pieces_required = 5 }} }}\n\
+             channels = [{{ channel = \"CriticalDamage\", value = 1.0 }}]\ncondition = \"InCombat\"\n\
+             trigger = {{ event = {{ Cast = {{ SkillLine = \"Psijic Order\" }} }}{chance}, cooldown_ms = 5000 }}\n"
+        );
+        let ok = parse(&text(", chance_pct = 33")).unwrap();
+        let t = ok[0].def.trigger.expect("trigger");
+        assert_eq!((t.chance_pct, t.cooldown_ms), (Some(33), Some(5000)));
+        assert_eq!(ok[0].def.condition, Condition::InCombat);
+        let err = parse(&text(", chance_pct = 150")).unwrap_err();
+        assert!(err.contains("chance_pct") && err.contains("75746"), "{err}");
     }
 
     #[test]

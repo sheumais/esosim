@@ -11,7 +11,7 @@
 
 use crate::resolved::{ClassStatus, ResolvedAbility, RootCategory};
 use crate::triggers;
-use esosim_types::Channel;
+use esosim_types::{Channel, Condition, Trigger, TriggerEvent};
 use std::collections::BTreeSet;
 
 /// How much of a tooltip goes into the comment above a skeleton.
@@ -68,6 +68,77 @@ fn toml_channel(channel: &Channel) -> String {
     match serde_json::to_value(channel) {
         Ok(v) => json_to_toml(&v),
         Err(_) => format!("\"TODO\" # could not write {channel:?} as TOML"),
+    }
+}
+
+/// What the data says about *when* an ability's effect applies, for the `condition = ` and `trigger = ` lines.
+#[derive(Debug, Default, PartialEq)]
+pub struct Timing {
+    /// The condition every clause of the classification agrees on; `Always` when there is none or they disagree.
+    pub condition: Condition,
+    /// Conditions of the other clauses when they disagree (shown as comments; a person picks).
+    pub other_conditions: Vec<Condition>,
+    /// The proc's event: the first event a clause's `On(..)` cue names, else the first kind of the ability's
+    /// `list26` that is a combat event.
+    pub event: Option<TriggerEvent>,
+    /// Whether a clause of the tooltip names `event` (written as `trigger = ...`), or only the game's trigger list
+    /// does (written as a comment: a buff's record can carry kinds that are not its own proc).
+    pub event_in_text: bool,
+    /// Further events (other clauses, other `list26` kinds), as comments.
+    pub other_events: Vec<TriggerEvent>,
+}
+
+/// Read `condition` and the proc event out of an ability's evidence and `list26` kinds.
+pub fn timing(a: &ResolvedAbility) -> Timing {
+    let mut t = Timing::default();
+    let evidence: &[crate::resolved::ResolvedEvidence] = match &a.classification {
+        Some(c) if c.status == ClassStatus::Classified => &c.evidence,
+        _ => &[],
+    };
+    // conditions: the clauses that carry one; all alike -> the condition, else the first and the rest as candidates
+    let mut conditions: Vec<Condition> = Vec::new();
+    for e in evidence {
+        if !conditions.contains(&e.condition) {
+            conditions.push(e.condition.clone());
+        }
+    }
+    // a clause with no circumstance next to one with a circumstance is a disagreement too: keep `Always` out of the
+    // pick when anything else is there, and say so through `other_conditions`
+    let mut specific = conditions.iter().filter(|c| **c != Condition::Always);
+    if let Some(first) = specific.next() {
+        t.condition = first.clone();
+        t.other_conditions = specific.cloned().collect();
+        if conditions.contains(&Condition::Always) {
+            // some clause has no circumstance: the person decides whether the first one holds for all of it
+            t.other_conditions.push(Condition::Always);
+        }
+    }
+    // events: clause events first, then the game's own trigger kinds
+    let mut events: Vec<TriggerEvent> = Vec::new();
+    for ev in evidence.iter().flat_map(|e| e.events.iter()).copied() {
+        if !events.contains(&ev) {
+            events.push(ev);
+        }
+    }
+    t.event_in_text = !events.is_empty();
+    for tr in &a.triggers {
+        if let Some(ev) = tr.event {
+            if !events.contains(&ev) {
+                events.push(ev);
+            }
+        }
+    }
+    let mut it = events.into_iter();
+    t.event = it.next();
+    t.other_events = it.collect();
+    t
+}
+
+/// `value` as TOML through its serde form (`"InCombat"`, `{ SelfHealthBelowPct = 50 }`).
+fn to_toml<T: serde::Serialize>(value: &T) -> String {
+    match serde_json::to_value(value) {
+        Ok(v) => json_to_toml(&v),
+        Err(_) => "\"TODO\"".to_string(),
     }
 }
 
@@ -172,7 +243,37 @@ pub fn skeleton(a: &ResolvedAbility, category: RootCategory) -> String {
     if a.duration_ms != 0 {
         out.push_str(&format!("# duration_ms = {}\n", a.duration_ms));
     }
-    out.push_str("# condition = \"Always\"\n");
+    let timing = timing(a);
+    if timing.condition == Condition::Always {
+        out.push_str("# condition = \"Always\"\n");
+    } else {
+        out.push_str(&format!("condition = {}  # from the tooltip's clause; check it\n", to_toml(&timing.condition)));
+    }
+    for c in &timing.other_conditions {
+        out.push_str(&format!("# other clause: condition = {}\n", to_toml(c)));
+    }
+    if let Some(event) = timing.event {
+        let chance = a.tooltip_text.as_deref().is_some_and(|t| t.to_lowercase().contains("chance"));
+        let (lead, why) = if timing.event_in_text {
+            ("", "a proc: no sheet counts it, the calculator lists it as conditional")
+        } else {
+            ("# ", "from the ability's trigger list only: uncomment if this ability is the proc")
+        };
+        out.push_str(&format!(
+            "{lead}trigger = {}  # {why}{}\n",
+            to_toml(&Trigger::on(event)),
+            if chance { "; the tooltip names a chance: add chance_pct" } else { "" }
+        ));
+        if a.duration_ms == 0 && timing.event_in_text {
+            out.push_str("# an instant effect (a heal, a restore) has no duration_ms\n");
+        }
+    }
+    for ev in &timing.other_events {
+        out.push_str(&format!("# other event: trigger = {}\n", to_toml(&Trigger::on(*ev))));
+    }
+    if timing.event.is_some() {
+        out.push_str("# cooldown_ms = 0  # the internal cooldown, when the tooltip names one\n");
+    }
     out.push_str("# check = { field = \"value1\", scale = 1.0 }  # have `verify` hold the value to the record\n");
     out.push('\n');
     out
@@ -234,6 +335,38 @@ mod tests {
         assert_eq!(parsed[0].def.name, "Minor Slayer");
         assert_eq!(parsed[0].def.channels.len(), 1);
         assert_eq!(parsed[0].def.channels[0].value, 5.0);
+        // the evidence's condition is written, not left as a comment
+        assert_eq!(parsed[0].def.condition, Condition::TargetIs(esosim_types::TargetKind::Monster));
+        assert!(parsed[0].def.trigger.is_none());
+    }
+
+    /// A clause that names an event gives a `trigger` line that loads; an event only in the game's trigger list is
+    /// offered as a comment.
+    #[test]
+    fn a_clause_event_becomes_a_trigger_and_a_list26_kind_only_a_comment() {
+        let with_event = CLASSIFIED
+            .replace(r#""condition":{"TargetIs":"Monster"}}]}}"#, r#""condition":"InCombat","events":["DrinkPotion"]}]}}"#);
+        let text = skeleton(&ability(&with_event), RootCategory::Sets);
+        assert!(text.contains("\ncondition = \"InCombat\""), "{text}");
+        assert!(text.contains("\ntrigger = { event = \"DrinkPotion\" }"), "{text}");
+        let parsed = overrides::parse(&text).unwrap();
+        assert_eq!(parsed[0].def.condition, Condition::InCombat);
+        assert_eq!(parsed[0].def.trigger, Some(Trigger::on(TriggerEvent::DrinkPotion)));
+
+        // list26 only (the unclassified sample's kind 78 = Bash): a comment, so the skeleton is not made a proc
+        let text = skeleton(&ability(UNCLASSIFIED), RootCategory::Sets);
+        assert!(text.contains("\n# trigger = { event = \"Bash\" }"), "{text}");
+        assert!(!text.contains("\ntrigger = "), "{text}");
+    }
+
+    #[test]
+    fn disagreeing_clauses_pick_the_first_specific_condition_and_list_the_rest() {
+        let a = ability(CLASSIFIED);
+        assert_eq!(timing(&a).condition, Condition::TargetIs(esosim_types::TargetKind::Monster));
+        assert!(timing(&a).event.is_none());
+        let none = ability(UNCLASSIFIED);
+        let t = timing(&none);
+        assert_eq!((t.condition, t.event, t.event_in_text), (Condition::Always, Some(TriggerEvent::Bash), false));
     }
 
     #[test]

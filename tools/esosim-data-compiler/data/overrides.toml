@@ -1935,7 +1935,7 @@ id = 45212
 name = "Restoring Spirit: Health, Magicka, Stamina and Ultimate cost"
 game_name = "Restoring Spirit"
 source = { Class = { name = "Templar", ability_id = 45212 } }
-channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.05 }]
+channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.1 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.1 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.1 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.1 }]
 check = { field = "value1", scale = -0.01 }
 note = "Record -5."
 
@@ -2109,7 +2109,6 @@ source = { Passive = { ability_id = 45533 } }
 channels = [{ channel = { Armour = "All" }, value = 343.2 }]
 condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
 stacking = "Additive"
-check = { field = "value1" }
 note = "Per piece worn (Additive stacking, stacks = pieces on the active bar)."
 
 [[effect]]
@@ -2672,7 +2671,6 @@ source = { Passive = { ability_id = 29825 } }
 channels = [{ channel = { Armour = "All" }, value = 114.0 }]
 condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
 stacking = "Additive"
-check = { field = "value1" }
 note = "Rank 1 of 3 of this passive: record 29825, value1 = 173. Per piece worn or ability slotted on the active bar (Additive stacking)."
 
 [[effect]]
@@ -2825,7 +2823,7 @@ id = 31721
 name = "Restoring Spirit: Health, Magicka, Stamina and Ultimate cost (rank 1)"
 game_name = "Restoring Spirit"
 source = { Class = { name = "Templar", ability_id = 31721 } }
-channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.02 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.02 }]
+channels = [{ channel = { CostReduction = ["Health", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Magicka", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Stamina", "Multiplicative"] }, value = 0.05 }, { channel = { CostReduction = ["Ultimate", "Multiplicative"] }, value = 0.05 }]
 check = { field = "value1", scale = -0.01 }
 note = "Rank 1 of 2 of this passive: record 31721, value1 = -2."
 
@@ -3194,7 +3192,6 @@ source = { Passive = { ability_id = 45531 } }
 channels = [{ channel = { Armour = "All" }, value = 228.0 }]
 condition = { ArmourPieces = { weight = "Heavy", at_least = 1 } }
 stacking = "Additive"
-check = { field = "value1" }
 note = "Rank 2 of 3 of this passive: record 45531, value1 = 347. Per piece worn or ability slotted on the active bar (Additive stacking)."
 
 [[effect]]
@@ -4422,3 +4419,19 @@ channels = [{ channel = "BlockMitigation", value = 30.0 }]
 condition = { SelfState = "Blocking" }
 check = { field = "value1", scale = 5.0 }
 note = "Class mastery: skill line 351 is the Dragonknight mastery. Tag 335 is on some records of the line and not on this one, so the line, not the tag, is what makes it a mastery. A build lists 263220, the mastery passive, and only a Dragonknight gets it. Record 263230, value1 = 6, is the gain per second spent Bracing, up to 5 times (the 5 is in the text of the tooltip): written at full stacks, 6 x 5 = 30 percentage points, listed as conditional (Blocking). The Stamina-restore half (chance on block, record 263233) is a proc and is not written."
+
+# --- procs: an effect with a `trigger` is not on because of the build. No sheet counts it; the calculator lists it
+# as conditional ("when you drink a potion, while in combat"), and only a simulator switches it on.
+# Clever Alchemist, 5 pieces: drinking a potion gives Weapon and Spell Damage for 20 seconds. The record is the proc's
+# own (value1 = 776, 20 s); `condition` and `trigger` are what the tooltip's clause says (`InCombat`, `DrinkPotion`).
+[[effect]]
+id = 75746
+name = "Clever Alchemist (5 pieces): potion proc"
+game_name = "Clever Alchemist"
+source = { Set = { set_id = 225, pieces_required = 5 } }
+channels = [{ channel = { Power = ["All", "Additive"] }, value = 776.0 }]
+condition = "InCombat"
+trigger = { event = "DrinkPotion" }
+duration_ms = 20000
+check = { field = "value1" }
+source_url = "https://en.uesp.net/wiki/Online:Clever_Alchemist"
