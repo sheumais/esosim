@@ -11,6 +11,7 @@ pub mod data {
     pub mod tables {
         pub mod armour;
         pub mod enchant;
+        pub mod food;
         pub mod item_type;
         pub mod power;
         pub use esosim_data::set_ids; // generated; lives in crates/esosim-data

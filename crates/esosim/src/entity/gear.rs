@@ -1,4 +1,4 @@
-use crate::{data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::armour_from_armour_piece, enchant::*, item_type::*, power::power_from_weapon_type, traits::*}}, entity::gear::PrismaticValueWrapper::{F32, Prismatic}};
+use crate::{data::{enums::gear::{EnchantType, GearSlot, GearTrait, ItemQuality, ItemType}, tables::{armour::{armour_from_armour_piece, armour_from_armour_piece_at_level}, enchant::*, item_type::*, power::power_from_weapon_type, traits::*}}, entity::gear::PrismaticValueWrapper::{F32, Prismatic}};
 use serde::{Deserialize, Serialize};
 
 
@@ -9,7 +9,21 @@ pub struct GearEnchant {
     pub quality: ItemQuality,
 }
 
+/// The effective level of CP160 gear (50 + 160 / 10): what a piece has when its JSON does not say.
+pub const DEFAULT_GEAR_LEVEL: u8 = 66;
+
+/// A piece as it is written (`Serialize`) is complete. A piece as it is read (`Deserialize`, through
+/// [`GearPieceWire`]) may leave out what esosim can work out, so that a captured build (the GoldenFixture
+/// addon, the import link) is as short as it can be:
+///
+/// * `item_type` and `set_id`: looked up from `item_id` (`item_types.csv`, `set_items.csv`). Written, they win.
+/// * `effective_level`: 66, CP160 gear. `quality`: Legendary.
+/// * the enchant's `effective_level` and `quality`: the piece's own (the game does not report the glyph's).
+/// * `item_id`: 0.
+///
+/// Only `gear_trait` (no item-to-trait table yet) and the glyph have to be said.
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[serde(from = "GearPieceWire")]
 pub struct GearPiece {
     pub item_id: u32,
     pub item_type: ItemType,
@@ -18,6 +32,60 @@ pub struct GearPiece {
     pub quality: ItemQuality,
     pub set_id: Option<u16>,
     pub enchant: Option<GearEnchant>,
+}
+
+fn default_gear_level() -> u8 {
+    DEFAULT_GEAR_LEVEL
+}
+
+fn default_gear_quality() -> ItemQuality {
+    ItemQuality::Legendary
+}
+
+/// What a JSON gear piece may leave out (see [`GearPiece`]).
+#[derive(Deserialize)]
+struct GearPieceWire {
+    #[serde(default)]
+    item_id: u32,
+    #[serde(default)]
+    item_type: Option<ItemType>,
+    #[serde(default = "default_gear_level")]
+    effective_level: u8,
+    #[serde(default)]
+    gear_trait: Option<GearTrait>,
+    #[serde(default = "default_gear_quality")]
+    quality: ItemQuality,
+    #[serde(default)]
+    set_id: Option<u16>,
+    #[serde(default)]
+    enchant: Option<GearEnchantWire>,
+}
+
+#[derive(Deserialize)]
+struct GearEnchantWire {
+    glyph: EnchantType,
+    #[serde(default)]
+    effective_level: Option<u8>,
+    #[serde(default)]
+    quality: Option<ItemQuality>,
+}
+
+impl From<GearPieceWire> for GearPiece {
+    fn from(wire: GearPieceWire) -> Self {
+        GearPiece {
+            item_id: wire.item_id,
+            item_type: wire.item_type.unwrap_or_else(|| item_type_of(wire.item_id)),
+            effective_level: wire.effective_level,
+            gear_trait: wire.gear_trait,
+            quality: wire.quality,
+            set_id: wire.set_id.or_else(|| crate::data::tables::item_set::set_of_item(wire.item_id)),
+            enchant: wire.enchant.map(|enchant| GearEnchant {
+                glyph: enchant.glyph,
+                effective_level: enchant.effective_level.unwrap_or(wire.effective_level),
+                quality: enchant.quality.unwrap_or(wire.quality),
+            }),
+        }
+    }
 }
 
 pub enum PrismaticValueWrapper {
@@ -176,7 +244,7 @@ impl GearPiece {
     }
 
     pub fn get_armour_value(&self, gear_slot: &GearSlot) -> u32 {
-        let armour_value = armour_from_armour_piece(&self.get_item_type(), gear_slot, &self.quality).unwrap_or(0).into();
+        let armour_value = armour_from_armour_piece_at_level(&self.get_item_type(), gear_slot, &self.quality, &self.effective_level).unwrap_or(0).into();
         let new_armour_value = if let Some(trait_) = &self.gear_trait {
             match trait_ {
                 GearTrait::ArmorReinforced => (armour_value as f32 * ( 1.0 + get_armor_reinforced_value(&self.quality))) as u32,

@@ -1,0 +1,1333 @@
+{
+  "build": {
+    "attributes": {
+      "health": 0,
+      "magicka": 0,
+      "stamina": 64
+    },
+    "back_bar": [
+      36901,
+      37470,
+      35414,
+      39028,
+      36967,
+      113105
+    ],
+    "champion": {
+      "points": {
+        "2": 50,
+        "6": 20,
+        "10": 20,
+        "11": 20,
+        "14": 20,
+        "15": 20,
+        "16": 20,
+        "17": 40,
+        "18": 40,
+        "20": 20,
+        "21": 30,
+        "22": 30,
+        "24": 50,
+        "26": 50,
+        "28": 50,
+        "34": 50,
+        "37": 30,
+        "38": 20,
+        "39": 20,
+        "40": 30,
+        "42": 16,
+        "43": 30,
+        "44": 6,
+        "45": 30,
+        "50": 20,
+        "52": 50,
+        "53": 50,
+        "58": 50,
+        "65": 50,
+        "66": 50,
+        "69": 50,
+        "70": 50,
+        "74": 50,
+        "75": 10,
+        "78": 75,
+        "79": 50,
+        "81": 50,
+        "83": 50,
+        "85": 30,
+        "86": 50,
+        "92": 50,
+        "99": 20,
+        "108": 20,
+        "113": 20,
+        "128": 20,
+        "133": 50,
+        "134": 50,
+        "265": 50,
+        "270": 50,
+        "273": 50,
+        "275": 50,
+        "279": 50
+      },
+      "slotted": [
+        92,
+        66,
+        78,
+        65,
+        24,
+        28,
+        265,
+        133,
+        270,
+        275,
+        273,
+        52
+      ]
+    },
+    "class": "Nightblade",
+    "external_buffs": [],
+    "front_bar": [
+      25267,
+      61919,
+      34843,
+      34727,
+      25380,
+      113105
+    ],
+    "gear": {
+      "legs": {
+        "effective_level": 50,
+        "esoui": {
+          "armor_rating": 1873,
+          "armor_type": {
+            "id": 3,
+            "name": "ARMORTYPE_HEAVY"
+          },
+          "display_quality": {
+            "id": 4,
+            "name": "ITEM_DISPLAY_QUALITY_ARTIFACT"
+          },
+          "equip_slot": 8,
+          "equip_type": {
+            "id": 9,
+            "name": "EQUIP_TYPE_LEGS"
+          },
+          "functional_quality": {
+            "id": 4,
+            "name": "ITEM_FUNCTIONAL_QUALITY_ARTIFACT"
+          },
+          "link": "|H0:item:57714:5:50:0:0:0:0:0:0:0:0:0:0:0:0:3:0:0:0:10000:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 50,
+            "item_id": 57714,
+            "sub_type": 5
+          },
+          "required_champion_points": 0,
+          "required_level": 50,
+          "slot": "legs",
+          "trait": {
+            "id": 25,
+            "name": "ITEM_TRAIT_TYPE_ARMOR_NIRNHONED"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "ArmorNirnhoned",
+        "item_id": 57714,
+        "item_type": "Heavy",
+        "name": "Exemplary Nirnhoned Greaves",
+        "quality": "Epic"
+      },
+      "main_hand_backup": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ReducePower"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "enchant": {
+            "applied_id": 28,
+            "category": {
+              "id": 19,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_REDUCE_POWER"
+            },
+            "default_id": 0,
+            "description": "Reduce target Weapon Damage and Spell Damage by 452 for 5 seconds.",
+            "final_id": 28,
+            "has_charges": true,
+            "header": "Weakening Enchantment"
+          },
+          "equip_slot": 20,
+          "equip_type": {
+            "id": 6,
+            "name": "EQUIP_TYPE_TWO_HAND"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:50460:370:50:26591:370:50:0:0:0:0:0:0:0:0:1:1:1:1:0:494:0|h|h",
+          "link_fields": {
+            "enchant_id": 26591,
+            "enchant_level": 50,
+            "enchant_sub_type": 370,
+            "internal_level": 50,
+            "item_id": 50460,
+            "sub_type": 370
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 75,
+            "max_equipped": 5,
+            "name": "Torug's Pact",
+            "num_bonuses": 4,
+            "num_equipped": 2,
+            "num_perfected_equipped": 0
+          },
+          "slot": "main_hand_backup",
+          "trait": {
+            "id": 4,
+            "name": "ITEM_TRAIT_TYPE_WEAPON_INFUSED"
+          },
+          "weapon_power": 1335,
+          "weapon_type": {
+            "id": 13,
+            "name": "WEAPONTYPE_FROST_STAFF"
+          }
+        },
+        "gear_trait": "WeaponInfused",
+        "item_id": 50460,
+        "item_type": "FrostStaff",
+        "name": "Ice Staff of Torug's Pact",
+        "quality": "Legendary",
+        "set_id": 75
+      },
+      "necklace": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "ReduceBlockAndBash"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 4,
+            "name": "ITEM_DISPLAY_QUALITY_ARTIFACT"
+          },
+          "enchant": {
+            "applied_id": 0,
+            "category": {
+              "id": 28,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_REDUCE_BLOCK_AND_BASH"
+            },
+            "default_id": 89,
+            "description": "Reduce the cost of Block by 191.",
+            "final_id": 89,
+            "has_charges": true,
+            "header": "Bracing Enchantment"
+          },
+          "equip_slot": 1,
+          "equip_type": {
+            "id": 2,
+            "name": "EQUIP_TYPE_NECK"
+          },
+          "functional_quality": {
+            "id": 4,
+            "name": "ITEM_FUNCTIONAL_QUALITY_ARTIFACT"
+          },
+          "link": "|H0:item:217724:363:50:0:0:0:0:0:0:0:0:0:0:0:1:155:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 50,
+            "item_id": 217724,
+            "sub_type": 363
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 807,
+            "max_equipped": 5,
+            "name": "Full Belly Barricade",
+            "num_bonuses": 4,
+            "num_equipped": 1,
+            "num_perfected_equipped": 0
+          },
+          "slot": "necklace",
+          "trait": {
+            "id": 21,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_HEALTHY"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelryHealthy",
+        "item_id": 217724,
+        "item_type": "Necklace",
+        "name": "Sanguine Rose Pendant",
+        "quality": "Epic",
+        "set_id": 807
+      },
+      "ring1": {
+        "effective_level": 66,
+        "enchant": {
+          "glyph": "StaminaRegen"
+        },
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 6,
+            "name": "ITEM_DISPLAY_QUALITY_MYTHIC_OVERRIDE"
+          },
+          "enchant": {
+            "applied_id": 0,
+            "category": {
+              "id": 18,
+              "name": "ENCHANTMENT_SEARCH_CATEGORY_STAMINA_REGEN"
+            },
+            "default_id": 26,
+            "description": "Adds 169 Stamina Recovery.",
+            "final_id": 26,
+            "has_charges": true,
+            "header": "Stamina Recovery Enchantment"
+          },
+          "equip_slot": 11,
+          "equip_type": {
+            "id": 12,
+            "name": "EQUIP_TYPE_RING"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:163052:364:50:0:0:0:28:25:0:0:0:0:0:0:2049:0:0:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 50,
+            "item_id": 163052,
+            "sub_type": 364
+          },
+          "required_champion_points": 160,
+          "required_level": 50,
+          "set": {
+            "id": 503,
+            "max_equipped": 1,
+            "name": "Ring of the Wild Hunt",
+            "num_bonuses": 1,
+            "num_equipped": 1,
+            "num_perfected_equipped": 0
+          },
+          "slot": "ring1",
+          "trait": {
+            "id": 28,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_SWIFT"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelrySwift",
+        "item_id": 163052,
+        "item_type": "Ring",
+        "name": "Ring of the Wild Hunt",
+        "quality": "Legendary",
+        "set_id": 503
+      },
+      "ring2": {
+        "effective_level": 0,
+        "esoui": {
+          "armor_type": {
+            "id": 0,
+            "name": "ARMORTYPE_NONE"
+          },
+          "display_quality": {
+            "id": 5,
+            "name": "ITEM_DISPLAY_QUALITY_LEGENDARY"
+          },
+          "equip_slot": 12,
+          "equip_type": {
+            "id": 12,
+            "name": "EQUIP_TYPE_RING"
+          },
+          "functional_quality": {
+            "id": 5,
+            "name": "ITEM_FUNCTIONAL_QUALITY_LEGENDARY"
+          },
+          "link": "|H0:item:44904:124:0:0:0:0:28:0:0:0:0:0:0:0:257:36:1:1:0:0:0|h|h",
+          "link_fields": {
+            "enchant_id": 0,
+            "enchant_level": 0,
+            "enchant_sub_type": 0,
+            "internal_level": 0,
+            "item_id": 44904,
+            "sub_type": 124
+          },
+          "required_champion_points": 0,
+          "required_level": 0,
+          "slot": "ring2",
+          "trait": {
+            "id": 28,
+            "name": "ITEM_TRAIT_TYPE_JEWELRY_SWIFT"
+          },
+          "weapon_type": {
+            "id": 0,
+            "name": "WEAPONTYPE_NONE"
+          }
+        },
+        "gear_trait": "JewelrySwift",
+        "item_id": 44904,
+        "item_type": "Ring",
+        "name": "Ring of Mara",
+        "quality": "Legendary"
+      }
+    },
+    "level": 50,
+    "location": "Pve",
+    "mundus": {
+      "stones": [
+        13982
+      ]
+    },
+    "passives": [
+      45038,
+      45048,
+      45053,
+      45060,
+      45103,
+      45071,
+      45084,
+      45115,
+      45135,
+      45150,
+      45155,
+      45145,
+      263604,
+      263605,
+      150185,
+      152778,
+      150181,
+      150184,
+      152780,
+      139908,
+      139904,
+      63802,
+      63806,
+      63810,
+      63814,
+      63818,
+      139942,
+      139773,
+      78219,
+      79865,
+      79868,
+      77396,
+      77400,
+      77401,
+      103793,
+      74580,
+      76457,
+      76461,
+      76451,
+      76452,
+      76453,
+      55676,
+      55386,
+      39248,
+      36063,
+      70390,
+      117848,
+      45301,
+      70043,
+      47842,
+      45573,
+      45579,
+      45555,
+      70041,
+      47856,
+      48171,
+      48165,
+      48168,
+      70044,
+      47862,
+      48201,
+      48195,
+      48198,
+      70045,
+      46763,
+      47853,
+      46772,
+      46769,
+      103636,
+      103639,
+      103645,
+      103648,
+      44650,
+      69953,
+      44610,
+      44615,
+      44619,
+      44624,
+      44641,
+      70046,
+      47859,
+      48186,
+      48180,
+      48177
+    ],
+    "race": "Khajiit"
+  },
+  "expected": {
+    "advanced": {
+      "BASH_COST": {
+        "category": "Core Abilities",
+        "flat": 675,
+        "format": "FLAT",
+        "name": "Bash Cost"
+      },
+      "BASH_DAMAGE": {
+        "category": "Core Abilities",
+        "flat": 195,
+        "format": "FLAT",
+        "name": "Bash Damage"
+      },
+      "BLEED_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Bleed Damage",
+        "percent": 0
+      },
+      "BLEED_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Bleed Resistance",
+        "percent": 5.090909004
+      },
+      "BLOCK_COST": {
+        "category": "Core Abilities",
+        "flat": 1519,
+        "format": "FLAT",
+        "name": "Block Cost"
+      },
+      "BLOCK_MITIGATION": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Block Mitigation",
+        "percent": 52.99999619
+      },
+      "BLOCK_SPEED": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Block Move Speed",
+        "percent": 42
+      },
+      "CC_BREAK_COST": {
+        "category": "Core Abilities",
+        "flat": 5180,
+        "format": "FLAT",
+        "name": "Break Free Cost"
+      },
+      "COLD_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Frost Damage",
+        "percent": 0
+      },
+      "CRITICAL_DAMAGE": {
+        "category": "Damage Bonuses",
+        "format": "PERCENT",
+        "name": "Critical Damage",
+        "percent": 47
+      },
+      "CRITICAL_HEALING": {
+        "category": "Healing Bonuses",
+        "format": "PERCENT",
+        "name": "Critical Healing",
+        "percent": 37
+      },
+      "DISEASE_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Disease Damage",
+        "percent": 0
+      },
+      "DISEASE_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Disease Resistance",
+        "percent": 5.090909004
+      },
+      "DODGE_COST": {
+        "category": "Core Abilities",
+        "flat": 3914,
+        "format": "FLAT",
+        "name": "Dodge Roll Cost"
+      },
+      "FIRE_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Flame Damage",
+        "percent": 0
+      },
+      "FIRE_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Flame Resistance",
+        "percent": 5.090909004
+      },
+      "FROST_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Frost Resistance",
+        "percent": 5.090909004
+      },
+      "HEALING_DONE_BONUSES": {
+        "category": "Healing Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Healing Done",
+        "percent": 5
+      },
+      "HEALING_TAKEN_BONUSES": {
+        "category": "Healing Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Healing Taken",
+        "percent": 2
+      },
+      "MAGIC_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Magic Damage",
+        "percent": 0
+      },
+      "MAGIC_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Magic Resistance",
+        "percent": 5.090909004
+      },
+      "OBLIVION_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Oblivion Damage",
+        "percent": 0
+      },
+      "PHYSICAL_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Physical Damage",
+        "percent": 0
+      },
+      "POISON_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Poison Damage",
+        "percent": 0
+      },
+      "POISON_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Poison Resistance",
+        "percent": 5.090909004
+      },
+      "SHOCK_DAMAGE": {
+        "category": "Damage Bonuses",
+        "flat": 0,
+        "format": "FLAT_AND_PERCENT",
+        "name": "Shock Damage",
+        "percent": 0
+      },
+      "SHOCK_RESIST": {
+        "category": "Resistances",
+        "flat": 3360,
+        "format": "FLAT_OR_PERCENT",
+        "name": "Shock Resistance",
+        "percent": 5.090909004
+      },
+      "SNEAK_COST": {
+        "category": "Core Abilities",
+        "flat": 39,
+        "format": "FLAT",
+        "name": "Sneak Cost"
+      },
+      "SNEAK_SPEED_REDUCTION": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Sneak Speed",
+        "percent": 60
+      },
+      "SPRINT_COST": {
+        "category": "Core Abilities",
+        "flat": 460,
+        "format": "FLAT",
+        "name": "Sprint Cost"
+      },
+      "SPRINT_SPEED": {
+        "category": "Core Abilities",
+        "format": "PERCENT",
+        "name": "Sprint Speed",
+        "percent": 143
+      },
+      "SUBSCRIBER_ALL_XP": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Experience",
+        "percent": 0
+      },
+      "SUBSCRIBER_ALLIANCE_POINTS_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Alliance Points",
+        "percent": 0
+      },
+      "SUBSCRIBER_COIN_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Gold",
+        "percent": 0
+      },
+      "SUBSCRIBER_INSPIRATION_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Crafting Inspiration",
+        "percent": 0
+      },
+      "SUBSCRIBER_TELVAR_BONUS": {
+        "category": "ESO Plus",
+        "format": "PERCENT",
+        "name": "Tel Var",
+        "percent": 0
+      }
+    },
+    "derived": {
+      "ARMOR_RATING": {
+        "label": "Armor",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "ATTACK_POWER": {
+        "label": "Attack Power",
+        "value": 1335,
+        "without_bonus": 0
+      },
+      "BLOCK": {
+        "label": "Block",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "CRITICAL_CHANCE": {
+        "label": "Critical Chance",
+        "value": 5139,
+        "without_bonus": 0
+      },
+      "CRITICAL_RESISTANCE": {
+        "label": "Critical Resistance",
+        "value": 1320,
+        "without_bonus": 0
+      },
+      "CRITICAL_STRIKE": {
+        "crit_chance_pct": 33.406353,
+        "label": "Weapon Critical",
+        "value": 7320,
+        "without_bonus": 2181
+      },
+      "DAMAGE_RESIST_BLEED": {
+        "label": "Bleed Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_COLD": {
+        "label": "Frost Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_DISEASE": {
+        "label": "Disease Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_DROWN": {
+        "label": "Drowning Resistance",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_EARTH": {
+        "label": "Earth Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_FIRE": {
+        "label": "Flame Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_GENERIC": {
+        "label": "Generic Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_MAGIC": {
+        "label": "Magic Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_OBLIVION": {
+        "label": "Oblivion Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_PHYSICAL": {
+        "label": "Physical Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_POISON": {
+        "label": "Poison Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DAMAGE_RESIST_SHOCK": {
+        "label": "Shock Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "DODGE": {
+        "label": "Dodge",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALING_DONE": {
+        "label": "Healing Done",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALING_TAKEN": {
+        "label": "Healing Taken",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "HEALTH_MAX": {
+        "label": "Maximum Health",
+        "value": 20616,
+        "without_bonus": 20616
+      },
+      "HEALTH_REGEN_COMBAT": {
+        "label": "Health Recovery",
+        "value": 459,
+        "without_bonus": 459
+      },
+      "HEALTH_REGEN_IDLE": {
+        "label": "Health Recovery Idle",
+        "value": 1527,
+        "without_bonus": 1527
+      },
+      "MAGICKA_MAX": {
+        "label": "Maximum Magicka",
+        "value": 14510,
+        "without_bonus": 14510
+      },
+      "MAGICKA_REGEN_COMBAT": {
+        "label": "Magicka Recovery",
+        "value": 1051,
+        "without_bonus": 1051
+      },
+      "MAGICKA_REGEN_IDLE": {
+        "label": "Magicka Recovery Idle",
+        "value": 1641,
+        "without_bonus": 1641
+      },
+      "MISS": {
+        "label": "Miss",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MITIGATION": {
+        "label": "Resistance",
+        "value": 0,
+        "without_bonus": 0
+      },
+      "MOUNT_STAMINA_MAX": {
+        "label": "Mount Stamina",
+        "value": 7000,
+        "without_bonus": 7000
+      },
+      "MOUNT_STAMINA_REGEN_COMBAT": {
+        "label": "Mount Stamina Regen Combat",
+        "value": 100,
+        "without_bonus": 100
+      },
+      "MOUNT_STAMINA_REGEN_MOVING": {
+        "label": "Mount Stamina Regen Moving",
+        "value": 200,
+        "without_bonus": 200
+      },
+      "OFFENSIVE_PENETRATION": {
+        "label": "Offensive Penetration",
+        "value": 700,
+        "without_bonus": 0
+      },
+      "PHYSICAL_PENETRATION": {
+        "label": "Physical Penetration",
+        "value": 700,
+        "without_bonus": 0
+      },
+      "PHYSICAL_RESIST": {
+        "label": "Physical Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "POWER": {
+        "label": "Weapon Damage",
+        "value": 2335,
+        "without_bonus": 1000
+      },
+      "SPELL_CRITICAL": {
+        "crit_chance_pct": 33.406353,
+        "label": "Spell Critical",
+        "value": 7320,
+        "without_bonus": 2181
+      },
+      "SPELL_MITIGATION": {
+        "label": "Spell Resistance",
+        "value": 51,
+        "without_bonus": 51
+      },
+      "SPELL_PENETRATION": {
+        "label": "Spell Penetration",
+        "value": 700,
+        "without_bonus": 0
+      },
+      "SPELL_POWER": {
+        "label": "Spell Damage",
+        "value": 2335,
+        "without_bonus": 1000
+      },
+      "SPELL_RESIST": {
+        "label": "Spell Resistance",
+        "value": 3360,
+        "without_bonus": 0
+      },
+      "STAMINA_MAX": {
+        "label": "Maximum Stamina",
+        "value": 22182,
+        "without_bonus": 22182
+      },
+      "STAMINA_REGEN_COMBAT": {
+        "label": "Stamina Recovery",
+        "value": 889,
+        "without_bonus": 889
+      },
+      "STAMINA_REGEN_IDLE": {
+        "label": "Stamina Recovery Idle",
+        "value": 1285,
+        "without_bonus": 1285
+      },
+      "WEAPON_AND_SPELL_DAMAGE": {
+        "label": "Weapon and Spell Damage",
+        "value": 1335,
+        "without_bonus": 0
+      }
+    },
+    "sheet": {
+      "crit_chance": 0.33406353,
+      "critical_resistance": 1320,
+      "max_health": 20616,
+      "max_magicka": 14510,
+      "max_stamina": 22182,
+      "physical_penetration": 700,
+      "physical_resistance": 3360,
+      "power": 2335,
+      "spell_crit_chance": 0.33406353,
+      "spell_penetration": 700,
+      "spell_power": 2335,
+      "spell_resistance": 3360
+    }
+  },
+  "extra": {
+    "artificial_effects": [],
+    "bars": {
+      "back": [
+        {
+          "ability_id": 36901,
+          "name": "Power Extraction",
+          "slot": 1,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 37470,
+          "name": "Mass Hysteria",
+          "slot": 2,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 35414,
+          "name": "Mirage",
+          "slot": 3,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 39028,
+          "name": "Blockade of Frost",
+          "slot": 4,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 36967,
+          "name": "Reaper's Mark",
+          "slot": 5,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 113105,
+          "name": "Incapacitating Strike",
+          "slot": 6,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": true
+        }
+      ],
+      "front": [
+        {
+          "ability_id": 25267,
+          "name": "Concealed Weapon",
+          "slot": 1,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 61919,
+          "name": "Merciless Resolve",
+          "slot": 2,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 34843,
+          "name": "Killer's Blade",
+          "slot": 3,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 34727,
+          "name": "Healthy Offering",
+          "slot": 4,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 25380,
+          "name": "Shadowy Disguise",
+          "slot": 5,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": false
+        },
+        {
+          "ability_id": 113105,
+          "name": "Incapacitating Strike",
+          "slot": 6,
+          "slot_type": {
+            "id": 1,
+            "name": "ACTION_TYPE_ABILITY"
+          },
+          "ultimate": true
+        }
+      ]
+    },
+    "buffs": [
+      {
+        "ability_id": 63569,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Gallop",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 13982,
+        "ability_type": "ABILITY_TYPE_BONUS",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "mundus": true,
+        "name": "Boon: The Atronach",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61667,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Major Savagery",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61735,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Expedition",
+        "remaining_s": 0,
+        "stacks": 0
+      },
+      {
+        "ability_id": 61721,
+        "ability_type": "ABILITY_TYPE_NONE",
+        "can_click_off": false,
+        "cast_by_player": true,
+        "duration_s": 0,
+        "effect_type": "BUFF_EFFECT_TYPE_BUFF",
+        "name": "Minor Protection",
+        "remaining_s": 0,
+        "stacks": 0
+      }
+    ],
+    "champion": {
+      "slotted": [
+        {
+          "ability_id": 149286,
+          "id": 92,
+          "name": "Gifted Rider",
+          "slot": 1
+        },
+        {
+          "ability_id": 142125,
+          "id": 66,
+          "name": "Steed's Blessing",
+          "slot": 2
+        },
+        {
+          "ability_id": 142217,
+          "id": 78,
+          "name": "Master Gatherer",
+          "slot": 3
+        },
+        {
+          "ability_id": 142123,
+          "id": 65,
+          "name": "Sustaining Shadows",
+          "slot": 4
+        },
+        {
+          "ability_id": 141998,
+          "id": 24,
+          "name": "Soothing Tide",
+          "slot": 5
+        },
+        {
+          "ability_id": 142002,
+          "id": 28,
+          "name": "Swift Renewal",
+          "slot": 6
+        },
+        {
+          "ability_id": 159972,
+          "id": 265,
+          "name": "Ironclad",
+          "slot": 7
+        },
+        {
+          "ability_id": 151748,
+          "id": 133,
+          "name": "Unassailable",
+          "slot": 8
+        },
+        {
+          "ability_id": 160044,
+          "id": 270,
+          "name": "Celerity",
+          "slot": 9
+        },
+        {
+          "ability_id": 160065,
+          "id": 275,
+          "name": "Pain's Refuge",
+          "slot": 10
+        },
+        {
+          "ability_id": 160057,
+          "id": 273,
+          "name": "Sustained by Suffering",
+          "slot": 11
+        },
+        {
+          "ability_id": 142094,
+          "id": 52,
+          "name": "Slippery",
+          "slot": 12
+        }
+      ],
+      "unslotted": [
+        {
+          "id": 26,
+          "name": "Focused Mending",
+          "points": 50
+        },
+        {
+          "id": 134,
+          "name": "Duelist's Rebuff",
+          "points": 50
+        },
+        {
+          "id": 34,
+          "name": "Fortified",
+          "points": 50
+        },
+        {
+          "id": 2,
+          "name": "Boundless Vitality",
+          "points": 50
+        }
+      ]
+    },
+    "character": {
+      "champion_points": 2122,
+      "champion_points_earned": 2122,
+      "character_id": "8796093044326779",
+      "class": "Nightblade",
+      "class_id": 3,
+      "class_localised": "Nightblade",
+      "display_name": "@TheMrPancake",
+      "effective_level": 66,
+      "level": 50,
+      "name": "Pancâke",
+      "race": "Khajiit",
+      "race_id": 9,
+      "race_localised": "Khajiit"
+    },
+    "meta": {
+      "active_bar": "back",
+      "active_hotbar": {
+        "id": 1,
+        "name": "HOTBAR_CATEGORY_BACKUP"
+      },
+      "addon_version": "1.0.5",
+      "api_version": 101051,
+      "in_combat": false,
+      "in_pvp_area": false,
+      "language": "en",
+      "schema": 1,
+      "timestamp": 1794987286,
+      "world": "NA Megaserver"
+    },
+    "mundus": [
+      {
+        "ability_id": 13982,
+        "advanced_stat_effects": [],
+        "name": "Boon: The Atronach"
+      }
+    ],
+    "sets": {
+      "75": {
+        "max_equipped": 5,
+        "name": "Torug's Pact",
+        "num_equipped": 2,
+        "num_perfected_equipped": 0
+      },
+      "503": {
+        "max_equipped": 1,
+        "name": "Ring of the Wild Hunt",
+        "num_equipped": 1,
+        "num_perfected_equipped": 0
+      },
+      "807": {
+        "max_equipped": 5,
+        "name": "Full Belly Barricade",
+        "num_equipped": 1,
+        "num_perfected_equipped": 0
+      }
+    },
+    "warnings": [
+      "the BACK bar is held: main_hand / off_hand are the back-bar weapons and the sheet shows back-bar numbers"
+    ]
+  },
+  "hidden": [],
+  "name": "Pancâke Khajiit Nightblade, CP2122, back bar",
+  "patch": "U51",
+  "source": "GoldenFixture addon v1.0.5: /goldenfixture on @TheMrPancake (API 101051)",
+  "tolerance": {}
+}

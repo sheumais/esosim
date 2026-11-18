@@ -12,11 +12,15 @@
 //! so in the report (`note:` lines) every time it has to:
 //!
 //! * `class` is taken from `extra.character.class_id` when `build.class` is missing (addon 1.0.4 leaves it out).
-//! * An `enchant` that only names its `glyph` gets the piece's `effective_level` and `quality`.
+//! * A gear piece may leave out its `item_type`, `set_id`, `effective_level` (66), `quality` (Legendary) and its
+//!   enchant's level and quality: `GearPiece`'s `Deserialize` fills them in (item tables and CP160 defaults), and the
+//!   harness says so when an item is not in the tables (`item_type` Unknown: the type decides weapon power and armour).
+//!   Addon 1.1 writes only `item_id`, `gear_trait`, the glyph and what differs from those defaults.
 //! * `subclass` is not exported by the addon, so a build without one is a pure class to the engine and a subclassed
 //!   character loses the passives of the lines it took (an Arcanist with Assassination has no Pressure Points).
 //!   [`infer_subclass`] works the swaps out from the skill lines of the passives and slotted abilities.
-//! * Buffs that were on the character when the numbers were read (`extra.buffs`) are added to `external_buffs` when the
+//! * Buffs that were on the character when the numbers were read (`buffs`, a list of ability ids in addon 1.1; objects
+//!   in `extra.buffs` in 1.0.x and with `/goldenfixture full`) are added to `external_buffs` when the
 //!   engine has a `Buff` effect for them (see [`MERGE_OBSERVED_BUFFS`]). The engine cannot yet derive Major Brutality from
 //!   the skill that gave it in game, and the sheet it is compared with includes it. Buffs the engine has no effect for
 //!   (food, vampirism, ...) are listed as `unmodelled`: they are in the game's numbers and not in the engine's.
@@ -36,6 +40,7 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use esosim::data::bundle::Bundle;
+use esosim::data::enums::gear::ItemType;
 use esosim::data::tables::sets::SETS;
 use esosim::engine::effect::{AggKind, Bucket, Channel, EffectSource, ResistableDamageType as Dmg, ResourceKind};
 use esosim::entity::build::Build;
@@ -132,24 +137,37 @@ fn build_of(root: &Value, bundle: &Bundle) -> Result<(Build, Vec<String>), Strin
         }
     }
 
-    if let Some(Value::Object(gear)) = build.get_mut("gear") {
-        for (_slot, piece) in gear.iter_mut() {
-            let Some(piece) = piece.as_object_mut() else { continue };
-            let level = piece.get("effective_level").cloned();
-            let quality = piece.get("quality").cloned();
-            if let Some(Value::Object(enchant)) = piece.get_mut("enchant") {
-                if !enchant.contains_key("effective_level") {
-                    if let Some(level) = level {
-                        enchant.insert("effective_level".to_string(), level);
-                    }
+    // The addon exports the weapons of the bar that is held as main_hand / off_hand, and the sheet is that bar's
+    // numbers; the engine always evaluates the front bar. So for a back-bar capture the bars are swapped here: the held
+    // bar becomes the front bar, otherwise per-slotted-ability effects (Dark Vigor, ...) count the wrong bar's skills.
+    let back_bar_held = root.get("bar").and_then(Value::as_str) == Some("back")
+        || root.pointer("/extra/meta/active_bar").and_then(Value::as_str) == Some("back");
+    if back_bar_held {
+        let front = build.remove("front_bar");
+        let back = build.remove("back_bar");
+        if let Some(back) = back {
+            build.insert("front_bar".to_string(), back);
+        }
+        if let Some(front) = front {
+            build.insert("back_bar".to_string(), front);
+        }
+        if let Some(Value::Object(gear)) = build.get_mut("gear") {
+            let pairs = [
+                ("main_hand_backup", "main_hand"),
+                ("off_hand_backup", "off_hand"),
+                ("backup_poison", "poison"),
+            ];
+            if pairs.iter().any(|(backup, _)| gear.contains_key(*backup)) {
+                for (backup, front) in pairs {
+                    let held = gear.remove(backup);
+                    let other = gear.remove(front);
+                    if let Some(h) = held { gear.insert(front.to_string(), h); }
+                    if let Some(o) = other { gear.insert(backup.to_string(), o); }
                 }
-                if !enchant.contains_key("quality") {
-                    if let Some(quality) = quality {
-                        enchant.insert("quality".to_string(), quality);
-                    }
-                }
+                notes.push("back bar held: weapon slots swapped with the bars".to_string());
             }
         }
+        notes.push("the back bar was held: bars swapped so the held bar is the front bar".to_string());
     }
 
     let subclass_given = build.contains_key("subclass");
@@ -159,10 +177,16 @@ fn build_of(root: &Value, bundle: &Bundle) -> Result<(Build, Vec<String>), Strin
         .map(|ids| ids.iter().filter_map(Value::as_u64).map(|id| id as u32).collect())
         .unwrap_or_default();
     let mut unmodelled = Vec::new();
-    let observed = root.pointer("/extra/buffs").and_then(Value::as_array).cloned().unwrap_or_default();
+    let observed = root.get("buffs").or_else(|| root.pointer("/extra/buffs")).and_then(Value::as_array).cloned().unwrap_or_default();
     for buff in &observed {
-        let Some(id) = buff.get("ability_id").and_then(Value::as_u64).map(|id| id as u32) else { continue };
-        let name = buff.get("name").and_then(Value::as_str).unwrap_or("?");
+        // a bare ability id (addon 1.1) or an object with an `ability_id` (1.0.x, `full`)
+        let Some(id) = buff.as_u64().or_else(|| buff.get("ability_id").and_then(Value::as_u64)).map(|id| id as u32) else { continue };
+        let name = buff
+            .get("name")
+            .and_then(Value::as_str)
+            .map(str::to_string)
+            .or_else(|| bundle.effect(id).map(|effect| effect.name.clone()))
+            .unwrap_or_else(|| "?".to_string());
         if buff.get("mundus").and_then(Value::as_bool) == Some(true) {
             continue; // the build's own mundus loadout
         }
@@ -180,6 +204,18 @@ fn build_of(root: &Value, bundle: &Bundle) -> Result<(Build, Vec<String>), Strin
     build.insert("external_buffs".to_string(), Value::from(external));
 
     let mut build = serde_json::from_value::<Build>(Value::Object(build)).map_err(|e| format!("build: {e}"))?;
+    let mut unknown_items = BTreeSet::new();
+    for backbar in [false, true] {
+        for (slot, piece) in build.gear.iter_active_gear(backbar) {
+            if piece.item_type == ItemType::Unknown {
+                unknown_items.insert(format!("{slot:?} (item {})", piece.item_id));
+            }
+        }
+    }
+    if !unknown_items.is_empty() {
+        let listed: Vec<_> = unknown_items.into_iter().collect();
+        notes.push(format!("item type unknown (not in item_types.csv: sync-data after a patch): {}", listed.join(", ")));
+    }
     if !subclass_given {
         match infer_subclass(&build, bundle) {
             Ok(swaps) if swaps.is_empty() => {}
@@ -230,9 +266,11 @@ fn load(path: &Path, bundle: &Bundle) -> Result<Fixture, String> {
         .and_then(Value::as_array)
         .map(|keys| keys.iter().filter_map(Value::as_str).map(str::to_string).collect())
         .unwrap_or_default();
+    let file = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
     Ok(Fixture {
-        file: path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(),
-        name: text_of("name"),
+        // addon 1.1 does not write a name (it is characters in the link): the file's name does
+        name: root.get("name").and_then(Value::as_str).map(str::to_string).unwrap_or_else(|| file.clone()),
+        file,
         patch: text_of("patch"),
         build,
         notes,
@@ -557,6 +595,31 @@ mod harness {
         assert_eq!(build.external_buffs, vec![61665]);
         assert!(notes.iter().any(|n| n.contains("Eye Scream (84720)")), "{notes:?}");
         assert!(!notes.iter().any(|n| n.contains("13981")), "{notes:?}");
+    }
+
+    /// What addon 1.1 writes: a bare list of buff ids, the held bar as `bar`, and gear pieces with only what the sim
+    /// cannot look up.
+    #[test]
+    fn the_compact_shape_of_addon_1_1_is_read() {
+        let root: Value = serde_json::from_str(
+            r#"{
+                "patch": "U52", "bar": "back", "buffs": [61665, 84720],
+                "build": {
+                    "race": "Khajiit", "class": "Arcanist", "attributes": {"health": 32, "magicka": 32},
+                    "front_bar": [1], "back_bar": [2],
+                    "gear": {"main_hand_backup": {"item_id": 208373, "gear_trait": "WeaponCharged"}}
+                },
+                "expected": {"sheet": {"max_health": 1}}
+            }"#,
+        )
+        .unwrap();
+        let (build, notes) = build_of(&root, Bundle::embedded()).unwrap();
+        assert_eq!(build.front_bar, vec![2], "the held bar is the front bar");
+        assert_eq!(build.back_bar, vec![1]);
+        assert!(build.gear.main_hand.is_some() && build.gear.main_hand_backup.is_none(), "{notes:?}");
+        assert_eq!(build.external_buffs, vec![61665], "the buff the engine knows is added");
+        assert!(notes.iter().any(|n| n.contains("84720")), "the one it does not know is reported: {notes:?}");
+        assert_eq!(build.gear.main_hand.unwrap().item_type, ItemType::LightningStaff, "looked up from the item id");
     }
 
     /// An Arcanist whose passives and bars hold Assassination ones has taken that line: the fixture's own build says

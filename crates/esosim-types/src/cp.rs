@@ -20,7 +20,9 @@ pub enum CpPerk {
     Passive,
     /// `1`: a slottable star (the table calls it "active").
     Active,
-    /// `2`: the always-on "base active" stars (Fortified, Boundless Vitality, ...).
+    /// `2`: a "base active" star (Fortified, Boundless Vitality, Steed's Blessing, ...). These sit in
+    /// the champion bar like [`CpPerk::Active`] stars, and like them only apply while slotted: a
+    /// character can have points in one without it being slotted (captured fixtures show both).
     BaseActive,
 }
 
@@ -104,14 +106,15 @@ impl CpLoadout {
         self.slotted.contains(&star_id)
     }
 
-    /// Stages of `star` that actually apply. Passive and base-active stars apply for every
-    /// stage bought; a slottable star only while it is slotted. Nothing else is checked here (not
+    /// Stages of `star` that actually apply. Passive stars apply for every stage bought; a slottable
+    /// star ([`CpPerk::Active`] or [`CpPerk::BaseActive`]) only while it is slotted, so one with
+    /// points that is not slotted is unlocked but does nothing. Nothing else is checked here (not
     /// the slot cap, not the prerequisites): see [`CpLoadout::issues`].
     pub fn stages_in_effect(&self, star: &CpStar) -> u32 {
         match star.perk {
-            CpPerk::Passive | CpPerk::BaseActive => self.stages_bought(star),
-            CpPerk::Active if self.is_slotted(star.id) => self.stages_bought(star),
-            CpPerk::Active => 0,
+            CpPerk::Passive => self.stages_bought(star),
+            CpPerk::Active | CpPerk::BaseActive if self.is_slotted(star.id) => self.stages_bought(star),
+            CpPerk::Active | CpPerk::BaseActive => 0,
         }
     }
 
@@ -147,7 +150,7 @@ impl CpLoadout {
                 issues.push(CpIssue::UnknownStar { star_id });
                 continue;
             };
-            if star.perk != CpPerk::Active {
+            if star.perk == CpPerk::Passive {
                 issues.push(CpIssue::SlottedNotSlottable { star_id });
             } else if self.stages_bought(star) == 0 {
                 issues.push(CpIssue::SlottedWithoutStages { star_id });
@@ -208,7 +211,7 @@ pub enum CpIssue {
     UnknownStar { star_id: u32 },
     /// More points than the star can take: the extra ones do nothing.
     PointsOverMax { star_id: u32, spent: u32, max: u32 },
-    /// A slotted star that is passive or always on: only [`CpPerk::Active`] stars have a slot.
+    /// A slotted star that is passive: only [`CpPerk::Active`] and [`CpPerk::BaseActive`] stars have a slot.
     SlottedNotSlottable { star_id: u32 },
     /// A slotted star with no stage bought: it does nothing.
     SlottedWithoutStages { star_id: u32 },
@@ -255,14 +258,14 @@ mod tests {
     }
 
     #[test]
-    fn only_slotted_active_stars_apply() {
+    fn only_slotted_slottable_stars_apply() {
         let passive = star(1, CpPerk::Passive, 10, 2, "T", &[]);
         let base = star(2, CpPerk::BaseActive, 1, 50, "T", &[]);
         let active = star(3, CpPerk::Active, 10, 5, "T", &[]);
         let l = loadout(&[(1, 20), (2, 30), (3, 50)], &[]);
-        assert_eq!([l.stages_in_effect(&passive), l.stages_in_effect(&base), l.stages_in_effect(&active)], [2, 30, 0]);
-        let l = loadout(&[(1, 20), (2, 30), (3, 50)], &[3]);
-        assert_eq!(l.stages_in_effect(&active), 5);
+        assert_eq!([l.stages_in_effect(&passive), l.stages_in_effect(&base), l.stages_in_effect(&active)], [2, 0, 0]);
+        let l = loadout(&[(1, 20), (2, 30), (3, 50)], &[2, 3]);
+        assert_eq!([l.stages_in_effect(&base), l.stages_in_effect(&active)], [30, 5]);
     }
 
     #[test]

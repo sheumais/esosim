@@ -145,7 +145,9 @@ impl Build {
         player.active_effects.apply_champion_points(bundle, &self.champion);
         player.set_mundus(bundle, &self.mundus);
         // an id the bundle has no effect for is skipped when aggregating
-        for id in self.food.iter().chain(&self.potion).chain(&self.external_buffs) {
+        // `food` is an item id: it is the buff the item gives that goes on (an item the table lacks gives none)
+        let food_buff = self.food.and_then(crate::data::tables::food::food_ability_of);
+        for id in food_buff.iter().chain(&self.potion).chain(&self.external_buffs) {
             player.active_effects.set(*id, 1);
         }
         // what the target gives the player (the trial dummy's buffs); the build alone does not have them
@@ -306,7 +308,7 @@ mod tests {
     #[test]
     fn consumables_and_group_buffs_apply_and_build_time_conditions_are_decided() {
         let jsonl: String = [
-            effect(1, EffectSource::Food, Condition::Always, 100.0),
+            effect(100_498, EffectSource::Food, Condition::Always, 100.0), // the buff of Clockwork Citrus Filet
             effect(2, EffectSource::Potion, Condition::Always, 10.0),
             effect(3, EffectSource::Buff { ability_id: 3 }, Condition::Always, 1000.0),
             // only for Nightblades / only for Templars
@@ -322,7 +324,7 @@ mod tests {
         let mut b = build();
         b.mundus = MundusLoadout::default();
         b.champion = CpLoadout::default();
-        b.food = Some(1);
+        b.food = Some(133_556); // an item id (Clockwork Citrus Filet), whose buff is 100498
         b.potion = Some(2);
         // 3 is given twice (a Unique buff counts once)
         b.external_buffs = vec![3, 3, 4, 5, 6];
@@ -730,7 +732,7 @@ mod tests {
     #[test]
     fn armour_class_and_weapon_passives_reach_the_sheet_with_their_counts() {
         use crate::data::tables::set_ids::ANSUULS_TORMENT_SET_ID as SET;
-        use crate::engine::effect::{AggKind::{Additive, Multiplicative}, ResistableDamageType::All as AllTypes, ResourceKind::Health};
+        use crate::engine::effect::{AggKind::Multiplicative, ResistableDamageType::All as AllTypes, ResourceKind::Health};
         use eso_skill_data::enums::skill_line::SkillLine;
         let bundle = Bundle::embedded();
         let unlocked = every_passive(bundle);

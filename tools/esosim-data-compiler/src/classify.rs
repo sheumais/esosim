@@ -546,7 +546,7 @@ pub enum Mapping {
     PairFlattened,
 }
 
-fn candidate_placeholders(r: &TooltipRef, text: &str, m: Mapping) -> Vec<usize> {
+fn candidate_placeholders(r: &TooltipRef) -> Vec<usize> {
     vec![r.flat + 1]
 }
 
@@ -599,7 +599,7 @@ pub fn classify_one_with(
             continue;
         }
         for text in fitting {
-            for n in candidate_placeholders(r, text, mapping) {
+            for n in candidate_placeholders(r) {
                 let Some(clause) = clause_for(text, n) else {
                     note("no_placeholder");
                     continue;

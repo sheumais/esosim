@@ -43,7 +43,7 @@ pub struct Player {
     /// Own class lines replaced by lines of other classes (`Build::subclass`). Empty = the pure class. Read through
     /// `Player::subclassing`, which applies the game's rules; an illegal swap listed here does nothing.
     pub subclass: Vec<SubclassSwap>,
-    /// The food or drink the build names (`Build::food`), which `Condition::FoodActive` asks about.
+    /// The food or drink the build names (`Build::food`, an ITEM id), which `Condition::FoodActive` asks about.
     /// `None` = no food. The food's own effect is switched on in `active_effects`; this only records
     /// that there is one.
     pub food: Option<u32>,

@@ -16,8 +16,9 @@ pub use super::critical::{
 pub use super::power::power;
 pub use super::resource::{max_resource, recovery};
 
-/// Attribute points spent on each pool.
+/// Attribute points spent on each pool. A pool a JSON leaves out has none (a capture does not write zeros).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Attributes {
     pub health: u8,
     pub magicka: u8,

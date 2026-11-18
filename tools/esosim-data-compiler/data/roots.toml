@@ -83,6 +83,9 @@ tags = [357]
 
 [consumables]
 tags = [156, 474, 97, 298]
+ids = [
+    100498,  # Clockwork Citrus Filet
+]
 
 [class]
 tags = [324, 335]

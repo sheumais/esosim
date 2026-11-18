@@ -71,14 +71,42 @@ pub struct SimEvent {
     /// listener for `DealDamage(Direct)` or `DealDamage(AreaOfEffect)` can tell whether this hit is one.
     /// Empty for every other event.
     pub damage_contexts: Vec<DamageDoneContext>,
+    /// For a `DealDamage` event: whether the hit was dealt in melee. `None` = the simulator does not know, and any
+    /// listener that needs the answer (`TriggerEvent::DealMeleeDamage`) makes [`event_matches`] fail with
+    /// [`EventError::CannotTell`]. It is never read as `false` or as `true`.
+    pub melee: Option<bool>,
 }
+
+/// An event that cannot be decided. Never turned into a yes or a no: the run stops (see the rules at the top of
+/// `esosim_types::trigger`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EventError {
+    /// `listening` depends on something the raised event does not say.
+    CannotTell { listening: TriggerEvent, missing: &'static str },
+}
+
+impl std::fmt::Display for EventError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EventError::CannotTell { listening, missing } => {
+                write!(f, "cannot tell whether the event satisfies \"{listening}\": the simulator does not know {missing}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for EventError {}
 
 /// Whether `raised` is what `listening` waits for. Not plain equality: a listener for
 /// `DealDamage(All)` hears every damage event, one for `DealDamage(Direct)` only a hit whose
 /// `damage_contexts` hold `Direct`, `Cast(CastKind::Any)` hears every cast, and
 /// `Cast(CastKind::SkillLine(l))` only a cast of that line (which needs the ability, hence
 /// [`SimEvent::ability_id`] and the book).
-pub fn event_matches(listening: TriggerEvent, raised: &SimEvent, abilities: &AbilityBook) -> bool {
+///
+/// `DealMeleeDamage(kind)` needs both a damage event whose `damage_contexts` hold `Type(kind)` (or any type for `All`)
+/// **and** `raised.melee == Some(true)`. `Some(false)` is a plain no. `None` is `Err(EventError::CannotTell)`: this
+/// function never guesses.
+pub fn event_matches(listening: TriggerEvent, raised: &SimEvent, abilities: &AbilityBook) -> Result<bool, EventError> {
     unimplemented!()
 }
 

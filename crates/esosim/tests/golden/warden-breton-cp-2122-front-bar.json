@@ -1,0 +1,271 @@
+{
+  "buffs": [
+    100498,
+    76618,
+    63569
+  ],
+  "build": {
+    "attributes": {
+      "magicka": 64
+    },
+    "back_bar": [
+      61505,
+      240150,
+      41958,
+      39011,
+      42038,
+      40223
+    ],
+    "champion": {
+      "points": {
+        "2": 50,
+        "6": 20,
+        "9": 50,
+        "10": 20,
+        "11": 20,
+        "14": 20,
+        "15": 20,
+        "16": 20,
+        "17": 40,
+        "18": 40,
+        "20": 20,
+        "21": 30,
+        "22": 30,
+        "24": 50,
+        "28": 50,
+        "35": 50,
+        "37": 30,
+        "38": 20,
+        "39": 20,
+        "40": 30,
+        "42": 16,
+        "43": 30,
+        "44": 6,
+        "45": 10,
+        "46": 50,
+        "50": 20,
+        "51": 50,
+        "53": 50,
+        "58": 50,
+        "60": 1,
+        "66": 50,
+        "69": 50,
+        "70": 50,
+        "71": 50,
+        "74": 50,
+        "75": 10,
+        "78": 15,
+        "79": 50,
+        "81": 50,
+        "82": 75,
+        "85": 30,
+        "86": 50,
+        "91": 25,
+        "92": 50,
+        "99": 20,
+        "108": 20,
+        "113": 20,
+        "128": 20,
+        "262": 50,
+        "263": 50,
+        "270": 50,
+        "273": 50,
+        "279": 50
+      },
+      "slotted": [
+        66,
+        92,
+        82,
+        78,
+        24,
+        28,
+        263,
+        262,
+        2,
+        46,
+        51,
+        35
+      ]
+    },
+    "class": "Warden",
+    "front_bar": [
+      40094,
+      40079,
+      40058,
+      85840,
+      243686,
+      40237
+    ],
+    "food": 133556,
+    "gear": {
+      "chest": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 111885
+      },
+      "feet": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 111886
+      },
+      "hands": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 111887
+      },
+      "head": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 147237
+      },
+      "legs": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 111889
+      },
+      "main_hand": {
+        "enchant": {
+          "glyph": "Berserker"
+        },
+        "gear_trait": "WeaponDecisive",
+        "item_id": 112009
+      },
+      "main_hand_backup": {
+        "enchant": {
+          "glyph": "ReducePower"
+        },
+        "gear_trait": "WeaponInfused",
+        "item_id": 187028
+      },
+      "necklace": {
+        "enchant": {
+          "glyph": "MagickaRegen"
+        },
+        "gear_trait": "JewelryArcane",
+        "item_id": 187650
+      },
+      "ring1": {
+        "enchant": {
+          "glyph": "IncreaseSpellDamage"
+        },
+        "gear_trait": "JewelryInfused",
+        "item_id": 187649
+      },
+      "ring2": {
+        "enchant": {
+          "glyph": "IncreaseSpellDamage"
+        },
+        "gear_trait": "JewelryInfused",
+        "item_id": 187649
+      },
+      "shoulders": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 147238
+      },
+      "waist": {
+        "enchant": {
+          "glyph": "Magicka"
+        },
+        "gear_trait": "ArmorDivines",
+        "item_id": 187115
+      }
+    },
+    "location": "Pve",
+    "mundus": {
+      "stones": [
+        13982
+      ]
+    },
+    "passives": [
+      86065,
+      86063,
+      86067,
+      86069,
+      85883,
+      85879,
+      85877,
+      85881,
+      86192,
+      86190,
+      86194,
+      86196,
+      263519,
+      263523,
+      45500,
+      45509,
+      45512,
+      45513,
+      45514,
+      45517,
+      45519,
+      45520,
+      45521,
+      45524,
+      150185,
+      152778,
+      45549,
+      45557,
+      45559,
+      45561,
+      150181,
+      45564,
+      45565,
+      45572,
+      45574,
+      150184,
+      152780,
+      45601,
+      40438,
+      74580,
+      55676,
+      55386,
+      39248,
+      39255,
+      36247,
+      45260,
+      45262,
+      45264,
+      45542,
+      45579,
+      47276,
+      47288,
+      46727,
+      46758,
+      103632,
+      44590,
+      44625,
+      44615,
+      44619,
+      47282
+    ],
+    "race": "Breton"
+  },
+  "expected": {
+    "sheet": {
+      "crit_chance": 0.184328,
+      "critical_resistance": 1320,
+      "max_health": 21712,
+      "max_magicka": 33535,
+      "max_stamina": 12770,
+      "physical_penetration": 700,
+      "physical_resistance": 7501,
+      "power": 3020,
+      "spell_penetration": 700,
+      "spell_resistance": 14893
+    }
+  },
+  "patch": "U51"
+}

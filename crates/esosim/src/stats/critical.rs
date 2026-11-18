@@ -22,10 +22,11 @@ pub const BASE_CRIT_RATING: f64 = 2181.0;
 
 /// Critical resistance rating per 1 % (`Channel::CriticalResistance` is in rating points, 66 to the percent).
 pub const CRIT_RESISTANCE_PER_PERCENT: f32 = 66.0;
+pub const CRITICAL_RESISTANCE_DEFAULT: i64 = 1320; // 20%
 
 /// The critical resistance the sources add, never below 0. It has no base: the game's sheet shows 0 without bonus.
 pub fn crit_resistance(c: &ChannelSet) -> u32 {
-    c.get(Channel::CriticalResistance).max(0) as u32
+    (CRITICAL_RESISTANCE_DEFAULT + c.get(Channel::CriticalResistance)).max(0) as u32
 }
 
 /// Critical resistance in percent (rating / 66). Not capped: no cap has been measured.

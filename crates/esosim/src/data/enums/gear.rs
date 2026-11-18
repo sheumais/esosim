@@ -129,7 +129,7 @@ pub enum EnchantType {
     AbsorbMagicka,
     AbsorbStamina,
     BefouledWeapon,
-    Beserker,
+    Berserker,
     ChargedWeapon,
     DamageShield,
     DiseaseResistance,

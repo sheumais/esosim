@@ -183,7 +183,7 @@ pub fn get_armor_nirnhoned_value(q: &ItemQuality) -> f32 {
 pub fn get_jewelry_healthy_value(q: &ItemQuality) -> f32 {
     match q {
         ItemQuality::Normal => 844.0,
-        ItemQuality::Fine => 877.0,
+        ItemQuality::Fine => 866.0,
         ItemQuality::Superior => 910.0,
         ItemQuality::Epic => 932.0,
         ItemQuality::Legendary => 965.0,

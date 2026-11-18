@@ -22,6 +22,8 @@ pub struct Build {
     /// would not allow is left out of the sheet and named by `Build::subclass_issues`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub subclass: Vec<SubclassSwap>,
+    /// 50 when the JSON leaves it out (every character with Champion Points is level 50).
+    #[serde(default = "default_level")]
     pub level: u8,
     pub attributes: Attributes,
     /// Ability ids of the stones, in pick order.
@@ -36,6 +38,10 @@ pub struct Build {
     pub front_bar: Vec<u32>,
     #[serde(default)]
     pub back_bar: Vec<u32>,
+    /// The ITEM id of the food or drink (not its buff: many foods give the same buff, with a value the server
+    /// works out). The GoldenFixture addon fills it in when the buff on the character names exactly one item in
+    /// `data::tables::food`; when several foods give that buff it leaves it out and the id is added by hand.
+    /// `Build::prepare_for` switches on the buff the item gives.
     #[serde(default)]
     pub food: Option<u32>,
     #[serde(default)]
@@ -56,6 +62,10 @@ pub struct Build {
     pub location: Option<Location>,
     #[serde(default)]
     pub enemy: EnemyPreset,
+}
+
+fn default_level() -> u8 {
+    50
 }
 
 impl Build {
@@ -135,6 +145,33 @@ mod tests {
             "subclass":[{"replaces":"Restoring Light","with":"Dark Magic"}]}"#;
         let build = Build::from_json(by_hand).unwrap();
         assert_eq!(build.subclass, [SubclassSwap::new(line("Restoring Light"), line("Dark Magic"))]);
+    }
+
+    /// What the GoldenFixture addon (1.1) leaves out of a capture, esosim works out: the item tables give the type
+    /// and set of an item id, and CP160 Legendary gear is the default.
+    #[test]
+    fn a_compact_gear_piece_is_filled_in() {
+        let json = r#"{"race":"Nord","class":"Sorcerer","attributes":{"health":64},
+            "gear":{"chest":{"item_id":207729,"gear_trait":"ArmorReinforced","enchant":{"glyph":"PrismaticDefense"}},
+                    "legs":{"item_id":57714,"gear_trait":"ArmorNirnhoned","quality":"Epic","effective_level":50}}}"#;
+        let build = Build::from_json(json).unwrap();
+        assert_eq!(build.level, 50, "a level that is left out is 50");
+        assert_eq!(build.attributes, Attributes { health: 64, magicka: 0, stamina: 0 });
+        let chest = build.gear.chest.unwrap();
+        assert_eq!(
+            (chest.item_type, chest.set_id, chest.effective_level, chest.quality),
+            (ItemType::Heavy, Some(771), 66, ItemQuality::Legendary)
+        );
+        let enchant = chest.enchant.unwrap();
+        assert_eq!(
+            (enchant.glyph, enchant.effective_level, enchant.quality),
+            (EnchantType::PrismaticDefense, 66, ItemQuality::Legendary)
+        );
+        let legs = build.gear.legs.unwrap();
+        assert_eq!(
+            (legs.item_type, legs.set_id, legs.effective_level, legs.quality),
+            (ItemType::Heavy, None, 50, ItemQuality::Epic)
+        );
     }
 
     #[test]

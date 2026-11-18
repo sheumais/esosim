@@ -13,7 +13,9 @@ use std::collections::{BTreeMap, BTreeSet};
 /// grimoires' abilities by line (`scribing::lines`): the game gives them no line, so they are added here.
 pub fn skill_lines_csv(abilities: &[ResolvedAbility], scribed: &BTreeMap<u32, Vec<u32>>) -> String {
     let mut by_line: BTreeMap<u32, BTreeSet<u32>> = BTreeMap::new();
-    for a in abilities.iter().filter(|a| a.skill_line != 0) {
+    // an ability can be in one line only: a grimoire's own line wins over one taken from an ability it replaces
+    let scribed_ids: BTreeSet<u32> = scribed.values().flatten().copied().collect();
+    for a in abilities.iter().filter(|a| a.skill_line != 0 && !scribed_ids.contains(&a.id)) {
         by_line.entry(a.skill_line).or_default().insert(a.id);
     }
     for (line, ids) in scribed {
@@ -31,6 +33,93 @@ pub fn skill_lines_csv(abilities: &[ResolvedAbility], scribed: &BTreeMap<u32, Ve
     out
 }
 
+/// The ability `s` replaces (`u8c`), if any: the game's `replaces_id`. An empty field or the ability's own id means
+/// it replaces nothing.
+pub fn replaces_id(s: &SkillData34) -> Option<u32> {
+    (s.u8c != 0 && s.u8c != s.ability_id1).then_some(s.u8c)
+}
+
+/// The base data an ability takes from the abilities it replaces: where it lives (`skill_line`) and what it costs and
+/// reaches (`target_type`, `cast_time`, `cost`, `range`, `radius`, `duration`, `tick`). A replacement record (a newer id
+/// the game casts in place of an older one) often leaves these empty, so it would otherwise be in no skill line and
+/// have no range.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BaseData {
+    pub skill_line: u32,
+    pub target_type: u16,
+    pub duration_ms: u32,
+    pub tick_ms: u32,
+    pub cast_time_ms: u32,
+    pub cost: u16,
+    pub range: u32,
+    pub radius: u32,
+}
+
+impl BaseData {
+    fn of(s: &SkillData34) -> BaseData {
+        let b = &s.base_data;
+        BaseData {
+            skill_line: b.skill_line_id,
+            target_type: b.target_type,
+            duration_ms: b.duration,
+            tick_ms: b.tick,
+            cast_time_ms: b.cast_time,
+            cost: b.cost,
+            range: b.range,
+            radius: b.radius,
+        }
+    }
+
+    /// Fill every empty field from `older`.
+    fn fill_from(&mut self, older: &BaseData) {
+        if self.skill_line == 0 {
+            self.skill_line = older.skill_line;
+        }
+        if self.target_type == 0 {
+            self.target_type = older.target_type;
+        }
+        if self.duration_ms == 0 {
+            self.duration_ms = older.duration_ms;
+        }
+        if self.tick_ms == 0 {
+            self.tick_ms = older.tick_ms;
+        }
+        if self.cast_time_ms == 0 {
+            self.cast_time_ms = older.cast_time_ms;
+        }
+        if self.cost == 0 {
+            self.cost = older.cost;
+        }
+        if self.range == 0 {
+            self.range = older.range;
+        }
+        if self.radius == 0 {
+            self.radius = older.radius;
+        }
+    }
+}
+
+/// `s`'s own base data, with each field it leaves empty taken from the ability it replaces, and failing that from the
+/// one *that* replaces, and so on. A value the replacement record has itself always wins: this is a default, not an
+/// override. Not taken over: `player_skill_index` and `scribing_index` (they say what a record *is*, and `is_root`
+/// would see the replacement as a second player skill), `ability_type`, `mechanic`, the `value`s, the coefficients
+/// and the tooltips.
+pub fn base_data_with_replaced(s: &SkillData34, corpus: &Corpus) -> BaseData {
+    let mut base = BaseData::of(s);
+    let mut seen = BTreeSet::from([s.ability_id1]);
+    let mut next = replaces_id(s);
+    while let Some(id) = next {
+        // a cycle, or a replaced ability the game data does not have: stop with what we have
+        if !seen.insert(id) {
+            break;
+        }
+        let Some(older) = corpus.skills.get(&id) else { break };
+        base.fill_from(&BaseData::of(older));
+        next = replaces_id(older);
+    }
+    base
+}
+
 pub fn is_root(s: &SkillData34) -> bool {
     s.base_data.player_skill_index != 0
 }
@@ -40,12 +129,13 @@ pub fn resolve(s: &SkillData34, corpus: &Corpus, graph: &Graph) -> ResolvedAbili
     let b = &s.base_data;
 
     let damage_type = s.u4[3];
+    let base = base_data_with_replaced(s, corpus);
     ResolvedAbility {
         id,
         name: corpus.name_of(id),
         ability_type: b.ability_type,
         mechanic: s.mechanic,
-        skill_line: b.skill_line_id,
+        skill_line: base.skill_line,
         player_skill_index: b.player_skill_index,
         scribing_index: b.scribing_index,
         major_minor_id: s.major_minor_id,
@@ -58,13 +148,13 @@ pub fn resolve(s: &SkillData34, corpus: &Corpus, graph: &Graph) -> ResolvedAbili
             .filter(|(_, v)| **v != 0)
             .map(|(i, v)| (i as u8, *v))
             .collect(),
-        target_type: b.target_type,
-        duration_ms: b.duration,
-        tick_ms: b.tick,
-        cast_time_ms: b.cast_time,
-        cost: b.cost,
-        range: b.range,
-        radius: b.radius,
+        target_type: base.target_type,
+        duration_ms: base.duration_ms,
+        tick_ms: base.tick_ms,
+        cast_time_ms: base.cast_time_ms,
+        cost: base.cost,
+        range: base.range,
+        radius: base.radius,
         value0: b.value0,
         value1: b.value1,
         value2: b.value2,
@@ -171,6 +261,68 @@ mod tests {
         assert_eq!(skill_lines_csv(&abilities, &scribed), "22,9\n44,100,500,217699,240150\n72,216803\n");
         // an id both sources list is written once
         assert_eq!(skill_lines_csv(&abilities, &BTreeMap::from([(44, vec![100])])), "22,9\n44,100,500\n");
+    }
+
+    fn replacing(id: u32, replaces: u32) -> SkillData34 {
+        let mut s = skill(id);
+        s.u8c = replaces;
+        s
+    }
+
+    fn resolved(list: Vec<SkillData34>, id: u32) -> ResolvedAbility {
+        let c = Corpus::from_skills(list);
+        resolve(&c.skills[&id], &c, &Graph::build(&c))
+    }
+
+    #[test]
+    fn a_replacement_takes_the_base_data_it_leaves_empty_from_the_ability_it_replaces() {
+        // 36508 is the old Incapacitating Strike (line 38, range 700, cost 70); 113105 replaces it and has its own cost
+        let mut old = skill(36508);
+        old.base_data.skill_line_id = 38;
+        old.base_data.player_skill_index = 95;
+        old.base_data.range = 700;
+        old.base_data.radius = 600;
+        old.base_data.cost = 70;
+        old.base_data.target_type = 3;
+        let mut new = replacing(113105, 36508);
+        new.base_data.cost = 120;
+        let r = resolved(vec![old, new], 113105);
+        assert_eq!((r.skill_line, r.range, r.radius, r.target_type), (38, 700, 600, 3), "taken from the replaced ability");
+        assert_eq!(r.cost, 120, "its own value is not overridden");
+        assert_eq!(r.player_skill_index, 0, "what a record is stays its own: the replacement is not a second player skill");
+    }
+
+    #[test]
+    fn replacement_base_data_follows_a_chain_and_survives_a_cycle_or_a_missing_record() {
+        let mut oldest = skill(1);
+        oldest.base_data.skill_line_id = 40;
+        oldest.base_data.range = 500;
+        let mut middle = replacing(2, 1);
+        middle.base_data.range = 900;
+        let newest = replacing(3, 2);
+        let r = resolved(vec![oldest, middle, newest], 3);
+        assert_eq!((r.skill_line, r.range), (40, 900), "line from the oldest, range from the nearest that has one");
+
+        // 5 and 6 replace each other: no line anywhere, and no endless loop
+        let r = resolved(vec![replacing(5, 6), replacing(6, 5)], 5);
+        assert_eq!((r.skill_line, r.range), (0, 0));
+        // replaces a record the game data does not have
+        assert_eq!(resolved(vec![replacing(7, 99999)], 7).skill_line, 0);
+        // `u8c` equal to its own id, or empty, replaces nothing
+        assert_eq!(replaces_id(&replacing(8, 8)), None);
+        assert_eq!(replaces_id(&replacing(8, 0)), None);
+        assert_eq!(replaces_id(&replacing(8, 9)), Some(9));
+    }
+
+    #[test]
+    fn a_replacement_is_in_the_skill_line_of_the_ability_it_replaces() {
+        let mut old = skill(36508);
+        old.base_data.skill_line_id = 38;
+        let list = vec![old, replacing(113105, 36508)];
+        let abilities = [resolved(list.clone(), 36508), resolved(list, 113105)];
+        assert_eq!(skill_lines_csv(&abilities, &BTreeMap::new()), "38,36508,113105\n");
+        // a grimoire's own line wins over an inherited one: an id is in one line only
+        assert_eq!(skill_lines_csv(&abilities, &BTreeMap::from([(72, vec![113105])])), "38,36508\n72,113105\n");
     }
 
     #[test]
