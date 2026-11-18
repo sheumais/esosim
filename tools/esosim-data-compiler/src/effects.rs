@@ -74,6 +74,7 @@ pub fn auto_effects(abilities: &[ResolvedAbility], config: &RootConfig, taken: &
             duration_ms: None,
             cooldown_ms: None,
             trigger: None,
+            applies: Vec::new(),
             note: Some(format!("auto: value1 = {} as stored by the game; unit and sign not checked against the engine", a.value1)),
         });
     }

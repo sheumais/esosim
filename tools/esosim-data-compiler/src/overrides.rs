@@ -5,7 +5,7 @@
 //! by a person. The file is the `EffectDef` of `esosim-types` as TOML plus a few fields that only
 //! the compiler uses (`game_name`, `source_url`, `check`); see the header of `data/overrides.toml`.
 
-use esosim_types::{ChannelValue, Condition, EffectDef, EffectSource, Stacking, Trigger};
+use esosim_types::{Application, ChannelValue, Condition, EffectDef, EffectSource, Stacking, Trigger};
 use serde::Deserialize;
 use std::collections::BTreeSet;
 
@@ -44,6 +44,8 @@ struct RawOverride {
     #[serde(default)]
     game_name: Option<String>,
     source: EffectSource,
+    /// Empty is fine for a proc that only applies other effects (`applies`).
+    #[serde(default)]
     channels: Vec<ChannelValue>,
     #[serde(default)]
     condition: Condition,
@@ -58,6 +60,11 @@ struct RawOverride {
     /// What fires a proc: `trigger = { event = { Cast = { SkillLine = "Psijic Order" } }, chance_pct = 33 }`.
     #[serde(default)]
     trigger: Option<Trigger>,
+    /// Effects this one puts on someone: `applies = [{ effect_id = 61743, recipient = "Target", duration_ms = 4000 }]`
+    /// ("when you deal critical damage you apply Major Breach to the enemy"). The applied effect is written as an
+    /// `[[effect]]` of its own (a `Debuff` or `Buff` source), once, however many abilities apply it.
+    #[serde(default)]
+    applies: Vec<Application>,
     #[serde(default)]
     note: Option<String>,
     #[serde(default)]
@@ -101,8 +108,11 @@ pub fn parse(text: &str) -> Result<Vec<Override>, String> {
         if r.id >= NO_ABILITY_HAS_AN_ID_FROM {
             return Err(at("synthetic ids are not allowed: write the effect against the ability record it comes from, or flag the gap in the roadmap"));
         }
-        if r.channels.is_empty() {
-            return Err(at("has no channels"));
+        if r.channels.is_empty() && r.applies.is_empty() {
+            return Err(at("has no channels and applies nothing"));
+        }
+        if let Some(a) = r.applies.iter().find(|a| a.effect_id == r.id || a.stacks == 0) {
+            return Err(at(&format!("applies {}: an effect cannot apply itself, and an application adds at least 1 stack", a.effect_id)));
         }
         if let Some(t) = &r.trigger {
             if t.chance_pct.is_some_and(|p| p == 0 || p > 100) {
@@ -130,6 +140,7 @@ pub fn parse(text: &str) -> Result<Vec<Override>, String> {
                 duration_ms: r.duration_ms,
                 cooldown_ms: r.cooldown_ms,
                 trigger: r.trigger,
+                applies: r.applies,
                 note: r.note,
             },
             game_name,
@@ -149,7 +160,7 @@ pub fn embedded() -> Result<Vec<Override>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use esosim_types::{Channel, ResistableDamageType};
+    use esosim_types::{Channel, Recipient, ResistableDamageType};
 
     const SAMPLE: &str = r#"
 [[effect]]
@@ -212,7 +223,7 @@ note = "Red CP"
         assert!(parse(&one("check = { field = \"value9\" }\n")).unwrap_err().contains("value0, value1 or value2"));
         assert!(parse(&one("check = { field = \"value1\", channel = 1 }\n")).unwrap_err().contains("past the end"));
         let none = "[[effect]]\nid = 6\nname = \"Y\"\nsource = \"Food\"\nchannels = []\n";
-        assert!(parse(none).unwrap_err().contains("effect 6 (`Y`): has no channels"));
+        assert!(parse(none).unwrap_err().contains("effect 6 (`Y`): has no channels and applies nothing"));
     }
 
     #[test]
@@ -234,6 +245,33 @@ note = "Red CP"
         assert_eq!(ok[0].def.condition, Condition::InCombat);
         let err = parse(&text(", chance_pct = 150")).unwrap_err();
         assert!(err.contains("chance_pct") && err.contains("75746"), "{err}");
+    }
+
+    #[test]
+    fn the_shipped_file_covers_the_set_procs_written_so_far() {
+        // 1 (Clever Alchemist) + 26 set procs + 8 that apply a debuff to the target + Contagion (waits for an application); a proc dropped by accident fails here
+        let procs: Vec<_> = embedded().unwrap().into_iter().filter(|o| o.def.trigger.is_some()).collect();
+        assert_eq!(procs.len(), 36);
+        assert!(procs.iter().all(|o| matches!(o.def.source, EffectSource::Set { .. })));
+        // a proc with numbers of its own is checked against its record; one that only applies has none to check
+        assert!(procs.iter().all(|o| o.check.is_some() != o.def.channels.is_empty()));
+        assert_eq!(procs.iter().filter(|o| !o.def.applies.is_empty()).count(), 8);
+    }
+
+    #[test]
+    fn a_proc_can_apply_a_debuff_to_the_target_and_need_no_channels_of_its_own() {
+        let text = |applies: &str| format!(
+            "[[effect]]\nid = 34386\nname = \"Night Mother's Gaze (5 pieces)\"\nsource = {{ Set = {{ set_id = 51, pieces_required = 5 }} }}\n\
+             channels = []\ntrigger = {{ event = \"DealCritical\" }}\napplies = {applies}\n"
+        );
+        let ok = parse(&text("[{ effect_id = 61743, recipient = \"Target\", duration_ms = 4000 }]")).unwrap();
+        let a = ok[0].def.applies[0];
+        assert_eq!((a.effect_id, a.recipient, a.duration_ms, a.stacks), (61743, Recipient::Target, Some(4000), 1));
+        assert!(ok[0].def.channels.is_empty());
+        assert!(parse(&text("[]")).unwrap_err().contains("applies nothing"));
+        assert!(parse(&text("[{ effect_id = 34386, recipient = \"Target\" }]")).unwrap_err().contains("cannot apply itself"));
+        assert!(parse(&text("[{ effect_id = 1, recipient = \"Target\", stacks = 0 }]")).unwrap_err().contains("at least 1 stack"));
+        assert!(parse(&text("[{ effect_id = 1, recipient = \"Enemy\" }]")).is_err(), "unknown recipient");
     }
 
     #[test]

@@ -109,6 +109,46 @@ pub struct ChannelValue {
     pub value_per_stack: f64,
 }
 
+/// Who an applied effect lands on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Recipient {
+    /// The one who has the ability: the buff a proc gives its wearer.
+    Wearer,
+    /// The enemy that was hit ("you apply Major Breach to the enemy"): the effect goes on `Enemy::active_effects`
+    /// and never reaches the wearer's own channels.
+    Target,
+    /// The wearer and the group members near enough ("you and the closest 5 group members gain major slayer").
+    /// A solo calculation counts the wearer's share; who else gets it is a simulator's question.
+    Group,
+}
+
+/// "Puts this effect on someone": one entry of [`EffectDef::applies`]. The applied effect is an `EffectDef` of its own
+/// (a `Debuff` for the enemy, a `Buff` for the wearer or group) with its own channels, stacking and `buff_code`, so a
+/// Major Breach applied by ten different sets is one effect that counts once.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Application {
+    /// The id of the applied effect (an ability record, like every effect id).
+    pub effect_id: u32,
+    pub recipient: Recipient,
+    /// How long it lasts when the applier's tooltip says so and the applied effect's own `duration_ms` does not (or
+    /// differs: "for 4 seconds" on a Major Breach that lasts 10 s elsewhere). `None` = the applied effect's own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_ms: Option<u32>,
+    /// Stacks added by one application ("applies a stack of malady"); the applied effect's `stacking` caps the total.
+    #[serde(default = "one_stack")]
+    pub stacks: u32,
+}
+
+fn one_stack() -> u32 {
+    1
+}
+
+impl Application {
+    pub fn new(effect_id: u32, recipient: Recipient) -> Application {
+        Application { effect_id, recipient, duration_ms: None, stacks: 1 }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EffectDef {
     /// The id of the ability record the effect comes from. There are no synthetic ids.
@@ -137,12 +177,24 @@ pub struct EffectDef {
     /// `duration_ms`, at most once every `cooldown_ms` when the trigger has none of its own). `None` = not a proc.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trigger: Option<Trigger>,
+    /// Other effects this one puts on someone when it fires: the ability that "applies Major Breach to the enemy",
+    /// "grants Major Slayer to you and your group", "applies a stack of Malady". Usually with a `trigger` (the proc),
+    /// and then `channels` may be empty, because the numbers are the applied effects'. Without a `trigger` the
+    /// application happens with the effect itself (a set bonus that always debuffs the target you hit): still not a
+    /// stat of the wearer. Nothing here changes a sheet; `Enemy::apply` puts a `Recipient::Target` one on a target.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub applies: Vec<Application>,
     /// Research notes carried over from the hand-written tables.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
 }
 
 impl EffectDef {
+    /// The applications that land on `who`.
+    pub fn applications_to(&self, who: Recipient) -> impl Iterator<Item = &Application> + '_ {
+        self.applies.iter().filter(move |a| a.recipient == who)
+    }
+
     /// Number of stacks that actually count: `Unique` is always 1, `PerStack` is capped.
     pub fn effective_stacks(&self, stacks: u32) -> u32 {
         match self.stacking {
@@ -194,8 +246,22 @@ mod tests {
             duration_ms: None,
             cooldown_ms: None,
             trigger: None,
+            applies: Vec::new(),
             note: None,
         }
+    }
+
+    #[test]
+    fn an_application_defaults_to_one_stack_and_the_effects_own_duration() {
+        let a: Application = serde_json::from_str(r#"{"effect_id":61743,"recipient":"Target"}"#).unwrap();
+        assert_eq!(a, Application::new(61743, Recipient::Target));
+        assert_eq!((a.stacks, a.duration_ms), (1, None));
+        let mut d = def(Stacking::Unique, 0.0, 0.0);
+        d.applies = vec![a, Application { stacks: 2, ..Application::new(5, Recipient::Group) }];
+        assert_eq!(d.applications_to(Recipient::Target).count(), 1);
+        assert_eq!(d.applications_to(Recipient::Wearer).count(), 0);
+        let round: EffectDef = serde_json::from_str(&serde_json::to_string(&d).unwrap()).unwrap();
+        assert_eq!(round, d);
     }
 
     #[test]

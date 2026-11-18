@@ -192,6 +192,16 @@ pub fn verify(input: &VerifyInput) -> VerifyReport {
                         o.def.id, a.name, o.game_name
                     ));
                 }
+                for ap in &o.def.applies {
+                    if !by_id.contains_key(&ap.effect_id) {
+                        r.errors.push(format!("{who}: applies ability {}, which is not in the bundle", ap.effect_id));
+                    }
+                }
+                if let Some(esosim_types::TriggerEvent::EffectApplied(id)) = o.def.trigger.map(|t| t.event) {
+                    if !by_id.contains_key(&id) {
+                        r.errors.push(format!("{who}: waits for applying ability {id}, which is not in the bundle"));
+                    }
+                }
                 if let Some(tr) = &o.def.trigger {
                     // drift guard for a proc: the game's own trigger list for the record should still hold the
                     // kind the override reacts to. Only a warning: a proc can live on the ability that applies it.
@@ -377,7 +387,7 @@ mod tests {
         r#"{"id":13984,"name":"Boon: The Shadow","categories":["mundus"]}"#, "\n",
     );
     const SETS: &str = "{\"id\":19,\"abilities\":[{\"ability_id\":76617}],\"keystone\":76617}\n";
-    const ROOTS: &str = "[buffs]\nids = [61746, 76617]\n[mundus]\nname_prefix = \"Boon: \"\nexpect = 2\n";
+    const ROOTS: &str = "[buffs]\nids = [61746, 76617]\n[mundus]\nname_prefix = [\"Boon: \"]\nexpect = 2\n";
 
     fn effect(extra: &str) -> String {
         format!(

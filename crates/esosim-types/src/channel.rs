@@ -142,6 +142,11 @@ pub enum Channel {
     DamageShieldStrength,
     BlockMitigation,
     CriticalDamageTaken,
+    /// "Increasing the potency of your damage done by X" (Cycle Unending, Inexorable Descent): a fraction
+    /// (0.25 = 25 %). Sources add up (`1 + Σ`) and the sum multiplies the ability's own value (coefficient ×
+    /// stats) *before* any flat bonus: it is not a `DamageDone` percentage. Stored as basis points like every
+    /// other fraction.
+    DamagePotency,
 
     HealingDone(HealingDoneContext),
 

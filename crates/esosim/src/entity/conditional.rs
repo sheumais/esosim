@@ -8,7 +8,7 @@
 //! sheet (`Build::sheet_against`) adds a target: the effects it settles switch on, and nothing else
 //! changes.
 
-use esosim_types::{ChannelValue, Condition, ConditionContext, EffectSource, Trigger};
+use esosim_types::{Application, ChannelValue, Condition, ConditionContext, EffectSource, Trigger};
 
 use crate::engine::grant_rule::GrantRule;
 use crate::engine::registry::EffectRegistry;
@@ -28,6 +28,9 @@ pub struct ConditionalEffect {
     pub stacks: u32,
     /// What fires the effect, when it is a proc. A proc is always conditional: no sheet counts it.
     pub trigger: Option<Trigger>,
+    /// What it puts on the target or the group when it fires (`EffectDef::applies`). Not part of the wearer's stats:
+    /// the calculator lists them ("applies Major Breach to the enemy") and a simulator carries them out.
+    pub applies: Vec<Application>,
     /// What the effect scales with, when it is a health gradient ("per 10% of the enemy's current Health").
     pub scales_with: Option<String>,
     /// Whether the target this was listed against settles the condition: `Some(true)` it applies and
@@ -101,6 +104,7 @@ impl Player {
                     channels: fx.channels.clone(),
                     stacks: if gradient { steps.unwrap_or(0) } else { fx.effective_stacks(active.stacks_of(id)) },
                     trigger: fx.trigger,
+                    applies: fx.applies.clone(),
                     scales_with: fx.stacking.gradient_text(),
                     vs_target,
                 })

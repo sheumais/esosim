@@ -1,6 +1,6 @@
 use crate::engine::active_effects::ActiveEffects;
 use crate::engine::aggregator::ChannelSet;
-use crate::engine::effect::{Channel, ResistableDamageType};
+use crate::engine::effect::{Application, Channel, Recipient, ResistableDamageType};
 use crate::engine::registry::EffectRegistry;
 use crate::stats::armour;
 use serde::{Deserialize, Serialize};
@@ -121,6 +121,22 @@ impl Enemy {
         self.channels = channels;
     }
 
+    /// A proc's application lands on this target: only a [`Recipient::Target`] one does, and it adds its stacks to the
+    /// effect's own count (capped by that effect's `stacking`; a second Major Breach is the same Major Breach), then
+    /// the channels are rebuilt. Returns whether anything was applied: `false` for a wearer or group application, or an
+    /// effect the registry does not know. Expiry is the simulator's business (`duration_ms`): clear it with
+    /// `active_effects.set(id, 0)` and `recompute`.
+    pub fn apply(&mut self, application: &Application, registry: &EffectRegistry) -> bool {
+        if application.recipient != Recipient::Target {
+            return false;
+        }
+        let Some(def) = registry.get(application.effect_id) else { return false };
+        let held = self.active_effects.stacks_of(application.effect_id);
+        self.active_effects.set(application.effect_id, def.effective_stacks(held + application.stacks));
+        self.recompute(registry);
+        true
+    }
+
     pub fn health_percent(&self) -> f32 {
         if self.max_health <= 0.0 {
             return 0.0;
@@ -150,6 +166,7 @@ mod tests {
             duration_ms: None,
             cooldown_ms: None,
             trigger: None,
+            applies: Vec::new(),
             note: None,
         }
     }
@@ -176,6 +193,27 @@ mod tests {
         enemy.active_effects.set(1, 0);
         enemy.recompute(&registry);
         assert_eq!(enemy.resistance(ResistableDamageType::All), 5_000);
+    }
+
+    #[test]
+    fn a_proc_applies_a_debuff_to_the_target_and_stacks_stop_at_the_effects_cap() {
+        let mut malady = debuff(7, -100.0, None);
+        malady.stacking = Stacking::PerStack { max: 3 };
+        malady.channels[0].value_per_stack = -100.0;
+        malady.channels[0].value = 0.0;
+        let registry = EffectRegistry::from_defs([debuff(1, -1000.0, None), malady]);
+        let mut enemy = EnemyPreset::Custom { max_health: 1.0, resistance: 5_000, debuffs: vec![] }.to_enemy(&registry);
+        assert!(enemy.apply(&Application::new(1, Recipient::Target), &registry));
+        assert_eq!(enemy.resistance(ResistableDamageType::All), 4_000);
+        assert!(enemy.apply(&Application::new(1, Recipient::Target), &registry), "again: still one Unique debuff");
+        assert_eq!(enemy.resistance(ResistableDamageType::All), 4_000);
+        let two = Application { stacks: 2, ..Application::new(7, Recipient::Target) };
+        enemy.apply(&two, &registry);
+        enemy.apply(&two, &registry);
+        assert_eq!(enemy.active_effects.stacks_of(7), 3, "capped at max 3");
+        assert_eq!(enemy.resistance(ResistableDamageType::All), 4_000 - 300);
+        assert!(!enemy.apply(&Application::new(1, Recipient::Group), &registry), "not the target's");
+        assert!(!enemy.apply(&Application::new(99, Recipient::Target), &registry), "unknown effect");
     }
 
     #[test]

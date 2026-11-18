@@ -84,6 +84,11 @@ pub enum TriggerEvent {
     EffectEnds,
     /// "every second in combat", "every 1.5 seconds while in combat" (game kind 86)
     EverySecondInCombat,
+    /// "applying Malady gives you a stack of Contagion": an [`Application`](crate::Application) of this effect landed.
+    /// Raised by whoever carries the application out, and only when it does land: an application held back by its own
+    /// proc's cooldown raises nothing, so the effect that waits for it is held back too. Not a game kind: the game
+    /// states these chains in the tooltip text only.
+    EffectApplied(u32),
 }
 
 impl TriggerEvent {
@@ -158,6 +163,7 @@ impl fmt::Display for TriggerEvent {
             TriggerEvent::Activate => f.write_str("the ability is activated"),
             TriggerEvent::EffectEnds => f.write_str("the effect ends"),
             TriggerEvent::EverySecondInCombat => f.write_str("every second in combat"),
+            TriggerEvent::EffectApplied(id) => write!(f, "you apply effect {id}"),
         }
     }
 }
@@ -230,6 +236,14 @@ mod tests {
             TriggerEvent::Cast(CastKind::SkillLine(SkillLine::MagesGuild)).to_string(),
             "you cast a Mages Guild ability"
         );
+    }
+
+    #[test]
+    fn applying_an_effect_is_an_event_with_the_applied_id() {
+        let e: TriggerEvent = serde_json::from_str(r#"{"EffectApplied":202586}"#).unwrap();
+        assert_eq!(e, TriggerEvent::EffectApplied(202586));
+        assert_eq!(e.to_string(), "you apply effect 202586");
+        assert!(e.list26_kinds().is_empty(), "not one of the game's kinds");
     }
 
     #[test]

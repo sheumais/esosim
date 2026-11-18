@@ -298,6 +298,7 @@ mod tests {
             duration_ms: None,
             cooldown_ms: None,
             trigger: None,
+            applies: Vec::new(),
             note: None,
         }
     }
@@ -494,6 +495,32 @@ mod tests {
         assert_eq!(from_set(&p, Channel::Power(esosim_types::PowerContext::All, esosim_types::AggKind::Additive), CLEVER_ALCHEMIST, 5), 0.0);
         // four pieces: the proc is not the build's at all
         assert!(wearing_build(CLEVER_ALCHEMIST, 4, None).conditional_effects(bundle, None).iter().all(|e| e.id != 75746));
+    }
+
+    /// A proc that applies an effect to the target: Night Mother's Gaze applies Major Breach on a critical. It has no
+    /// channels of its own, so no sheet changes, the calculator lists it with what it applies, and handing the
+    /// application to a target takes the resistance down by the applied effect's number (5,948).
+    #[test]
+    fn a_proc_that_applies_a_debuff_is_listed_and_lands_on_the_target_not_the_wearer() {
+        use crate::entity::enemy::EnemyPreset;
+        use esosim_types::{Application, Recipient, ResistableDamageType};
+        const NIGHT_MOTHERS_GAZE: u16 = 51;
+        let bundle = Bundle::embedded();
+        let fx = bundle.effect(29113).expect("Night Mother's Gaze's proc is in effects.jsonl");
+        assert!(fx.channels.is_empty());
+        assert_eq!(fx.applies, vec![Application { duration_ms: Some(4000), ..Application::new(61743, Recipient::Target) }]);
+
+        let five = wearing_build(NIGHT_MOTHERS_GAZE, 5, None);
+        let listed: Vec<_> = five.conditional_effects(bundle, None).into_iter().filter(|e| e.id == 29113).collect();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].when(), "when you deal critical damage");
+        assert_eq!(listed[0].applies, fx.applies);
+        assert!(five.to_player(bundle).explain(Channel::Armour(ResistableDamageType::All)).iter().all(|(s, _)| !matches!(s, EffectSource::Debuff { .. })));
+
+        let registry = EffectRegistry::embedded();
+        let mut target = EnemyPreset::Custom { max_health: 1.0, resistance: 18_200, debuffs: vec![] }.to_enemy(&registry);
+        assert!(target.apply(&fx.applies[0], &registry));
+        assert_eq!(target.resistance(ResistableDamageType::Physical), 18_200 - 5_948);
     }
 
     /// A build wearing `pieces` pieces of `set` (head, chest, legs, hands, feet in that order) and
@@ -718,13 +745,13 @@ mod tests {
         let armour = Channel::Armour(AllTypes);
         let passive = |ability_id| EffectSource::Passive { ability_id };
 
-        // armour weight: Resolve (45533) is 520 per Heavy piece, Juggernaut (45546) 2 % Max Health per piece, and the
+        // armour weight: Resolve (45533) is 343.2 per Heavy piece, Juggernaut (45546) 2 % Max Health per piece, and the
         // Light and Medium passives give nothing to a build in Heavy
         let five = worn(SET, 5, None);
-        assert_eq!(from_source(&five, armour, passive(45533)), 2600.0);
+        assert_eq!(from_source(&five, armour, passive(45533)), 1716.0);
         assert!(near(from_source(&five, Channel::Resource(Health, Multiplicative), passive(45546)), 0.10));
         assert_eq!(from_source(&five, Channel::CriticalChance, passive(45561)), 0.0, "Prodigy is a Light passive");
-        assert_eq!(from_source(&worn(SET, 4, None), armour, passive(45533)), 2080.0);
+        assert_eq!(from_source(&worn(SET, 4, None), armour, passive(45533)), 1373.0);
         assert_eq!(from_source(&worn(SET, 0, None), armour, passive(45533)), 0.0);
 
         // class: a Nightblade has Hemorrhage (+10 Critical Damage) and Refreshing Shadows (+15 % Recovery), a Templar
@@ -1115,7 +1142,7 @@ mod tests {
 
         b.subclass = vec![SubclassSwap::new(line_named("Assassination"), line_named("Storm Calling"))];
         // 2 Storm Calling + 1 Shadow; the Assassination ability is of a line the character gave up
-        assert_eq!(from_source(&b.to_player(bundle), power, expert), 3.0 * 108.0);
+        assert_eq!(from_source(&b.to_player(bundle), power, expert), 2.0 * 108.0);
         let issues = b.subclass_issues(bundle);
         assert_eq!(issues.len(), 1, "{issues:?}");
         assert!(matches!(issues[0], SubclassIssue::SlottedOutsideYourLines { line, .. } if line == line_named("Assassination")));

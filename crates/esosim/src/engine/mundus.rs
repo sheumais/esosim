@@ -281,6 +281,7 @@ use super::*;
             duration_ms: None,
             cooldown_ms: None,
             trigger: None,
+            applies: Vec::new(),
             note: None,
         };
         let mut defs: Vec<EffectDef> = Bundle::embedded().effects.values().cloned().collect();

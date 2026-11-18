@@ -4,7 +4,7 @@
 //! statics are gone.
 
 pub use esosim_types::{
-    AggKind, ArmourWeight, Bar, Bucket, Channel, ChannelValue, Condition, ConditionContext,
-    DamageDoneContext, DamageTakenContext, EffectDef, EffectSource, NoContext, PowerContext, ResourceKind,
-    Stacking, cca::CoreCombatAbility, damage::ResistableDamageType,
+    AggKind, Application, ArmourWeight, Bar, Bucket, Channel, ChannelValue, Condition, ConditionContext,
+    DamageDoneContext, DamageTakenContext, EffectDef, EffectSource, NoContext, PowerContext, Recipient,
+    ResourceKind, Stacking, cca::CoreCombatAbility, damage::ResistableDamageType,
 };

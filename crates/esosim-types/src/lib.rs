@@ -27,7 +27,7 @@ pub use condition::{
 };
 pub use cp::{CP_SLOTS_PER_TREE, CpIssue, CpLoadout, CpPerk, CpStar};
 pub use damage::ResistableDamageType;
-pub use effect_def::{ChannelValue, EffectDef, EffectSource, Stacking};
+pub use effect_def::{Application, ChannelValue, EffectDef, EffectSource, Recipient, Stacking};
 pub use mundus::{BASE_MUNDUS_STONES, MUNDUS_STONES_WITH_EXTRA_SLOT, MundusIssue, MundusLoadout};
 pub use race::Race;
 pub use set_behaviour::{BehaviourClass, BlockBehaviour, SetBehaviour, SetKind};
@@ -102,6 +102,8 @@ use super::*;
         }
         // the one payload-less channel that is a fraction: Divines pieces sum, every mundus stone scales by it
         assert_eq!(Channel::MundusBoost.bucket(), Bucket::Multiplicative);
+        // a fraction that is summed, then used as `1 + sum` to multiply
+        assert_eq!(Channel::DamagePotency.bucket(), Bucket::Multiplicative);
         // no payload: always additive
         assert_eq!(Channel::MovementSpeed.bucket(), Bucket::Additive);
         assert_eq!(Channel::HealingDone(HealingDoneContext::All).bucket(), Bucket::Additive);

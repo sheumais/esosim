@@ -227,7 +227,7 @@ mod tests {
     }
 
     fn effect(id: u32, source: EffectSource) -> EffectDef {
-        EffectDef { id, name: String::new(), source, channels: vec![], condition: Default::default(), stacking: Default::default(), buff_code: None, duration_ms: None, cooldown_ms: None, trigger: None, note: None }
+        EffectDef { id, name: String::new(), source, channels: vec![], condition: Default::default(), stacking: Default::default(), buff_code: None, duration_ms: None, cooldown_ms: None, trigger: None, applies: Vec::new(), note: None }
     }
 
     #[test]

@@ -222,6 +222,7 @@ pub fn effects(stars: &[CpStar], map: &[StarEffect]) -> Result<Vec<EffectDef>, S
             duration_ms: None,
             cooldown_ms: None,
             trigger: None,
+            applies: Vec::new(),
             note: m.note.clone(),
         });
     }

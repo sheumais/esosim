@@ -45,6 +45,8 @@ impl Channel {
             | StatusEffectDuration(kind) => (*kind).into(),
             // a fraction (0.091 = 9.1 %), summed over Divines pieces and scaling every mundus stone
             MundusBoost => Bucket::Multiplicative,
+            // a fraction (0.25 = 25 %); the sources are summed and the sum scales the ability's value
+            DamagePotency => Bucket::Multiplicative,
             CapRaise(_)
             | Armour(_)
             | CriticalChance
